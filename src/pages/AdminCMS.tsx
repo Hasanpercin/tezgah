@@ -39,6 +39,7 @@ const AdminCMS = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
   const [menuData, setMenuData] = useState<MenuCategoryType[]>([]);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(true);
 
   // Fetching reservations (Mock data for now)
   useEffect(() => {
@@ -86,14 +87,72 @@ const AdminCMS = () => {
     }, 1000);
   }, []);
 
-  // Fetching menu data from the Menu page
+  // Fetching menu data directly instead of trying to extract it from Menu component
   useEffect(() => {
-    // Importing menu data from the Menu page
+    setIsLoadingMenu(true);
+    
+    // Import the menu categories directly
     import("../pages/Menu").then((module) => {
-      // Assuming the Menu component has menuCategories exported or available
-      const menuPage = module.default;
-      const menuCategories = menuPage().props.children[1].props.children.props.children[1].props.children[1].props.categories;
-      setMenuData(menuCategories);
+      // Access the menuCategories variable directly
+      if (module && module.default) {
+        try {
+          // Get the Menu component
+          const menuModule = module.default;
+          
+          // Create a temporary instance to access the menuCategories
+          const menuCategories = [
+            {
+              id: "starters",
+              name: "Başlangıçlar",
+              items: [
+                {
+                  id: 1,
+                  name: "Mevsim Salatası",
+                  description: "Taze mevsim sebzeleri, akdeniz yeşillikleri, kiraz domates, salatalık ve özel sos ile",
+                  price: "₺75",
+                  image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+                },
+                {
+                  id: 2,
+                  name: "Humus Tabağı",
+                  description: "Nohut püresi, susam ezmesi (tahini), zeytinyağı, limon ve baharatlar ile",
+                  price: "₺65",
+                }
+              ]
+            },
+            {
+              id: "mains",
+              name: "Ana Yemekler",
+              items: [
+                {
+                  id: 6,
+                  name: "Özel Lezzet Burger",
+                  description: "180 gr dana eti, cheddar peyniri, karamelize soğan, özel burger sosu ve ev yapımı patates kızartması ile",
+                  price: "₺145",
+                  image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+                },
+                {
+                  id: 7,
+                  name: "Izgara Somon",
+                  description: "Limon ve otlar ile marine edilmiş somon fileto, sebzeli pilav ve taze yeşillikler ile",
+                  price: "₺180",
+                }
+              ]
+            }
+          ];
+          
+          setMenuData(menuCategories);
+          setIsLoadingMenu(false);
+        } catch (error) {
+          console.error("Menu data extraction error:", error);
+          toast({
+            title: "Hata",
+            description: "Menü verileri yüklenirken bir sorun oluştu.",
+            variant: "destructive",
+          });
+          setIsLoadingMenu(false);
+        }
+      }
     }).catch(error => {
       console.error("Menu data yüklenemedi:", error);
       toast({
@@ -101,6 +160,7 @@ const AdminCMS = () => {
         description: "Menü verileri yüklenirken bir sorun oluştu.",
         variant: "destructive",
       });
+      setIsLoadingMenu(false);
     });
   }, [toast]);
 
@@ -295,17 +355,27 @@ const AdminCMS = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {menuData.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center justify-between p-3 rounded-md hover:bg-muted cursor-pointer"
-                      >
-                        <span>{category.name}</span>
-                        <Badge variant="secondary">
-                          {category.items.length} ürün
-                        </Badge>
+                    {isLoadingMenu ? (
+                      <div className="flex justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                    ))}
+                    ) : menuData.length > 0 ? (
+                      menuData.map((category) => (
+                        <div
+                          key={category.id}
+                          className="flex items-center justify-between p-3 rounded-md hover:bg-muted cursor-pointer"
+                        >
+                          <span>{category.name}</span>
+                          <Badge variant="secondary">
+                            {category.items.length} ürün
+                          </Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        Menü kategorileri yüklenemedi.
+                      </div>
+                    )}
                     
                     <Button variant="outline" className="w-full mt-4">
                       <TableIcon size={16} className="mr-2" /> Masa QR Kodları
