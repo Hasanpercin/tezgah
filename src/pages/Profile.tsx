@@ -1,4 +1,3 @@
-
 import Hero from '@/components/Hero';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -17,14 +16,12 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [activeSidebar, setActiveSidebar] = useState('profile');
   
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
   
-  // Example user data
   const [userData, setUserData] = useState({
     name: user?.name || 'Ahmet Yılmaz',
     email: 'ahmet@example.com',
@@ -32,7 +29,6 @@ const Profile = () => {
     address: 'Atatürk Mah. Örnek Sok. No:123 İstanbul',
   });
 
-  // Example reservation history
   const reservations = [
     {
       id: '1',
@@ -54,7 +50,6 @@ const Profile = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulating API call
     setTimeout(() => {
       setIsLoading(false);
       toast({
@@ -80,7 +75,7 @@ const Profile = () => {
     setActiveTab(tab);
   };
 
-  const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
+  const heroImage = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1920&auto=format&fit=crop";
 
   if (!isAuthenticated) {
     return null; // Return null since useEffect will redirect
@@ -238,7 +233,6 @@ const Profile = () => {
       <section className="section-padding bg-white">
         <div className="container-custom max-w-5xl">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <Card className="p-4">
                 <div className="flex flex-col items-center mb-6">
@@ -286,7 +280,6 @@ const Profile = () => {
               </Card>
             </div>
             
-            {/* Main Content */}
             <div className="lg:col-span-3">
               {renderContent()}
             </div>

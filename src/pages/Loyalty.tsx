@@ -1,4 +1,3 @@
-
 import Hero from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -19,7 +18,8 @@ const Loyalty = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
+  // Updated heroImage
+  const heroImage = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?q=80&w=1920&auto=format&fit=crop";
   
   // Example loyalty data
   const loyaltyData = {
