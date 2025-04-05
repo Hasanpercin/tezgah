@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -50,8 +51,15 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setMenuItems(data as MenuItem[]);
-      setFilteredItems(data as MenuItem[]);
+      
+      // Ensure is_in_stock property exists, default to true if missing
+      const itemsWithStockStatus = data.map(item => ({
+        ...item,
+        is_in_stock: item.is_in_stock !== undefined ? item.is_in_stock : true
+      }));
+      
+      setMenuItems(itemsWithStockStatus as MenuItem[]);
+      setFilteredItems(itemsWithStockStatus as MenuItem[]);
     } catch (error: any) {
       toast({
         title: "Hata",
@@ -201,7 +209,7 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
                             <Badge variant="outline" className="bg-amber-100">Öne Çıkan</Badge>
                           )}
                           {!item.is_in_stock && (
-                            <Badge variant="destructive" size="sm">Stokta Yok</Badge>
+                            <Badge variant="destructive" className="text-xs">Stokta Yok</Badge>
                           )}
                         </div>
                       </div>

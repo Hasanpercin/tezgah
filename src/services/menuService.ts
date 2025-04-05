@@ -48,7 +48,14 @@ export const fetchMenuItems = async (categoryId?: string) => {
     
   const { data, error } = await query;
   if (error) throw error;
-  return data as MenuItem[];
+  
+  // Ensure is_in_stock property exists, default to true if missing
+  const itemsWithStockStatus = data.map(item => ({
+    ...item,
+    is_in_stock: item.is_in_stock !== undefined ? item.is_in_stock : true
+  }));
+  
+  return itemsWithStockStatus as MenuItem[];
 };
 
 export const fetchFeaturedMenuItems = async (limit: number = 4) => {
@@ -59,7 +66,14 @@ export const fetchFeaturedMenuItems = async (limit: number = 4) => {
     .limit(limit);
     
   if (error) throw error;
-  return data as (MenuItem & { menu_categories: { name: string } })[];
+  
+  // Ensure is_in_stock property exists, default to true if missing
+  const itemsWithStockStatus = data.map(item => ({
+    ...item,
+    is_in_stock: item.is_in_stock !== undefined ? item.is_in_stock : true
+  }));
+  
+  return itemsWithStockStatus as (MenuItem & { menu_categories: { name: string } })[];
 };
 
 export const fetchMenuItemsByCategory = async () => {
