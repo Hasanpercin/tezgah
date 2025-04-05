@@ -1,7 +1,7 @@
 
 import Hero from '@/components/Hero';
-import ReservationForm from '@/components/ReservationForm';
 import { Clock, Phone } from 'lucide-react';
+import MultiStepReservation from '@/components/reservation/MultiStepReservation';
 
 const Reservation = () => {
   const heroImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
@@ -22,11 +22,11 @@ const Reservation = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4">Masa Rezervasyonu</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Özel anlarınızı unutulmaz kılmak için bize katılın. Rezervasyonlarınız için aşağıdaki formu doldurabilir veya doğrudan bizi arayabilirsiniz.
+              Özel anlarınızı unutulmaz kılmak için bize katılın. İsterseniz menülerimizi önceden inceleyip siparişinizi verebilir veya sadece masa ayırtabilirsiniz.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
             {/* Info Section */}
             <div className="lg:col-span-1 space-y-8">
               <div className="bg-muted p-6 rounded-lg">
@@ -64,8 +64,8 @@ const Reservation = () => {
             </div>
             
             {/* Form Section */}
-            <div className="lg:col-span-2">
-              <ReservationForm />
+            <div className="lg:col-span-4">
+              <MultiStepReservation />
             </div>
           </div>
         </div>
