@@ -27,21 +27,21 @@ const Reservation = () => {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-            {/* Info Section */}
-            <div className="lg:col-span-1 space-y-8">
-              <div className="bg-muted p-6 rounded-lg">
-                <h3 className="text-xl font-semibold mb-4 font-playfair">Çalışma Saatleri</h3>
+            {/* Info Section - Enhanced Design */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 shadow-sm">
+                <h3 className="text-xl font-semibold mb-4 font-playfair text-primary">Çalışma Saatleri</h3>
                 
-                <div className="flex items-start space-x-3 mb-4">
-                  <Clock className="mt-1 flex-shrink-0 text-primary" size={18} />
+                <div className="flex items-start space-x-3 mb-4 group hover:bg-white/50 p-2 rounded-md transition-colors">
+                  <Clock className="mt-1 flex-shrink-0 text-primary" size={20} />
                   <div>
                     <p className="font-medium">Pazartesi - Cuma</p>
                     <p className="text-muted-foreground">11:00 - 23:00</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3">
-                  <Clock className="mt-1 flex-shrink-0 text-primary" size={18} />
+                <div className="flex items-start space-x-3 group hover:bg-white/50 p-2 rounded-md transition-colors">
+                  <Clock className="mt-1 flex-shrink-0 text-primary" size={20} />
                   <div>
                     <p className="font-medium">Cumartesi - Pazar</p>
                     <p className="text-muted-foreground">10:00 - 00:00</p>
@@ -49,11 +49,11 @@ const Reservation = () => {
                 </div>
               </div>
               
-              <div className="bg-muted p-6 rounded-lg">
-                <h3 className="text-xl font-semibold mb-4 font-playfair">Telefonla Rezervasyon</h3>
+              <div className="bg-secondary/10 p-6 rounded-lg border border-secondary/20 shadow-sm">
+                <h3 className="text-xl font-semibold mb-4 font-playfair text-secondary-foreground">Telefonla Rezervasyon</h3>
                 
-                <div className="flex items-center space-x-3">
-                  <Phone className="flex-shrink-0 text-primary" size={18} />
+                <div className="flex items-center space-x-3 group hover:bg-white/50 p-2 rounded-md transition-colors">
+                  <Phone className="flex-shrink-0 text-secondary" size={20} />
                   <p className="font-medium">+90 212 123 45 67</p>
                 </div>
                 

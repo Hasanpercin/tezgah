@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight, ArrowLeft, Calendar, Users, Utensils, CreditCard, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,7 @@ const STEPS = [
 const MultiStepReservation = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -68,6 +69,7 @@ const MultiStepReservation = () => {
   const [selectedALaCarteItems, setSelectedALaCarteItems] = useState<{ item: MenuItem, quantity: number }[]>([]);
   const [isPrePayment, setIsPrePayment] = useState(true);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [basicFormCompleted, setBasicFormCompleted] = useState(false);
   
   // Handle form data changes from the basic reservation form
   const handleFormDataChange = (data: Partial<typeof formData>) => {
@@ -76,6 +78,28 @@ const MultiStepReservation = () => {
       ...data,
     });
   };
+
+  // Handle the custom event from the ReservationForm component
+  useEffect(() => {
+    const handleReservationCompleted = (event: CustomEvent) => {
+      setBasicFormCompleted(true);
+      setFormData({
+        ...formData,
+        ...(event.detail?.formData || {})
+      });
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('reservationCompleted', 
+        handleReservationCompleted as EventListener);
+
+      return () => {
+        container.removeEventListener('reservationCompleted', 
+          handleReservationCompleted as EventListener);
+      };
+    }
+  }, [formData]);
   
   // Calculate total payment amount
   const calculateTotal = () => {
@@ -109,7 +133,7 @@ const MultiStepReservation = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 0: // Basic details
-        return formData.name && formData.email && formData.phone && formData.date && formData.time && formData.guests;
+        return basicFormCompleted || (formData.name && formData.email && formData.phone && formData.date && formData.time && formData.guests);
       case 1: // Table selection
         return selectedTable !== null;
       case 2: // Menu selection
@@ -148,7 +172,7 @@ const MultiStepReservation = () => {
   };
 
   return (
-    <div className="container-custom max-w-5xl">
+    <div className="container-custom max-w-5xl" ref={containerRef} data-reservation-step>
       {/* Step Indicator */}
       <div className="mb-10">
         <div className="hidden md:flex justify-between">

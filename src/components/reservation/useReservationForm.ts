@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
@@ -118,18 +117,19 @@ export const useReservationForm = () => {
         description: `${formData.name} adına ${formData.date ? format(formData.date, 'dd MMMM yyyy') : ''} tarihinde ${formData.time} saati için ${formData.guests} kişilik rezervasyon alınmıştır.`,
         variant: "default",
       });
+
+      // Trigger next step in the parent MultiStepReservation component
+      const multiStepReservation = document.querySelector('[data-reservation-step]');
+      if (multiStepReservation) {
+        // Create and dispatch a custom event to notify the MultiStepReservation component
+        const event = new CustomEvent('reservationCompleted', { 
+          detail: { formData }
+        });
+        multiStepReservation.dispatchEvent(event);
+      }
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        date: null,
-        time: '',
-        guests: '2',
-        occasion: '',
-        notes: '',
-      });
+      // Keep form data for the next steps
+      // Do not reset the form data as we'll need it for subsequent steps
       
     } catch (error) {
       toast({

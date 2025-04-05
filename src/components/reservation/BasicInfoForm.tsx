@@ -55,35 +55,35 @@ const BasicInfoForm = ({
         </div>
         
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
-            E-posta
+          <label htmlFor="phone" className="block text-sm font-medium mb-1">
+            Telefon
           </label>
           <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
+            id="phone"
+            name="phone"
+            value={formData.phone}
             onChange={handleInputChange}
-            placeholder="ornek@email.com"
-            className={errors.email ? "border-destructive" : ""}
+            placeholder="05XX XXX XX XX"
+            className={errors.phone ? "border-destructive" : ""}
           />
-          {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
+          {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
         </div>
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium mb-1">
-          Telefon
+        <label htmlFor="email" className="block text-sm font-medium mb-1">
+          E-posta
         </label>
         <Input
-          id="phone"
-          name="phone"
-          value={formData.phone}
+          id="email"
+          name="email"
+          type="email"
+          value={formData.email}
           onChange={handleInputChange}
-          placeholder="05XX XXX XX XX"
-          className={errors.phone ? "border-destructive" : ""}
+          placeholder="ornek@email.com"
+          className={errors.email ? "border-destructive" : ""}
         />
-        {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
+        {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,6 +112,7 @@ const BasicInfoForm = ({
                 onSelect={handleDateChange}
                 initialFocus
                 disabled={(date) => date < new Date()}
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
