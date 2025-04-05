@@ -115,7 +115,7 @@ const AboutUs = () => {
               <p className="text-muted-foreground">{content.team_member_2_title || "İşletme Müdürü"}</p>
             </div>
             
-            {/* Team Member 3 - Optional based on content */}
+            {/* Team Member 3 - Only display if content exists */}
             {content.team_member_3_name && (
               <div className="flex flex-col items-center">
                 <div className="w-40 h-40 rounded-full bg-muted mb-4 overflow-hidden">

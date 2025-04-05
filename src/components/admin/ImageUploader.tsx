@@ -3,15 +3,19 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 type ImageUploaderProps = {
-  onImageSelected: (file: File, previewUrl: string) => void;
+  onImageSelected: (imageUrl: string) => void;
   className?: string;
+  folder?: string;
 };
 
-export const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
+export const ImageUploader = ({ onImageSelected, className, folder = "general" }: ImageUploaderProps) => {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -38,7 +42,7 @@ export const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps
     }
   };
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     // Check if file is an image
     if (!file.type.startsWith('image/')) {
       toast({
@@ -59,13 +63,48 @@ export const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target && e.target.result) {
-        onImageSelected(file, e.target.result.toString());
+    try {
+      setIsUploading(true);
+      
+      // Generate a unique filename
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExtension}`;
+      const filePath = `${folder}/${fileName}`;
+      
+      // Upload the image to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('website_images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        throw error;
       }
-    };
-    reader.readAsDataURL(file);
+
+      // Get public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('website_images')
+        .getPublicUrl(filePath);
+
+      // Call the callback with the public URL
+      onImageSelected(urlData.publicUrl);
+      
+      toast({
+        title: "Başarılı",
+        description: "Görsel başarıyla yüklendi",
+      });
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Hata",
+        description: `Görsel yüklenirken bir hata oluştu: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -91,8 +130,9 @@ export const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps
         variant="outline" 
         onClick={() => fileInputRef.current?.click()}
         type="button"
+        disabled={isUploading}
       >
-        Görsel Seç
+        {isUploading ? 'Yükleniyor...' : 'Görsel Seç'}
       </Button>
     </div>
   );

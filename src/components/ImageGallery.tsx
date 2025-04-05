@@ -1,21 +1,16 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-
-type ImageItem = {
-  id: number;
-  src: string;
-  alt: string;
-};
+import { GalleryImageType } from '@/types/gallery';
 
 type ImageGalleryProps = {
-  images: ImageItem[];
+  images: GalleryImageType[];
 };
 
 const ImageGallery = ({ images }: ImageGalleryProps) => {
-  const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<GalleryImageType | null>(null);
 
-  const openLightbox = (image: ImageItem) => {
+  const openLightbox = (image: GalleryImageType) => {
     setSelectedImage(image);
     document.body.style.overflow = 'hidden';
   };
@@ -27,10 +22,26 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
 
   return (
     <>
-      <div className="gallery-grid">
+      <div className="gallery-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map((image) => (
-          <div key={image.id} className="gallery-item" onClick={() => openLightbox(image)}>
-            <img src={image.src} alt={image.alt} className="gallery-image" />
+          <div 
+            key={image.id} 
+            className="gallery-item relative overflow-hidden rounded-lg cursor-pointer group" 
+            onClick={() => openLightbox(image)}
+          >
+            <img 
+              src={image.src} 
+              alt={image.alt || `Gallery image ${image.id}`} 
+              className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105" 
+            />
+            {image.title && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <h4 className="font-medium text-sm">{image.title}</h4>
+                {image.description && (
+                  <p className="text-xs text-gray-300 truncate">{image.description}</p>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -48,12 +59,20 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
           >
             <X size={24} />
           </button>
-          <img 
-            src={selectedImage.src} 
-            alt={selectedImage.alt} 
-            className="max-w-[90%] max-h-[90vh] object-contain" 
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="max-w-[90%] max-h-[90vh] flex flex-col items-center">
+            <img 
+              src={selectedImage.src} 
+              alt={selectedImage.alt || `Gallery image ${selectedImage.id}`} 
+              className="max-w-full max-h-[80vh] object-contain" 
+              onClick={(e) => e.stopPropagation()}
+            />
+            {(selectedImage.title || selectedImage.description) && (
+              <div className="bg-black/80 p-4 mt-2 rounded-md text-white max-w-full">
+                {selectedImage.title && <h3 className="font-medium">{selectedImage.title}</h3>}
+                {selectedImage.description && <p className="text-sm text-gray-300 mt-1">{selectedImage.description}</p>}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>

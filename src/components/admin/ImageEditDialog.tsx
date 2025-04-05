@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog,
   DialogContent,
@@ -29,11 +29,13 @@ export const ImageEditDialog = ({
   onSave 
 }: ImageEditDialogProps) => {
   const [editedImage, setEditedImage] = useState<GalleryImageType | null>(image);
+  const [showImageUploader, setShowImageUploader] = useState(false);
   
   // Update local state when the image prop changes
-  useState(() => {
+  useEffect(() => {
     setEditedImage(image);
-  });
+    setShowImageUploader(false);
+  }, [image]);
   
   const handleSave = () => {
     if (editedImage) {
@@ -42,12 +44,13 @@ export const ImageEditDialog = ({
     }
   };
 
-  const handleImageSelected = (_file: File, previewUrl: string) => {
+  const handleImageSelected = (imageUrl: string) => {
     if (editedImage) {
       setEditedImage({
         ...editedImage,
-        src: previewUrl,
+        src: imageUrl,
       });
+      setShowImageUploader(false);
     }
   };
 
@@ -94,17 +97,30 @@ export const ImageEditDialog = ({
           
           <div className="grid gap-2">
             <Label>Görsel</Label>
-            <div className="flex justify-center mb-4">
-              <img 
-                src={editedImage.src} 
-                alt={editedImage.alt || 'Preview'} 
-                className="max-h-48 object-contain rounded-md"
+            {showImageUploader ? (
+              <ImageUploader 
+                onImageSelected={handleImageSelected}
+                folder="gallery"
               />
-            </div>
-            <ImageUploader 
-              onImageSelected={handleImageSelected}
-              className="h-32"
-            />
+            ) : (
+              <div className="space-y-2">
+                <div className="flex justify-center mb-4">
+                  <img 
+                    src={editedImage.src} 
+                    alt={editedImage.alt || 'Preview'} 
+                    className="max-h-48 object-contain rounded-md"
+                  />
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowImageUploader(true)}
+                >
+                  Görseli Değiştir
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         

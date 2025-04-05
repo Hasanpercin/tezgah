@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageIcon, Save } from "lucide-react";
 import { useWebsiteContent } from "@/hooks/useWebsiteContent";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUploader } from "../ImageUploader";
 
 type HomepageContentProps = {
   onSave: () => void;
@@ -31,14 +31,22 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
     about_text_1: '',
     about_text_2: '',
     about_button_text: '',
+    about_image_1: '',
+    about_image_2: '',
+    about_image_3: '',
     atmosphere_title: '',
     atmosphere_description: '',
+    atmosphere_image_1: '',
+    atmosphere_image_2: '',
+    atmosphere_image_3: '',
     gallery_button_text: '',
     reservation_title: '',
     reservation_description: '',
     reservation_button_text: '',
     reservation_bg_image: '',
   });
+
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && Object.keys(content).length > 0) {
@@ -59,8 +67,14 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
         about_text_1: content.about_text_1 || '',
         about_text_2: content.about_text_2 || '',
         about_button_text: content.about_button_text || '',
+        about_image_1: content.about_image_1 || '',
+        about_image_2: content.about_image_2 || '',
+        about_image_3: content.about_image_3 || '',
         atmosphere_title: content.atmosphere_title || '',
         atmosphere_description: content.atmosphere_description || '',
+        atmosphere_image_1: content.atmosphere_image_1 || '',
+        atmosphere_image_2: content.atmosphere_image_2 || '',
+        atmosphere_image_3: content.atmosphere_image_3 || '',
         gallery_button_text: content.gallery_button_text || '',
         reservation_title: content.reservation_title || '',
         reservation_description: content.reservation_description || '',
@@ -75,6 +89,11 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
       ...prev,
       [key]: value,
     }));
+  };
+
+  const handleImageSelected = (imageUrl: string, imageType: string) => {
+    setUploadingImage(null);
+    handleChange(imageType as keyof typeof formValues, imageUrl);
   };
 
   const handleSaveChanges = async () => {
@@ -127,20 +146,37 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
             
             <div className="mt-4">
               <label className="block text-sm font-medium mb-1">Hero Arkaplan Görseli</label>
-              <Input 
-                value={formValues.hero_image}
-                onChange={(e) => handleChange('hero_image', e.target.value)}
-                placeholder="Görsel URL'si"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Önerilen boyut: 1920x1080px</p>
+              {uploadingImage === 'hero_image' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'hero_image')} 
+                  folder="hero"
+                />
+              ) : (
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2" 
+                    onClick={() => setUploadingImage('hero_image')}
+                  >
+                    <ImageIcon size={16} /> Görsel Seç
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Önerilen boyut: 1920x1080px</p>
+                </div>
+              )}
             </div>
           </div>
           <div className="border rounded-md p-4 bg-muted/50">
-            <img 
-              src={formValues.hero_image || "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png"} 
-              alt="Hero önizleme" 
-              className="rounded-md w-full h-auto" 
-            />
+            {formValues.hero_image ? (
+              <img 
+                src={formValues.hero_image} 
+                alt="Hero önizleme" 
+                className="rounded-md w-full h-auto" 
+              />
+            ) : (
+              <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
+                <p className="text-sm text-muted-foreground">Görsel seçilmedi</p>
+              </div>
+            )}
             <p className="text-xs text-center mt-2 text-muted-foreground">Hero Görsel Önizleme</p>
           </div>
         </div>
@@ -255,11 +291,126 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
             </div>
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-medium">Hakkımızda Görsel Önizlemeleri</p>
-            <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Varsayılan görseller kullanılacak</p>
+            <p className="text-sm font-medium">Hakkımızda Görselleri</p>
+            
+            <div className="border rounded-md p-2">
+              <label className="text-sm font-medium mb-1">Ana Görsel</label>
+              {uploadingImage === 'about_image_1' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'about_image_1')} 
+                  folder="about"
+                />
+              ) : (
+                <div>
+                  {formValues.about_image_1 ? (
+                    <div>
+                      <img 
+                        src={formValues.about_image_1} 
+                        alt="About preview" 
+                        className="rounded-md w-full h-40 object-cover" 
+                      />
+                      <div className="flex justify-end mt-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setUploadingImage('about_image_1')}
+                        >
+                          <ImageIcon size={16} /> Değiştir
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-32" 
+                      onClick={() => setUploadingImage('about_image_1')}
+                    >
+                      <ImageIcon size={16} /> Görsel Seç
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">Not: Hakkımızda sayfası içinden görselleri düzenleyebilirsiniz</p>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border rounded-md p-2">
+                <label className="text-sm font-medium mb-1">Görsel 2</label>
+                {uploadingImage === 'about_image_2' ? (
+                  <ImageUploader 
+                    onImageSelected={(url) => handleImageSelected(url, 'about_image_2')} 
+                    folder="about"
+                  />
+                ) : (
+                  <div>
+                    {formValues.about_image_2 ? (
+                      <div>
+                        <img 
+                          src={formValues.about_image_2} 
+                          alt="About preview" 
+                          className="rounded-md w-full h-24 object-cover" 
+                        />
+                        <div className="flex justify-end mt-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setUploadingImage('about_image_2')}
+                          >
+                            <ImageIcon size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-24" 
+                        onClick={() => setUploadingImage('about_image_2')}
+                      >
+                        <ImageIcon size={12} />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="border rounded-md p-2">
+                <label className="text-sm font-medium mb-1">Görsel 3</label>
+                {uploadingImage === 'about_image_3' ? (
+                  <ImageUploader 
+                    onImageSelected={(url) => handleImageSelected(url, 'about_image_3')} 
+                    folder="about"
+                  />
+                ) : (
+                  <div>
+                    {formValues.about_image_3 ? (
+                      <div>
+                        <img 
+                          src={formValues.about_image_3} 
+                          alt="About preview" 
+                          className="rounded-md w-full h-24 object-cover" 
+                        />
+                        <div className="flex justify-end mt-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setUploadingImage('about_image_3')}
+                          >
+                            <ImageIcon size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-24" 
+                        onClick={() => setUploadingImage('about_image_3')}
+                      >
+                        <ImageIcon size={12} />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -290,6 +441,125 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
               onChange={(e) => handleChange('gallery_button_text', e.target.value)}
               placeholder="Galeriyi Gör"
             />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="border rounded-md p-2">
+              <label className="text-sm font-medium mb-1">Atmosfer Görsel 1</label>
+              {uploadingImage === 'atmosphere_image_1' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'atmosphere_image_1')} 
+                  folder="atmosphere"
+                />
+              ) : (
+                <div>
+                  {formValues.atmosphere_image_1 ? (
+                    <div>
+                      <img 
+                        src={formValues.atmosphere_image_1} 
+                        alt="Atmosphere preview" 
+                        className="rounded-md w-full h-40 object-cover" 
+                      />
+                      <div className="flex justify-end mt-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setUploadingImage('atmosphere_image_1')}
+                        >
+                          <ImageIcon size={16} /> Değiştir
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-40" 
+                      onClick={() => setUploadingImage('atmosphere_image_1')}
+                    >
+                      <ImageIcon size={16} /> Görsel Seç
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="border rounded-md p-2">
+              <label className="text-sm font-medium mb-1">Atmosfer Görsel 2</label>
+              {uploadingImage === 'atmosphere_image_2' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'atmosphere_image_2')} 
+                  folder="atmosphere"
+                />
+              ) : (
+                <div>
+                  {formValues.atmosphere_image_2 ? (
+                    <div>
+                      <img 
+                        src={formValues.atmosphere_image_2} 
+                        alt="Atmosphere preview" 
+                        className="rounded-md w-full h-40 object-cover" 
+                      />
+                      <div className="flex justify-end mt-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setUploadingImage('atmosphere_image_2')}
+                        >
+                          <ImageIcon size={16} /> Değiştir
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-40" 
+                      onClick={() => setUploadingImage('atmosphere_image_2')}
+                    >
+                      <ImageIcon size={16} /> Görsel Seç
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="border rounded-md p-2">
+              <label className="text-sm font-medium mb-1">Atmosfer Görsel 3</label>
+              {uploadingImage === 'atmosphere_image_3' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'atmosphere_image_3')} 
+                  folder="atmosphere"
+                />
+              ) : (
+                <div>
+                  {formValues.atmosphere_image_3 ? (
+                    <div>
+                      <img 
+                        src={formValues.atmosphere_image_3} 
+                        alt="Atmosphere preview" 
+                        className="rounded-md w-full h-40 object-cover" 
+                      />
+                      <div className="flex justify-end mt-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setUploadingImage('atmosphere_image_3')}
+                        >
+                          <ImageIcon size={16} /> Değiştir
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-40" 
+                      onClick={() => setUploadingImage('atmosphere_image_3')}
+                    >
+                      <ImageIcon size={16} /> Görsel Seç
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -324,19 +594,33 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Arkaplan Görseli</label>
-              <Input 
-                value={formValues.reservation_bg_image}
-                onChange={(e) => handleChange('reservation_bg_image', e.target.value)}
-                placeholder="Görsel URL'si"
-              />
+              {uploadingImage === 'reservation_bg_image' ? (
+                <ImageUploader 
+                  onImageSelected={(url) => handleImageSelected(url, 'reservation_bg_image')} 
+                  folder="reservation"
+                />
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2" 
+                  onClick={() => setUploadingImage('reservation_bg_image')}
+                >
+                  <ImageIcon size={16} /> Görsel Seç
+                </Button>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Önerilen boyut: 1920x1080px</p>
             </div>
           </div>
           <div className="border rounded-md overflow-hidden">
-            <div className="aspect-video bg-cover bg-center" style={{
-              backgroundImage: `url(${formValues.reservation_bg_image || "https://images.unsplash.com/photo-1559339352-11d035aa65de?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=500"})`,
-            }}>
-            </div>
+            {formValues.reservation_bg_image ? (
+              <div className="aspect-video bg-cover bg-center" style={{
+                backgroundImage: `url(${formValues.reservation_bg_image})`,
+              }}></div>
+            ) : (
+              <div className="aspect-video bg-muted flex items-center justify-center">
+                <p className="text-sm text-muted-foreground">Görsel seçilmedi</p>
+              </div>
+            )}
             <p className="text-xs text-center p-2 text-muted-foreground">Rezervasyon CTA Arkaplan Önizleme</p>
           </div>
         </div>
@@ -350,4 +634,3 @@ export const HomepageContent = ({ onSave }: HomepageContentProps) => {
     </div>
   );
 };
-

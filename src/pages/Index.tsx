@@ -1,4 +1,3 @@
-
 import Hero from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -33,12 +32,6 @@ const Index = () => {
       image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
       price: "₺85"
     }
-  ];
-  
-  const atmosphereImages = [
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600",
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600",
-    "https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600",
   ];
 
   if (isLoading) {
@@ -161,14 +154,21 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {atmosphereImages.map((image, index) => (
-              <img 
-                key={index}
-                src={content[`atmosphere_image_${index + 1}`] || image} 
-                alt={`Restaurant atmosphere ${index + 1}`}
-                className="w-full h-64 object-cover rounded-lg hover:opacity-90 transition-opacity"
-              />
-            ))}
+            <img 
+              src={content.atmosphere_image_1 || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600"}
+              alt="Restaurant atmosphere 1"
+              className="w-full h-64 object-cover rounded-lg hover:opacity-90 transition-opacity"
+            />
+            <img 
+              src={content.atmosphere_image_2 || "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600"}
+              alt="Restaurant atmosphere 2"
+              className="w-full h-64 object-cover rounded-lg hover:opacity-90 transition-opacity"
+            />
+            <img 
+              src={content.atmosphere_image_3 || "https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600"}
+              alt="Restaurant atmosphere 3"
+              className="w-full h-64 object-cover rounded-lg hover:opacity-90 transition-opacity"
+            />
           </div>
           
           <div className="text-center mt-10">
