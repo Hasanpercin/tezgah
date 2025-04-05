@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, LayoutDashboard, Settings, Menu } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Menu, Utensils } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
 import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
+import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
 
 type Reservation = {
   id: string;
@@ -157,15 +158,18 @@ const AdminCMS = () => {
           </div>
           
           <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard size={16} /> Genel Bakış
               </TabsTrigger>
               <TabsTrigger value="reservations" className="flex items-center gap-2">
                 <Users size={16} /> Rezervasyonlar
               </TabsTrigger>
+              <TabsTrigger value="menu" className="flex items-center gap-2">
+                <Utensils size={16} /> Menü
+              </TabsTrigger>
               <TabsTrigger value="menu-qr" className="flex items-center gap-2">
-                <Menu size={16} /> Menü ve QR
+                <Menu size={16} /> QR Kod
               </TabsTrigger>
               <TabsTrigger value="website" className="flex items-center gap-2">
                 <Settings size={16} /> Site İçeriği
@@ -229,6 +233,13 @@ const AdminCMS = () => {
                     >
                       <span>Rezervasyonları Yönet</span>
                       <Users size={16} />
+                    </button>
+                    <button 
+                      className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
+                      onClick={() => setActiveTab("menu")}
+                    >
+                      <span>Menüyü Düzenle</span>
+                      <Utensils size={16} />
                     </button>
                     <button 
                       className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
@@ -312,6 +323,11 @@ const AdminCMS = () => {
                 onStatusChange={handleStatusChange}
                 isLoading={isLoadingReservations}
               />
+            </TabsContent>
+            
+            {/* Menu Management Tab (New) */}
+            <TabsContent value="menu" className="space-y-6">
+              <MenuManagementPanel />
             </TabsContent>
             
             {/* Menu and QR Code Tab */}
