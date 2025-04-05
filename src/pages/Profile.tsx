@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Settings, History, LogOut } from 'lucide-react';
+import { User, History, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { toast } = useToast();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
+  const [activeSidebar, setActiveSidebar] = useState('profile');
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -25,7 +27,7 @@ const Profile = () => {
   
   // Example user data
   const [userData, setUserData] = useState({
-    name: 'Ahmet Yılmaz',
+    name: user?.name || 'Ahmet Yılmaz',
     email: 'ahmet@example.com',
     phone: '0532 123 4567',
     address: 'Atatürk Mah. Örnek Sok. No:123 İstanbul',
@@ -74,6 +76,11 @@ const Profile = () => {
     navigate('/login');
   };
 
+  const handleSidebarClick = (tab: string) => {
+    setActiveSidebar(tab);
+    setActiveTab(tab);
+  };
+
   const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
 
   if (!isAuthenticated) {
@@ -105,19 +112,35 @@ const Profile = () => {
                 </div>
                 
                 <nav className="space-y-1">
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button 
+                    variant={activeSidebar === 'profile' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => handleSidebarClick('profile')}
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Profilim
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button 
+                    variant={activeSidebar === 'reservations' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => handleSidebarClick('reservations')}
+                  >
                     <History className="mr-2 h-4 w-4" />
                     Rezervasyonlarım
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button 
+                    variant={activeSidebar === 'settings' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => handleSidebarClick('settings')}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Ayarlar
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleLogout}>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-destructive" 
+                    onClick={handleLogout}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Çıkış Yap
                   </Button>
@@ -127,10 +150,11 @@ const Profile = () => {
             
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <Tabs defaultValue="profile">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-6">
                   <TabsTrigger value="profile">Profil Bilgileri</TabsTrigger>
                   <TabsTrigger value="reservations">Rezervasyonlarım</TabsTrigger>
+                  <TabsTrigger value="settings">Ayarlar</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="profile">
@@ -216,6 +240,51 @@ const Profile = () => {
                           Henüz rezervasyonunuz bulunmuyor.
                         </div>
                       )}
+                    </div>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="settings">
+                  <Card>
+                    <div className="p-6">
+                      <h2 className="text-2xl font-semibold mb-6">Ayarlar</h2>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-medium mb-2">Bildirim Tercihleri</h3>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span>E-posta bildirimleri</span>
+                              <Button variant="outline" size="sm">Açık</Button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>SMS bildirimleri</span>
+                              <Button variant="outline" size="sm">Kapalı</Button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-lg font-medium mb-2">Şifre Değiştir</h3>
+                          <div className="space-y-3">
+                            <div>
+                              <label htmlFor="current-password" className="block text-sm font-medium mb-1">Mevcut Şifre</label>
+                              <Input id="current-password" type="password" />
+                            </div>
+                            <div>
+                              <label htmlFor="new-password" className="block text-sm font-medium mb-1">Yeni Şifre</label>
+                              <Input id="new-password" type="password" />
+                            </div>
+                            <div>
+                              <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">Yeni Şifre Tekrar</label>
+                              <Input id="confirm-password" type="password" />
+                            </div>
+                            <Button variant="default" size="default">
+                              Şifreyi Güncelle
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </Card>
                 </TabsContent>
