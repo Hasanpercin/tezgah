@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -85,20 +84,20 @@ const AdminCMS = () => {
       setIsLoadingMenu(true);
       
       // Hardcoded menu data to avoid issues with imports
-      const menuCategories = [
+      const menuCategories: MenuCategoryType[] = [
         {
           id: "starters",
           name: "Başlangıçlar",
           items: [
             {
-              id: 1,
+              id: "1",
               name: "Mevsim Salatası",
               description: "Taze mevsim sebzeleri, akdeniz yeşillikleri, kiraz domates, salatalık ve özel sos ile",
               price: "₺75",
               image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
             },
             {
-              id: 2,
+              id: "2",
               name: "Humus Tabağı",
               description: "Nohut püresi, susam ezmesi (tahini), zeytinyağı, limon ve baharatlar ile",
               price: "₺65",
@@ -110,14 +109,14 @@ const AdminCMS = () => {
           name: "Ana Yemekler",
           items: [
             {
-              id: 6,
+              id: "6",
               name: "Özel Lezzet Burger",
               description: "180 gr dana eti, cheddar peyniri, karamelize soğan, özel burger sosu ve ev yapımı patates kızartması ile",
               price: "₺145",
               image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
             },
             {
-              id: 7,
+              id: "7",
               name: "Izgara Somon",
               description: "Limon ve otlar ile marine edilmiş somon fileto, sebzeli pilav ve taze yeşillikler ile",
               price: "₺180",

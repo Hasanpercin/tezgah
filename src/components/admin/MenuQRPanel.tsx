@@ -42,7 +42,7 @@ export const MenuQRPanel = ({ menuData, isLoading }: MenuQRPanelProps) => {
     setEditMode(false);
   };
 
-  const handleEditItem = (itemId: number) => {
+  const handleEditItem = (itemId: string) => {
     if (selectedCategory) {
       const item = selectedCategory.items.find(i => i.id === itemId);
       if (item) {
