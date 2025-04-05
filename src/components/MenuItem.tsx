@@ -1,25 +1,33 @@
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 type MenuItemProps = {
   name: string;
   description: string;
   price: string;
   image?: string;
-  id?: number;
+  id?: string;
+  isInStock?: boolean;
 }
 
-const MenuItem = ({ name, description, price, image, id }: MenuItemProps) => {
+const MenuItem = ({ name, description, price, image, id, isInStock = true }: MenuItemProps) => {
   return (
     <Card className="overflow-hidden h-full">
       <CardContent className="p-0">
-        <div className={`flex ${image ? 'flex-col md:flex-row' : ''} h-full`}>
+        <div className={`flex ${image ? 'flex-col md:flex-row' : ''} h-full relative`}>
+          {!isInStock && (
+            <div className="absolute top-0 right-0 m-2 z-10">
+              <Badge variant="destructive" className="font-medium">Stokta Yok</Badge>
+            </div>
+          )}
+          
           {image && (
-            <div className={`${image ? 'md:w-1/3' : 'hidden'} overflow-hidden`}>
+            <div className={`${image ? 'md:w-1/3' : 'hidden'} overflow-hidden relative`}>
               <img 
                 src={image} 
                 alt={name} 
-                className="w-full h-full object-cover aspect-square md:aspect-auto"
+                className={`w-full h-full object-cover aspect-square md:aspect-auto ${!isInStock ? 'opacity-50' : ''}`}
               />
             </div>
           )}

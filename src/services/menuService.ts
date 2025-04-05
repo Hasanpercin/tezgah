@@ -22,6 +22,7 @@ export interface MenuItem {
   is_gluten_free: boolean;
   is_spicy: boolean;
   is_featured: boolean;
+  is_in_stock: boolean;
   display_order: number;
 }
 
@@ -76,7 +77,8 @@ export const fetchMenuItemsByCategory = async () => {
           name: item.name,
           description: item.description || "",
           price: formatPrice(item.price),
-          image: item.image_path
+          image: item.image_path,
+          isInStock: item.is_in_stock
         }))
       };
     })

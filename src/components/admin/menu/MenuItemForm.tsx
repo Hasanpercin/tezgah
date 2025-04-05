@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +26,7 @@ const menuItemSchema = z.object({
   is_gluten_free: z.boolean().default(false),
   is_spicy: z.boolean().default(false),
   is_featured: z.boolean().default(false),
+  is_in_stock: z.boolean().default(true),
   display_order: z.coerce.number().int().default(0)
 });
 
@@ -58,6 +58,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       is_gluten_free: item?.is_gluten_free || false,
       is_spicy: item?.is_spicy || false,
       is_featured: item?.is_featured || false,
+      is_in_stock: item?.is_in_stock !== false,
       display_order: item?.display_order || 0
     }
   });
@@ -71,7 +72,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
     setIsSubmitting(true);
     try {
       if (isEditMode && item) {
-        // Update existing menu item
         const { error } = await supabase
           .from("menu_items")
           .update({
@@ -87,6 +87,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
             is_gluten_free: values.is_gluten_free,
             is_spicy: values.is_spicy,
             is_featured: values.is_featured,
+            is_in_stock: values.is_in_stock,
             display_order: values.display_order,
             updated_at: new Date().toISOString()
           })
@@ -98,7 +99,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           description: "Menü öğesi başarıyla güncellendi",
         });
       } else {
-        // Create new menu item
         const { error } = await supabase
           .from("menu_items")
           .insert({
@@ -114,6 +114,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
             is_gluten_free: values.is_gluten_free,
             is_spicy: values.is_spicy,
             is_featured: values.is_featured,
+            is_in_stock: values.is_in_stock,
             display_order: values.display_order
           });
 
@@ -144,7 +145,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         </h2>
         
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Left Column */}
           <div className="flex-1 space-y-4">
             <FormField
               control={form.control}
@@ -250,7 +250,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
             </div>
           </div>
 
-          {/* Right Column */}
           <div className="flex-1 space-y-4">
             <FormLabel>Ürün Görseli</FormLabel>
             <div className="mb-4">
@@ -311,7 +310,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           </div>
         </div>
 
-        {/* Features Checkboxes */}
         <div>
           <FormLabel>Özellikler</FormLabel>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-2">
@@ -391,6 +389,22 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
                     />
                   </FormControl>
                   <FormLabel className="font-normal">Öne Çıkan</FormLabel>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="is_in_stock"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox 
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">Stokta</FormLabel>
                 </FormItem>
               )}
             />

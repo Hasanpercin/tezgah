@@ -83,6 +83,7 @@ export type Database = {
           ingredients: string | null
           is_featured: boolean | null
           is_gluten_free: boolean | null
+          is_in_stock: boolean
           is_spicy: boolean | null
           is_vegan: boolean | null
           is_vegetarian: boolean | null
@@ -101,6 +102,7 @@ export type Database = {
           ingredients?: string | null
           is_featured?: boolean | null
           is_gluten_free?: boolean | null
+          is_in_stock?: boolean
           is_spicy?: boolean | null
           is_vegan?: boolean | null
           is_vegetarian?: boolean | null
@@ -119,6 +121,7 @@ export type Database = {
           ingredients?: string | null
           is_featured?: boolean | null
           is_gluten_free?: boolean | null
+          is_in_stock?: boolean
           is_spicy?: boolean | null
           is_vegan?: boolean | null
           is_vegetarian?: boolean | null

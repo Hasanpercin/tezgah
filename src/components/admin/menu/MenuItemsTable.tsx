@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -101,7 +100,6 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
         description: "Menü öğesi başarıyla silindi",
       });
       
-      // Refresh list
       fetchMenuItems();
     } catch (error: any) {
       toast({
@@ -184,7 +182,7 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
               </TableRow>
             ) : (
               filteredItems.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} className={item.is_in_stock ? '' : 'bg-muted/20'}>
                   <TableCell className="font-medium">
                     <div className="flex items-center">
                       {item.image_path && (
@@ -192,15 +190,20 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
                           <img 
                             src={item.image_path} 
                             alt={item.name} 
-                            className="w-full h-full object-cover"
+                            className={`w-full h-full object-cover ${!item.is_in_stock ? 'opacity-50' : ''}`}
                           />
                         </div>
                       )}
                       <div>
                         {item.name}
-                        {item.is_featured && (
-                          <Badge variant="outline" className="ml-2 bg-amber-100">Öne Çıkan</Badge>
-                        )}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.is_featured && (
+                            <Badge variant="outline" className="bg-amber-100">Öne Çıkan</Badge>
+                          )}
+                          {!item.is_in_stock && (
+                            <Badge variant="destructive" size="sm">Stokta Yok</Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -247,7 +250,6 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
         </Table>
       </div>
 
-      {/* Menu Item Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <MenuItemForm 
@@ -260,7 +262,6 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

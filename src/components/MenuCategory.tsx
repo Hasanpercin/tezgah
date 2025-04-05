@@ -8,6 +8,7 @@ export type MenuItemType = {
   description: string;
   price: string;
   image?: string;
+  isInStock?: boolean;
 }
 
 export type MenuCategoryType = {
@@ -51,10 +52,12 @@ const MenuCategory = ({ categories }: MenuCategoryProps) => {
               {category.items.map((item) => (
                 <MenuItem
                   key={item.id}
+                  id={item.id}
                   name={item.name}
                   description={item.description}
                   price={item.price}
                   image={item.image}
+                  isInStock={item.isInStock}
                 />
               ))}
             </div>
