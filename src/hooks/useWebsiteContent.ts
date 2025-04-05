@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
+import { Database } from '@/integrations/supabase/types'; 
 
 export type ContentSection = 'homepage' | 'about' | 'contact' | 'gallery';
 
@@ -34,7 +35,7 @@ export const useWebsiteContent = (section: ContentSection) => {
         }
 
         // Convert array of content items to a key-value object
-        const contentObj = data.reduce((acc: Record<string, string>, item: WebsiteContentItem) => {
+        const contentObj = (data || []).reduce((acc: Record<string, string>, item: WebsiteContentItem) => {
           acc[item.key] = item.value;
           return acc;
         }, {});
@@ -82,14 +83,16 @@ export const useWebsiteContent = (section: ContentSection) => {
   // Function to update a content item
   const updateContent = async (key: string, value: string) => {
     try {
+      const updateData = {
+        section,
+        key,
+        value,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data, error: upsertError } = await supabase
         .from('website_content')
-        .upsert({
-          section,
-          key,
-          value,
-          updated_at: new Date().toISOString(),
-        }, {
+        .upsert(updateData, {
           onConflict: 'section,key',
           ignoreDuplicates: false,
         });
