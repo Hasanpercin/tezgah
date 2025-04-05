@@ -17,30 +17,7 @@ import { MenuItemsTable } from "./menu/MenuItemsTable";
 import { MenuItemForm } from "./menu/MenuItemForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus } from "lucide-react";
-
-export type MenuCategory = {
-  id: string;
-  name: string;
-  description: string | null;
-  display_order: number;
-};
-
-export type MenuItem = {
-  id: string;
-  category_id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image_path: string | null;
-  ingredients: string | null;
-  allergens: string | null;
-  is_vegetarian: boolean;
-  is_vegan: boolean;
-  is_gluten_free: boolean;
-  is_spicy: boolean;
-  is_featured: boolean;
-  display_order: number;
-};
+import { MenuCategory } from "@/services/menuService";
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Kategori adı en az 2 karakter olmalıdır" }),
@@ -79,7 +56,7 @@ export const MenuManagementPanel = () => {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setCategories(data || []);
+      setCategories(data as MenuCategory[]);
     } catch (error: any) {
       toast({
         title: "Hata",

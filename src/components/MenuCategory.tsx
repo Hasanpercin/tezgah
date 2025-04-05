@@ -3,7 +3,7 @@ import { useState } from 'react';
 import MenuItem from './MenuItem';
 
 export type MenuItemType = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: string;

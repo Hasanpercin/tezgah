@@ -4,8 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MenuCategory, MenuItem } from "../MenuManagementPanel";
-import { Edit, Loader2, Plus, Trash, Check } from "lucide-react";
+import { MenuCategory, MenuItem } from "@/services/menuService";
+import { Edit, Loader2, Plus, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MenuItemForm } from "./MenuItemForm";
@@ -51,8 +51,8 @@ export function MenuItemsTable({ categories }: MenuItemsTableProps) {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setMenuItems(data || []);
-      setFilteredItems(data || []);
+      setMenuItems(data as MenuItem[]);
+      setFilteredItems(data as MenuItem[]);
     } catch (error: any) {
       toast({
         title: "Hata",
