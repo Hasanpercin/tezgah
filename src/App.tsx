@@ -14,35 +14,40 @@ import Profile from "./pages/Profile";
 import Loyalty from "./pages/Loyalty";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Login from "./pages/Login";
+import { AuthProvider } from "./context/AuthContext";
 
 // Create a client
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <Toaster />
-      <Sonner />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/reservation" element={<Reservation />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/loyalty" element={<Loyalty />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        
-        <Footer />
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster />
+        <Sonner />
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/menu" element={<Menu />} />
+              <Route path="/reservation" element={<Reservation />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/loyalty" element={<Loyalty />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+          
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

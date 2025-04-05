@@ -1,16 +1,27 @@
 
 import Hero from '@/components/Hero';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Settings, History, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { toast } = useToast();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
   
   // Example user data
   const [userData, setUserData] = useState({
@@ -48,16 +59,29 @@ const Profile = () => {
       toast({
         title: "Profil güncellendi",
         description: "Bilgileriniz başarıyla güncellendi.",
-        variant: "success",
+        variant: "default",
       });
     }, 1500);
   };
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Çıkış yapıldı",
+      description: "Başarıyla çıkış yaptınız.",
+      variant: "default",
+    });
+    navigate('/login');
+  };
+
   const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
+
+  if (!isAuthenticated) {
+    return null; // Return null since useEffect will redirect
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with green overlay */}
       <Hero 
         backgroundImage={heroImage}
         title="Kullanıcı Profili"
@@ -93,7 +117,7 @@ const Profile = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     Ayarlar
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start text-destructive">
+                  <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Çıkış Yap
                   </Button>

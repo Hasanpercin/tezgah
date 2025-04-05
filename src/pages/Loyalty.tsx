@@ -4,8 +4,21 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Gift, Coffee, Award, Info } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const Loyalty = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+  
   const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
   
   // Example loyalty data
@@ -54,6 +67,10 @@ const Loyalty = () => {
       available: false
     }
   ];
+
+  if (!isAuthenticated) {
+    return null; // Return null since useEffect will redirect
+  }
 
   return (
     <div className="min-h-screen">

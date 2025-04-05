@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar as CalendarIcon, Check } from "lucide-react";
@@ -147,8 +146,8 @@ const ReservationForm = () => {
       // Show success message
       toast({
         title: "Rezervasyon Alındı",
-        description: "Rezervasyonunuz başarıyla alındı. Onay için e-posta adresinizi kontrol ediniz.",
-        variant: "success",
+        description: `${formData.name} adına ${format(formData.date, 'dd MMMM yyyy')} tarihinde ${formData.time} saati için ${formData.guests} kişilik rezervasyon alınmıştır.`,
+        variant: "default",
       });
       
       // Reset form

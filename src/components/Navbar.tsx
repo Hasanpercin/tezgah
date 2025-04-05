@@ -1,12 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,15 +31,29 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location]);
 
+  const handleProfileClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    } else {
+      navigate('/profile');
+    }
+  };
+
+  const handleLoyaltyClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    } else {
+      navigate('/loyalty');
+    }
+  };
+
   const navLinks = [
     { name: 'Anasayfa', path: '/' },
     { name: 'Menü', path: '/menu' },
     { name: 'Rezervasyon', path: '/reservation' },
     { name: 'Hakkımızda', path: '/about' },
     { name: 'Galeri', path: '/gallery' },
-    { name: 'Loyalty', path: '/loyalty' },
     { name: 'İletişim', path: '/contact' },
-    { name: 'Profil', path: '/profile' },
   ];
 
   const isActive = (path: string) => {
@@ -68,6 +85,31 @@ const Navbar = () => {
               </Link>
             </li>
           ))}
+          <li>
+            <button 
+              onClick={handleLoyaltyClick}
+              className={`hover-link font-medium transition-all ${
+                isActive('/loyalty')
+                  ? 'text-yellow-300 after:w-full'
+                  : 'text-yellow-300'
+              }`}
+            >
+              Sadakat
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={handleProfileClick}
+              className={`hover-link font-medium transition-all flex items-center ${
+                isActive('/profile') || isActive('/login')
+                  ? 'text-yellow-300 after:w-full'
+                  : 'text-yellow-300'
+              }`}
+            >
+              <span>Profil</span>
+              <User className="ml-1 h-4 w-4" />
+            </button>
+          </li>
         </ul>
 
         {/* Mobile Menu Button */}
@@ -99,6 +141,26 @@ const Navbar = () => {
                   </Link>
                 </li>
               ))}
+              <li className="w-full text-center">
+                <button
+                  onClick={handleLoyaltyClick}
+                  className={`block py-2 px-4 text-lg w-full ${
+                    isActive('/loyalty') ? 'text-yellow-300 font-medium' : 'text-yellow-300'
+                  }`}
+                >
+                  Sadakat
+                </button>
+              </li>
+              <li className="w-full text-center">
+                <button
+                  onClick={handleProfileClick}
+                  className={`block py-2 px-4 text-lg w-full ${
+                    isActive('/profile') || isActive('/login') ? 'text-yellow-300 font-medium' : 'text-yellow-300'
+                  }`}
+                >
+                  Profil
+                </button>
+              </li>
             </ul>
           </div>
         )}
