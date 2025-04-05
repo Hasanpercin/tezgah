@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Check } from "lucide-react";
+import { Calendar as CalendarIcon, Check } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
@@ -243,16 +244,16 @@ const ReservationForm = () => {
                   !formData.date && "text-muted-foreground"
                 } ${errors.date ? "border-destructive" : ""}`}
               >
-                <Calendar className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4" />
                 {formData.date ? (
-                  formData.date.toLocaleDateString("tr-TR")
+                  format(formData.date, "dd.MM.yyyy")
                 ) : (
                   <span>Tarih seçiniz</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
-              <CalendarComponent
+              <Calendar
                 mode="single"
                 selected={formData.date}
                 onSelect={handleDateChange}
