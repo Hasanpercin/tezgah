@@ -20,10 +20,8 @@ export const WebsiteContentPanel = () => {
   const [activeTab, setActiveTab] = useState("homepage");
   
   const handleSaveChanges = () => {
-    toast({
-      title: "İçerik güncellendi",
-      description: "Web sitesi içeriği başarıyla güncellendi",
-    });
+    // This is now handled directly by the content components using Supabase
+    // The toast will be shown from the individual hooks after successful updates
   };
 
   return (
