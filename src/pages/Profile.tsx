@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, History, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -87,6 +86,145 @@ const Profile = () => {
     return null; // Return null since useEffect will redirect
   }
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return (
+          <Card>
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold mb-6">Profil Bilgileri</h2>
+              
+              <form onSubmit={updateProfile} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium mb-1">Ad Soyad</label>
+                  <Input 
+                    id="name" 
+                    value={userData.name}
+                    onChange={(e) => setUserData({...userData, name: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium mb-1">E-posta</label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={userData.email}
+                    onChange={(e) => setUserData({...userData, email: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium mb-1">Telefon</label>
+                  <Input 
+                    id="phone" 
+                    value={userData.phone}
+                    onChange={(e) => setUserData({...userData, phone: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium mb-1">Adres</label>
+                  <Input 
+                    id="address" 
+                    value={userData.address}
+                    onChange={(e) => setUserData({...userData, address: e.target.value})}
+                  />
+                </div>
+                
+                <Button type="submit" disabled={isLoading} className="mt-4">
+                  {isLoading ? 'Güncelleniyor...' : 'Profili Güncelle'}
+                </Button>
+              </form>
+            </div>
+          </Card>
+        );
+      case 'reservations':
+        return (
+          <Card>
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold mb-6">Rezervasyonlarım</h2>
+              
+              {reservations.length > 0 ? (
+                <div className="space-y-4">
+                  {reservations.map(reservation => (
+                    <Card key={reservation.id} className="p-4 shadow-sm">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{reservation.date} - {reservation.time}</p>
+                          <p className="text-sm text-muted-foreground">{reservation.guests}</p>
+                        </div>
+                        <div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            reservation.status === 'Onaylandı' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {reservation.status}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Henüz rezervasyonunuz bulunmuyor.
+                </div>
+              )}
+            </div>
+          </Card>
+        );
+      case 'settings':
+        return (
+          <Card>
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold mb-6">Ayarlar</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Bildirim Tercihleri</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span>E-posta bildirimleri</span>
+                      <Button variant="outline" size="sm">Açık</Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>SMS bildirimleri</span>
+                      <Button variant="outline" size="sm">Kapalı</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Şifre Değiştir</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="current-password" className="block text-sm font-medium mb-1">Mevcut Şifre</label>
+                      <Input id="current-password" type="password" />
+                    </div>
+                    <div>
+                      <label htmlFor="new-password" className="block text-sm font-medium mb-1">Yeni Şifre</label>
+                      <Input id="new-password" type="password" />
+                    </div>
+                    <div>
+                      <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">Yeni Şifre Tekrar</label>
+                      <Input id="confirm-password" type="password" />
+                    </div>
+                    <Button variant="default" size="default">
+                      Şifreyi Güncelle
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Hero 
@@ -150,145 +288,7 @@ const Profile = () => {
             
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-6">
-                  <TabsTrigger value="profile">Profil Bilgileri</TabsTrigger>
-                  <TabsTrigger value="reservations">Rezervasyonlarım</TabsTrigger>
-                  <TabsTrigger value="settings">Ayarlar</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="profile">
-                  <Card>
-                    <div className="p-6">
-                      <h2 className="text-2xl font-semibold mb-6">Profil Bilgileri</h2>
-                      
-                      <form onSubmit={updateProfile} className="space-y-4">
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium mb-1">Ad Soyad</label>
-                          <Input 
-                            id="name" 
-                            value={userData.name}
-                            onChange={(e) => setUserData({...userData, name: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium mb-1">E-posta</label>
-                          <Input 
-                            id="email" 
-                            type="email" 
-                            value={userData.email}
-                            onChange={(e) => setUserData({...userData, email: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="phone" className="block text-sm font-medium mb-1">Telefon</label>
-                          <Input 
-                            id="phone" 
-                            value={userData.phone}
-                            onChange={(e) => setUserData({...userData, phone: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="address" className="block text-sm font-medium mb-1">Adres</label>
-                          <Input 
-                            id="address" 
-                            value={userData.address}
-                            onChange={(e) => setUserData({...userData, address: e.target.value})}
-                          />
-                        </div>
-                        
-                        <Button type="submit" disabled={isLoading} className="mt-4">
-                          {isLoading ? 'Güncelleniyor...' : 'Profili Güncelle'}
-                        </Button>
-                      </form>
-                    </div>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="reservations">
-                  <Card>
-                    <div className="p-6">
-                      <h2 className="text-2xl font-semibold mb-6">Rezervasyonlarım</h2>
-                      
-                      {reservations.length > 0 ? (
-                        <div className="space-y-4">
-                          {reservations.map(reservation => (
-                            <Card key={reservation.id} className="p-4 shadow-sm">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium">{reservation.date} - {reservation.time}</p>
-                                  <p className="text-sm text-muted-foreground">{reservation.guests}</p>
-                                </div>
-                                <div>
-                                  <span className={`px-2 py-1 text-xs rounded-full ${
-                                    reservation.status === 'Onaylandı' 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-blue-100 text-blue-800'
-                                  }`}>
-                                    {reservation.status}
-                                  </span>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Henüz rezervasyonunuz bulunmuyor.
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="settings">
-                  <Card>
-                    <div className="p-6">
-                      <h2 className="text-2xl font-semibold mb-6">Ayarlar</h2>
-                      
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">Bildirim Tercihleri</h3>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span>E-posta bildirimleri</span>
-                              <Button variant="outline" size="sm">Açık</Button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>SMS bildirimleri</span>
-                              <Button variant="outline" size="sm">Kapalı</Button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">Şifre Değiştir</h3>
-                          <div className="space-y-3">
-                            <div>
-                              <label htmlFor="current-password" className="block text-sm font-medium mb-1">Mevcut Şifre</label>
-                              <Input id="current-password" type="password" />
-                            </div>
-                            <div>
-                              <label htmlFor="new-password" className="block text-sm font-medium mb-1">Yeni Şifre</label>
-                              <Input id="new-password" type="password" />
-                            </div>
-                            <div>
-                              <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">Yeni Şifre Tekrar</label>
-                              <Input id="confirm-password" type="password" />
-                            </div>
-                            <Button variant="default" size="default">
-                              Şifreyi Güncelle
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+              {renderContent()}
             </div>
           </div>
         </div>
