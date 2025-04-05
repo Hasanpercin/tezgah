@@ -11,6 +11,13 @@ import { MenuCategoryType } from "@/components/MenuCategory";
 import { Button } from "@/components/ui/button";
 import { Clock, CalendarDays, Users, Table as TableIcon, QrCode } from "lucide-react";
 import { format } from "date-fns";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 type Reservation = {
   id: string;
@@ -186,9 +193,9 @@ const AdminCMS = () => {
                       <span>
                         {selectedDate ? format(selectedDate, "d MMMM yyyy") : "Tüm"} Rezervasyonlar
                       </span>
-                      <span className="text-base bg-primary/10 text-primary px-2 py-1 rounded-md">
+                      <Badge variant="secondary" className="text-base px-2 py-1">
                         {filteredReservations.length} rezervasyon
-                      </span>
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -223,49 +230,44 @@ const AdminCMS = () => {
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                <Badge className={`${
                                   res.status === "confirmed" 
-                                    ? "bg-green-100 text-green-800" 
+                                    ? "bg-green-100 text-green-800 hover:bg-green-100" 
                                     : res.status === "pending" 
-                                    ? "bg-yellow-100 text-yellow-800" 
-                                    : "bg-red-100 text-red-800"
+                                    ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" 
+                                    : "bg-red-100 text-red-800 hover:bg-red-100"
                                 }`}>
                                   {res.status === "confirmed" ? "Onaylı" : res.status === "pending" ? "Beklemede" : "İptal"}
-                                </span>
+                                </Badge>
                               </TableCell>
                               <TableCell>
-                                <NavigationMenu>
-                                  <NavigationMenuList>
-                                    <NavigationMenuItem>
-                                      <NavigationMenuTrigger className="h-8 px-2">İşlem</NavigationMenuTrigger>
-                                      <NavigationMenuContent>
-                                        <div className="flex flex-col p-2 w-32">
-                                          <Button 
-                                            variant="ghost" 
-                                            className="justify-start h-8 px-2 text-green-600"
-                                            onClick={() => handleStatusChange(res.id, "confirmed")}
-                                          >
-                                            Onayla
-                                          </Button>
-                                          <Button 
-                                            variant="ghost" 
-                                            className="justify-start h-8 px-2 text-yellow-600" 
-                                            onClick={() => handleStatusChange(res.id, "pending")}
-                                          >
-                                            Beklet
-                                          </Button>
-                                          <Button 
-                                            variant="ghost" 
-                                            className="justify-start h-8 px-2 text-red-600"
-                                            onClick={() => handleStatusChange(res.id, "cancelled")}
-                                          >
-                                            İptal Et
-                                          </Button>
-                                        </div>
-                                      </NavigationMenuContent>
-                                    </NavigationMenuItem>
-                                  </NavigationMenuList>
-                                </NavigationMenu>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      İşlem
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusChange(res.id, "confirmed")}
+                                      className="text-green-600"
+                                    >
+                                      Onayla
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusChange(res.id, "pending")}
+                                      className="text-yellow-600"
+                                    >
+                                      Beklet
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusChange(res.id, "cancelled")}
+                                      className="text-red-600"
+                                    >
+                                      İptal Et
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -299,9 +301,9 @@ const AdminCMS = () => {
                         className="flex items-center justify-between p-3 rounded-md hover:bg-muted cursor-pointer"
                       >
                         <span>{category.name}</span>
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                        <Badge variant="secondary">
                           {category.items.length} ürün
-                        </span>
+                        </Badge>
                       </div>
                     ))}
                     
