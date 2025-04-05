@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,8 +60,8 @@ const Navbar = () => {
                 to={link.path}
                 className={`hover-link font-medium transition-all ${
                   isActive(link.path)
-                    ? 'text-secondary after:w-full'
-                    : 'text-secondary'
+                    ? 'text-yellow-300 after:w-full'
+                    : 'text-yellow-300'
                 }`}
               >
                 {link.name}
@@ -92,7 +92,7 @@ const Navbar = () => {
                   <Link
                     to={link.path}
                     className={`block py-2 px-4 text-lg ${
-                      isActive(link.path) ? 'text-secondary font-medium' : 'text-secondary'
+                      isActive(link.path) ? 'text-yellow-300 font-medium' : 'text-yellow-300'
                     }`}
                   >
                     {link.name}

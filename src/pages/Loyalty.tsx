@@ -1,223 +1,168 @@
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Hero from '@/components/Hero';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Gift, Coffee, Award, Info } from 'lucide-react';
 
-export default function Loyalty() {
-  // Example loyalty tiers
-  const loyaltyTiers = [
-    {
-      name: "Bronz",
-      points: "0-499",
-      benefits: [
-        "Her 100₺ harcama için 10 puan",
-        "Doğum gününüzde hoş geldin içeceği",
-      ]
-    },
-    {
-      name: "Gümüş",
-      points: "500-999",
-      benefits: [
-        "Her 100₺ harcama için 15 puan",
-        "Doğum gününüzde hoş geldin içeceği",
-        "%5 indirim",
-        "Rezervasyonlarda öncelik"
-      ]
-    },
-    {
-      name: "Altın",
-      points: "1000+",
-      benefits: [
-        "Her 100₺ harcama için 20 puan",
-        "Doğum gününüzde ücretsiz tatlı",
-        "%10 indirim",
-        "Özel etkinliklere davet",
-        "VIP rezervasyon"
-      ]
-    }
-  ];
-
-  const howToEarn = [
-    {
-      title: "Restoran Ziyareti",
-      description: "Her 100₺ harcama için 10 puan kazanın",
-      icon: "🍽️"
-    },
-    {
-      title: "Online Rezervasyon",
-      description: "Her online rezervasyon için ekstra 5 puan",
-      icon: "📱"
-    },
-    {
-      title: "Arkadaş Tavsiyesi",
-      description: "Her başarılı tavsiye için 25 puan",
-      icon: "👥"
-    },
-    {
-      title: "Sosyal Medya",
-      description: "Restoranımızı etiketlediğiniz paylaşımlar için 15 puan",
-      icon: "📸"
-    }
-  ];
-
+const Loyalty = () => {
+  const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
+  
+  // Example loyalty data
+  const loyaltyData = {
+    points: 150,
+    level: 'Bronz',
+    nextLevel: 'Gümüş',
+    pointsToNextLevel: 100,
+    totalPointsForNextLevel: 250,
+    progress: 60, // percentage
+    history: [
+      { id: 1, date: '15 Nisan 2025', description: 'Rezervasyon', points: 50 },
+      { id: 2, date: '10 Nisan 2025', description: 'Yemek Siparişi', points: 75 },
+      { id: 3, date: '5 Mart 2025', description: 'Özel Etkinlik Katılımı', points: 25 }
+    ]
+  };
+  
+  // Rewards list
   const rewards = [
     {
-      title: "Ücretsiz İçecek",
+      id: 1,
+      name: 'Ücretsiz Tatlı',
       points: 100,
-      description: "Sıcak veya soğuk içecek seçeneği"
+      icon: <Coffee className="h-10 w-10 text-primary" />,
+      available: true
     },
     {
-      title: "Ücretsiz Tatlı",
-      points: 250,
-      description: "Dilediğiniz tatlıyı seçebilirsiniz"
+      id: 2,
+      name: 'Ücretsiz İçecek',
+      points: 150,
+      icon: <Coffee className="h-10 w-10 text-primary" />,
+      available: true
     },
     {
-      title: "%15 İndirim Kuponu",
-      points: 500,
-      description: "Tüm menüde geçerli"
+      id: 3,
+      name: '%10 İndirim',
+      points: 200,
+      icon: <Gift className="h-10 w-10 text-primary" />,
+      available: false
     },
     {
-      title: "Ücretsiz Ana Yemek",
-      points: 1000,
-      description: "Ana yemek seçeneklerinden biri"
+      id: 4,
+      name: 'Özel Masa Rezervasyonu',
+      points: 300,
+      icon: <Award className="h-10 w-10 text-primary" />,
+      available: false
     }
   ];
 
   return (
-    <>
+    <div className="min-h-screen">
+      {/* Hero Section */}
       <Hero 
-        backgroundImage="/lovable-uploads/a685bcf7-d128-4123-ab5f-581a1d6ef24f.png" 
-        title="Sadakat Programı" 
-        subtitle="Lezzet Durağı'na her gelişinizde kazanın, özel fırsatlardan yararlanın"
+        backgroundImage={heroImage}
+        title="Sadakat Programı"
+        subtitle="Lezzet Durağı'nın ayrıcalıklar dünyasına hoş geldiniz"
         showButtons={false}
+        overlayColor="green-600/70"
       />
       
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-3xl font-playfair font-bold text-foreground mb-4">Nasıl Çalışır?</h2>
-          <p className="text-lg text-muted-foreground">
-            Lezzet Durağı Sadakat Programı, sizi her ziyaretinizde ödüllendirmek için tasarlandı. 
-            Puan biriktirin, özel avantajlardan yararlanın ve daha fazla lezzet deneyimi kazanın.
-          </p>
-          <div className="mt-8">
-            <Button asChild>
-              <a href="/profile">Üye Ol ve Puanları Toplamaya Başla</a>
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto mb-4 p-2 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
-                <span className="text-3xl">🍽️</span>
-              </div>
-              <CardTitle className="text-xl">Yemek Ye & Kazan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Her ziyaretinizde harcama tutarınıza göre puan kazanın. Hesabınıza üye olduktan sonra puanlarınız otomatik olarak eklenir.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto mb-4 p-2 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
-                <span className="text-3xl">🏆</span>
-              </div>
-              <CardTitle className="text-xl">Puanları Biriktir</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Kazandığınız puanlar hesabınızda birikir. Ne kadar çok ziyaret ederseniz o kadar çok puan kazanır ve üst seviyelere yükselirsiniz.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto mb-4 p-2 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center">
-                <span className="text-3xl">🎁</span>
-              </div>
-              <CardTitle className="text-xl">Ödülleri Kullan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Biriken puanlarınızı ücretsiz yemekler, içecekler, indirimler ve daha fazlası için kullanabilirsiniz.</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <h2 className="text-3xl font-playfair font-bold text-foreground mb-8 text-center">Üyelik Seviyeleri</h2>
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          {loyaltyTiers.map((tier, index) => (
-            <Card key={index} className={`${
-              tier.name === "Altın" ? "border-secondary" : ""
-            }`}>
-              <CardHeader className={`${
-                tier.name === "Altın" ? "bg-secondary text-secondary-foreground" : ""
-              }`}>
-                <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
-                <CardDescription className={`${
-                  tier.name === "Altın" ? "text-secondary-foreground/90" : ""
-                }`}>
-                  {tier.points} puan
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ul className="space-y-2">
-                  {tier.benefits.map((benefit, i) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-secondary mr-2">✓</span>
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div>
-            <h2 className="text-2xl font-playfair font-bold mb-6">Puan Kazanma Yolları</h2>
-            <div className="space-y-4">
-              {howToEarn.map((item, index) => (
-                <div key={index} className="flex items-start p-4 border rounded-lg">
-                  <div className="text-3xl mr-4">{item.icon}</div>
+      {/* Loyalty Content */}
+      <section className="section-padding bg-white">
+        <div className="container-custom max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Loyalty Status */}
+            <div className="lg:col-span-1">
+              <Card className="p-6 h-full">
+                <h2 className="text-2xl font-semibold mb-6">Sadakat Durumu</h2>
+                
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">{loyaltyData.level}</span>
+                  <span className="text-sm font-medium">{loyaltyData.nextLevel}</span>
+                </div>
+                
+                <Progress value={loyaltyData.progress} className="mb-2" />
+                
+                <p className="text-sm text-muted-foreground mb-6">
+                  {loyaltyData.nextLevel} seviyesine ulaşmak için {loyaltyData.pointsToNextLevel} puan daha kazanın
+                </p>
+                
+                <div className="bg-muted p-4 rounded-lg mb-6 flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                    <p className="text-sm text-muted-foreground">Mevcut Puanınız</p>
+                    <p className="text-3xl font-bold">{loyaltyData.points}</p>
+                  </div>
+                  <Award className="h-12 w-12 text-primary opacity-70" />
+                </div>
+                
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-sm mb-1">Nasıl Puan Kazanılır?</h3>
+                      <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                        <li>Her 100₺ harcama için 10 puan</li>
+                        <li>Online rezervasyon için 50 puan</li>
+                        <li>Özel etkinliklere katılım için 25 puan</li>
+                        <li>Doğum gününüzde 2x puan</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              ))}
+              </Card>
             </div>
-          </div>
-          
-          <div>
-            <h2 className="text-2xl font-playfair font-bold mb-6">Ödüller</h2>
-            <div className="space-y-4">
-              {rewards.map((reward, index) => (
-                <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-medium">{reward.title}</h3>
-                    <p className="text-sm text-muted-foreground">{reward.description}</p>
-                  </div>
-                  <div className="text-secondary font-bold">
-                    {reward.points} puan
+            
+            {/* Rewards */}
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl font-semibold mb-6">Ödülleriniz</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                {rewards.map(reward => (
+                  <Card key={reward.id} className={`p-6 relative ${!reward.available && 'opacity-60'}`}>
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        {reward.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{reward.name}</h3>
+                        <p className="text-sm text-muted-foreground">{reward.points} Puan</p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      className="w-full mt-4"
+                      variant={reward.available ? "default" : "outline"}
+                      disabled={!reward.available}
+                    >
+                      {reward.available ? 'Ödülü Kullan' : `${reward.points - loyaltyData.points} Puan Daha Gerekiyor`}
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+              
+              {/* Points History */}
+              <Card>
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Puan Geçmişi</h2>
+                  
+                  <div className="space-y-4">
+                    {loyaltyData.history.map(item => (
+                      <div key={item.id} className="flex justify-between items-center pb-3 border-b">
+                        <div>
+                          <p className="font-medium">{item.description}</p>
+                          <p className="text-sm text-muted-foreground">{item.date}</p>
+                        </div>
+                        <div className="text-primary font-semibold">+{item.points}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              </Card>
             </div>
           </div>
         </div>
-
-        <div className="bg-accent rounded-lg p-6 text-center">
-          <h2 className="text-2xl font-playfair font-bold mb-4">Hemen Başlayın!</h2>
-          <p className="mb-6 max-w-2xl mx-auto">
-            Lezzet Durağı Sadakat Programı'na üye olun, her ziyaretinizde puan biriktirin ve özel ödüllerin tadını çıkarın!
-          </p>
-          <Button asChild size="lg">
-            <a href="/profile">Üye Ol</a>
-          </Button>
-        </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
-}
+};
+
+export default Loyalty;

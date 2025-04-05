@@ -6,19 +6,26 @@ type HeroProps = {
   title: string;
   subtitle: string;
   showButtons?: boolean;
+  overlayColor?: string;
 }
 
-const Hero = ({ backgroundImage, title, subtitle, showButtons = true }: HeroProps) => {
+const Hero = ({ 
+  backgroundImage, 
+  title, 
+  subtitle, 
+  showButtons = true,
+  overlayColor = "primary/60" 
+}: HeroProps) => {
   return (
-    <div className="hero-section">
+    <div className="hero-section relative w-full min-h-[50vh] flex items-center justify-center">
       <div 
-        className="hero-background"
+        className="absolute inset-0 z-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       ></div>
-      <div className="hero-overlay bg-primary/60"></div>
+      <div className={`absolute inset-0 z-10 bg-${overlayColor}`}></div>
       
-      <div className="hero-content">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-white">{title}</h1>
+      <div className="container z-20 relative text-center px-4 py-16">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-secondary">{title}</h1>
         <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-white">{subtitle}</p>
         
         {showButtons && (
