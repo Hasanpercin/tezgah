@@ -15,6 +15,7 @@ import Loyalty from "./pages/Loyalty";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Login from "./pages/Login";
+import AdminCMS from "./pages/AdminCMS";
 import { AuthProvider } from "./context/AuthContext";
 
 // Create a client
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<AdminCMS />} /> {/* Admin CMS sayfasını ekledik */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
