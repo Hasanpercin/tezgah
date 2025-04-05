@@ -42,10 +42,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-background/95 backdrop-blur-sm py-2 shadow-md' : 'bg-transparent py-4'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-background/95 backdrop-blur-sm py-2 shadow-md' : 'bg-primary/60 backdrop-blur-sm py-4'}`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
-          <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary">
+          <h1 className="text-2xl md:text-3xl font-playfair font-bold text-secondary">
             Lezzet Durağı
           </h1>
         </Link>
@@ -58,12 +58,8 @@ const Navbar = () => {
                 to={link.path}
                 className={`hover-link font-medium transition-all ${
                   isActive(link.path)
-                    ? 'text-primary after:w-full'
-                    : isScrolled
-                    ? 'text-foreground'
-                    : location.pathname === '/'
-                    ? 'text-white'
-                    : 'text-foreground'
+                    ? 'text-secondary after:w-full'
+                    : 'text-white'
                 }`}
               >
                 {link.name}
@@ -79,22 +75,22 @@ const Navbar = () => {
           aria-label="Toggle menu"
         >
           {isOpen ? (
-            <X className={location.pathname === '/' && !isScrolled ? 'text-white' : 'text-foreground'} />
+            <X className="text-white" />
           ) : (
-            <Menu className={location.pathname === '/' && !isScrolled ? 'text-white' : 'text-foreground'} />
+            <Menu className="text-white" />
           )}
         </button>
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden fixed top-[60px] right-0 left-0 bottom-0 bg-background z-40">
+          <div className="md:hidden fixed top-[60px] right-0 left-0 bottom-0 bg-primary/95 backdrop-blur-sm z-40">
             <ul className="flex flex-col items-center pt-8 space-y-6">
               {navLinks.map((link) => (
                 <li key={link.name} className="w-full text-center">
                   <Link
                     to={link.path}
                     className={`block py-2 px-4 text-lg ${
-                      isActive(link.path) ? 'text-primary font-medium' : 'text-foreground'
+                      isActive(link.path) ? 'text-secondary font-medium' : 'text-white'
                     }`}
                   >
                     {link.name}
