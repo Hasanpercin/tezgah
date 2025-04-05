@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +34,9 @@ const Navbar = () => {
     { name: 'Rezervasyon', path: '/reservation' },
     { name: 'Hakkımızda', path: '/about' },
     { name: 'Galeri', path: '/gallery' },
-    { name: 'İletişim', path: '/contact' }
+    { name: 'Loyalty', path: '/loyalty' },
+    { name: 'İletişim', path: '/contact' },
+    { name: 'Profil', path: '/profile' },
   ];
 
   const isActive = (path: string) => {
@@ -59,7 +61,7 @@ const Navbar = () => {
                 className={`hover-link font-medium transition-all ${
                   isActive(link.path)
                     ? 'text-secondary after:w-full'
-                    : 'text-white'
+                    : 'text-secondary'
                 }`}
               >
                 {link.name}
@@ -75,9 +77,9 @@ const Navbar = () => {
           aria-label="Toggle menu"
         >
           {isOpen ? (
-            <X className="text-white" />
+            <X className="text-secondary" />
           ) : (
-            <Menu className="text-white" />
+            <Menu className="text-secondary" />
           )}
         </button>
 
@@ -90,7 +92,7 @@ const Navbar = () => {
                   <Link
                     to={link.path}
                     className={`block py-2 px-4 text-lg ${
-                      isActive(link.path) ? 'text-secondary font-medium' : 'text-white'
+                      isActive(link.path) ? 'text-secondary font-medium' : 'text-secondary'
                     }`}
                   >
                     {link.name}

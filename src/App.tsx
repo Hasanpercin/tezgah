@@ -11,6 +11,8 @@ import AboutUs from "./pages/AboutUs";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
+import Loyalty from "./pages/Loyalty";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -33,7 +35,8 @@ const App = () => (
               <Route path="/about" element={<AboutUs />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/contact" element={<Contact />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/loyalty" element={<Loyalty />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
@@ -46,4 +49,3 @@ const App = () => (
 );
 
 export default App;
-
