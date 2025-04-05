@@ -75,7 +75,8 @@ const Profile = () => {
     setActiveTab(tab);
   };
 
-  const heroImage = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1920&auto=format&fit=crop";
+  // New heroImage using the uploaded image
+  const heroImage = "/lovable-uploads/2c59c482-2fad-4bfb-b382-09d5e7c92c20.png";
 
   if (!isAuthenticated) {
     return null; // Return null since useEffect will redirect

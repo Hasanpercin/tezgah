@@ -7,9 +7,16 @@ import { TableIcon } from "lucide-react";
 type MenuCategoryListProps = {
   categories: MenuCategoryType[];
   isLoading: boolean;
+  onSelectCategory: (category: MenuCategoryType) => void;
+  onShowQRCodes: () => void;
 };
 
-export const MenuCategoryList = ({ categories, isLoading }: MenuCategoryListProps) => {
+export const MenuCategoryList = ({ 
+  categories, 
+  isLoading, 
+  onSelectCategory,
+  onShowQRCodes 
+}: MenuCategoryListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -32,6 +39,7 @@ export const MenuCategoryList = ({ categories, isLoading }: MenuCategoryListProp
         <div
           key={category.id}
           className="flex items-center justify-between p-3 rounded-md hover:bg-muted cursor-pointer"
+          onClick={() => onSelectCategory(category)}
         >
           <span>{category.name}</span>
           <Badge variant="secondary">
@@ -40,7 +48,11 @@ export const MenuCategoryList = ({ categories, isLoading }: MenuCategoryListProp
         </div>
       ))}
       
-      <Button variant="outline" className="w-full mt-4">
+      <Button 
+        variant="outline" 
+        className="w-full mt-4"
+        onClick={onShowQRCodes}
+      >
         <TableIcon size={16} className="mr-2" /> Masa QR Kodları
       </Button>
     </>

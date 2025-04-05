@@ -18,8 +18,8 @@ const Loyalty = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  // Updated heroImage
-  const heroImage = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?q=80&w=1920&auto=format&fit=crop";
+  // Updated heroImage with the uploaded image
+  const heroImage = "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
   
   // Example loyalty data
   const loyaltyData = {
