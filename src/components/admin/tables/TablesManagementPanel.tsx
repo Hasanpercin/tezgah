@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -164,7 +163,6 @@ export const TablesManagementPanel = () => {
     setDialogOpen(true);
   };
 
-  // Calculate stats for dashboard
   const activeTablesCount = tables.filter(t => t.is_active).length;
   const totalCapacity = tables.reduce((sum, table) => sum + table.size, 0);
 
@@ -202,7 +200,8 @@ export const TablesManagementPanel = () => {
           <TableLayout 
             tables={tables} 
             onUpdatePositions={handleUpdatePositions}
-            isPositionSaved={isPositionSaved} 
+            isPositionSaved={isPositionSaved}
+            setIsPositionSaved={setIsPositionSaved}
           />
         </TabsContent>
       </Tabs>

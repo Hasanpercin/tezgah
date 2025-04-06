@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +8,14 @@ interface TableLayoutProps {
   tables: TableData[];
   onUpdatePositions: (updatedTables: TableData[]) => Promise<void>;
   isPositionSaved: boolean;
+  setIsPositionSaved: (saved: boolean) => void;
 }
 
 export const TableLayout = ({ 
   tables, 
   onUpdatePositions,
-  isPositionSaved 
+  isPositionSaved,
+  setIsPositionSaved
 }: TableLayoutProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedTable, setDraggedTable] = useState<string | null>(null);
