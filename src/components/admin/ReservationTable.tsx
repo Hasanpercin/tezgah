@@ -10,11 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
-import { type Reservation } from "./ReservationsPanel";
+import { Reservation, ReservationStatus } from "./reservations/types";
 
 type ReservationTableProps = {
   reservations: Reservation[];
-  onStatusChange: (id: string, newStatus: "Onaylandı" | "Beklemede" | "İptal") => void;
+  onStatusChange: (id: string, newStatus: ReservationStatus) => void;
 };
 
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {

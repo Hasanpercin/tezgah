@@ -2,19 +2,7 @@
 import { Clock, CalendarDays } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-
-type Reservation = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  date: Date;
-  time: string;
-  guests: string;
-  occasion?: string;
-  notes?: string;
-  status: "Onaylandı" | "Beklemede" | "İptal";
-};
+import { Reservation } from "./reservations/types";
 
 type ReservationCalendarProps = {
   selectedDate: Date | undefined;

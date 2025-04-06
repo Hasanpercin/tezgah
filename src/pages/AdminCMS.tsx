@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
-import { ReservationsPanel, type Reservation } from "@/components/admin/ReservationsPanel";
+import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
+import { type Reservation, type ReservationStatus } from "@/components/admin/reservations/types";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
