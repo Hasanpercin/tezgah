@@ -31,11 +31,14 @@ export const checkTableAvailability = async (
     const formattedDate = date.toISOString().split('T')[0];
     
     // Check if the table is already reserved for this date and time
+    // Using correct query structure for Supabase joins
     const { data, error } = await supabase
       .from("reservation_tables")
-      .select("reservation_tables.*, reservations.date, reservations.time, reservations.status")
+      .select(`
+        reservation_id,
+        reservations!inner(date, time, status)
+      `)
       .eq("table_id", tableId)
-      .join("reservations", "reservation_tables.reservation_id", "reservations.id")
       .eq("reservations.date", formattedDate)
       .eq("reservations.time", time)
       .neq("reservations.status", "İptal");
