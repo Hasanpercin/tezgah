@@ -10,9 +10,10 @@ type ImageUploaderProps = {
   onImageSelected: (imageUrl: string) => void;
   className?: string;
   folder?: string;
+  accept?: string;
 };
 
-export const ImageUploader = ({ onImageSelected, className, folder = "general" }: ImageUploaderProps) => {
+export const ImageUploader = ({ onImageSelected, className, folder = "general", accept = "image/*" }: ImageUploaderProps) => {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -117,7 +118,7 @@ export const ImageUploader = ({ onImageSelected, className, folder = "general" }
     >
       <input
         type="file"
-        accept="image/*"
+        accept={accept}
         className="hidden"
         ref={fileInputRef}
         onChange={handleFileSelect}
