@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Table, 
   FixMenuOption, 
@@ -12,6 +13,7 @@ import {
 export const useReservationState = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const [reservationId, setReservationId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Initialize state
@@ -47,6 +49,8 @@ export const useReservationState = () => {
   // Handle the custom event from the ReservationForm component
   useEffect(() => {
     const handleReservationCompleted = (event: CustomEvent) => {
+      const newReservationId = event.detail?.reservationId;
+      
       setState(prevState => ({
         ...prevState,
         basicFormCompleted: true,
@@ -55,6 +59,15 @@ export const useReservationState = () => {
           ...(event.detail?.formData || {})
         }
       }));
+      
+      if (newReservationId) {
+        setReservationId(newReservationId);
+      }
+      
+      // İlk adım tamamlandığında bir sonraki adıma geç
+      if (currentStep === 0) {
+        setCurrentStep(1);
+      }
     };
 
     const container = containerRef.current;
@@ -67,8 +80,8 @@ export const useReservationState = () => {
           handleReservationCompleted as EventListener);
       };
     }
-  }, []);
-  
+  }, [currentStep]);
+
   // Calculate total payment amount
   const calculateTotal = () => {
     let subtotal = 0;
@@ -91,13 +104,80 @@ export const useReservationState = () => {
   };
   
   // Handle payment completion
-  const handlePaymentComplete = (txId: string) => {
-    setState({
-      ...state,
-      transactionId: txId
-    });
-    // Move to confirmation step
-    setCurrentStep(4);
+  const handlePaymentComplete = async (txId: string) => {
+    try {
+      // Ödeme bilgilerini kaydet
+      if (reservationId) {
+        const { error } = await supabase
+          .from('reservation_payments')
+          .insert({
+            reservation_id: reservationId,
+            amount: calculateTotal(),
+            is_prepayment: true,
+            payment_status: 'completed',
+            transaction_id: txId
+          });
+        
+        if (error) throw error;
+        
+        // Rezervasyon durumunu güncelle
+        await supabase
+          .from('reservations')
+          .update({
+            status: 'confirmed',
+            has_prepayment: true,
+            total_amount: calculateTotal()
+          })
+          .eq('id', reservationId);
+          
+        // Seçilen masayı kaydet
+        if (state.selectedTable) {
+          await supabase
+            .from('reservation_tables')
+            .insert({
+              reservation_id: reservationId,
+              table_id: state.selectedTable.id
+            });
+        }
+        
+        // Seçilen menüyü kaydet
+        if (state.selectedFixMenu) {
+          await supabase
+            .from('reservation_fixed_menus')
+            .insert({
+              reservation_id: reservationId,
+              fixed_menu_id: state.selectedFixMenu.id,
+              quantity: parseInt(state.formData.guests)
+            });
+        } else if (state.selectedALaCarteItems.length > 0) {
+          const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({
+            reservation_id: reservationId,
+            menu_item_id: item.id,
+            quantity
+          }));
+          
+          await supabase
+            .from('reservation_menu_items')
+            .insert(menuItemInserts);
+        }
+      }
+
+      setState({
+        ...state,
+        transactionId: txId
+      });
+      
+      // Move to confirmation step
+      setCurrentStep(4);
+      
+    } catch (error: any) {
+      console.error("Payment completion error:", error.message);
+      toast({
+        title: "Hata",
+        description: "Ödeme bilgileri kaydedilirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Check if current step is valid to move to next
@@ -124,8 +204,62 @@ export const useReservationState = () => {
   };
   
   // Go to next step
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < 4 && canProceed()) {
+      // Eğer 3. adımda ön ödeme yapmadan devam ediyorsak
+      if (currentStep === 3 && !state.isPrePayment) {
+        try {
+          // Seçilen masayı kaydet
+          if (reservationId && state.selectedTable) {
+            await supabase
+              .from('reservation_tables')
+              .insert({
+                reservation_id: reservationId,
+                table_id: state.selectedTable.id
+              });
+          }
+          
+          // Seçilen menüyü kaydet
+          if (reservationId) {
+            if (state.selectedFixMenu) {
+              await supabase
+                .from('reservation_fixed_menus')
+                .insert({
+                  reservation_id: reservationId,
+                  fixed_menu_id: state.selectedFixMenu.id,
+                  quantity: parseInt(state.formData.guests)
+                });
+            } else if (state.selectedALaCarteItems.length > 0) {
+              const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({
+                reservation_id: reservationId,
+                menu_item_id: item.id,
+                quantity
+              }));
+              
+              await supabase
+                .from('reservation_menu_items')
+                .insert(menuItemInserts);
+            }
+            
+            // Rezervasyon durumunu güncelle
+            await supabase
+              .from('reservations')
+              .update({
+                status: 'confirmed',
+                total_amount: calculateTotal()
+              })
+              .eq('id', reservationId);
+          }
+        } catch (error: any) {
+          console.error("Reservation update error:", error.message);
+          toast({
+            title: "Hata",
+            description: "Rezervasyon bilgileri güncellenirken bir hata oluştu.",
+            variant: "destructive",
+          });
+        }
+      }
+      
       setCurrentStep(currentStep + 1);
       
       // Scroll to top when changing steps
@@ -149,7 +283,7 @@ export const useReservationState = () => {
       ...state,
       isPrePayment: false
     });
-    setCurrentStep(4); // Skip to confirmation
+    handleNextStep();
   };
 
   // Handlers for state updates
@@ -185,6 +319,7 @@ export const useReservationState = () => {
     currentStep,
     containerRef,
     state,
+    reservationId,
     calculateTotal,
     handlePaymentComplete,
     canProceed,

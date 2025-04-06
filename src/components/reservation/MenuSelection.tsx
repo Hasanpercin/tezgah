@@ -1,469 +1,380 @@
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Minus, Check } from "lucide-react";
-
-// Types
-type FixMenuOption = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-};
-
-type MenuItem = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: 'starter' | 'main' | 'dessert';
-  image?: string;
-};
+import { Label } from "@/components/ui/label";
+import { Table } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchFixedMenus } from '@/services/fixedMenuService';
+import { fetchMenuItems, formatPrice } from '@/services/menuService';
+import { FixMenuOption, MenuItem } from './types/reservationTypes';
 
 type MenuSelectionProps = {
   onFixMenuSelected: (menu: FixMenuOption | null) => void;
-  onALaCarteItemsSelected: (items: { item: MenuItem, quantity: number }[]) => void;
+  onALaCarteItemsSelected: (items: { item: MenuItem; quantity: number }[]) => void;
   selectedFixMenu: FixMenuOption | null;
-  selectedALaCarteItems: { item: MenuItem, quantity: number }[];
+  selectedALaCarteItems: { item: MenuItem; quantity: number }[];
   guests: string;
 };
 
-const MenuSelection = ({ 
-  onFixMenuSelected, 
-  onALaCarteItemsSelected, 
-  selectedFixMenu, 
+const MenuSelection = ({
+  onFixMenuSelected,
+  onALaCarteItemsSelected,
+  selectedFixMenu,
   selectedALaCarteItems,
-  guests 
+  guests,
 }: MenuSelectionProps) => {
-  const [menuType, setMenuType] = useState<'fix' | 'alacarte'>(selectedFixMenu ? 'fix' : 'alacarte');
-  
-  // Sample fix menu options
-  const fixMenuOptions: FixMenuOption[] = [
-    {
-      id: 'fix-1',
-      name: 'Fix Menü 1 - Kırmızı Et',
-      description: 'Çorba, Mevsim Salatası, Antrikot veya Lokum, Tatlı, Sıcak İçecek',
-      price: 450,
-      image: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    {
-      id: 'fix-2',
-      name: 'Fix Menü 2 - Beyaz Et',
-      description: 'Çorba, Mevsim Salatası, Tavuk veya Balık, Tatlı, Sıcak İçecek',
-      price: 380,
-      image: 'https://images.unsplash.com/photo-1518492104633-130d0cc84637?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    {
-      id: 'fix-3',
-      name: 'Fix Menü 3 - Vejetaryen',
-      description: 'Çorba, Mevsim Salatası, Sebzeli Risotto veya Makarna, Tatlı, Sıcak İçecek',
-      price: 350,
-      image: 'https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    }
-  ];
-  
-  // Sample a la carte items
-  const menuItems: MenuItem[] = [
-    // Starters
-    {
-      id: 'starter-1',
-      name: 'Mevsim Salatası',
-      description: 'Taze mevsim sebzeleri ile',
-      price: 75,
-      category: 'starter',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    {
-      id: 'starter-2',
-      name: 'Deniz Mahsulleri Salatası',
-      description: 'Karışık deniz mahsulleri, taze yeşillikler ve özel sos ile',
-      price: 95,
-      category: 'starter'
-    },
-    {
-      id: 'starter-3',
-      name: 'Günün Çorbası',
-      description: 'Şefin özel tarifi ile hazırlanmış günün çorbası',
-      price: 55,
-      category: 'starter'
-    },
-    
-    // Main dishes
-    {
-      id: 'main-1',
-      name: 'Lokum Bonfile',
-      description: '200gr bonfile, mantar sosu ve patates püresi ile',
-      price: 280,
-      category: 'main',
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    {
-      id: 'main-2',
-      name: 'Tavuk Şinitzel',
-      description: 'Panelenmiş tavuk göğsü, patates kızartması ve özel sos ile',
-      price: 190,
-      category: 'main'
-    },
-    {
-      id: 'main-3',
-      name: 'Levrek Fileto',
-      description: 'Izgarada pişirilmiş levrek fileto, sebzeli pilav ile',
-      price: 220,
-      category: 'main',
-      image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    
-    // Desserts
-    {
-      id: 'dessert-1',
-      name: 'Çikolatalı Sufle',
-      description: 'Sıcak çikolatalı sufle, vanilyalı dondurma ile',
-      price: 85,
-      category: 'dessert',
-      image: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300'
-    },
-    {
-      id: 'dessert-2',
-      name: 'Cheesecake',
-      description: 'Frambuaz soslu ev yapımı cheesecake',
-      price: 75,
-      category: 'dessert'
-    }
-  ];
-  
-  // Filtered by category
-  const starters = menuItems.filter(item => item.category === 'starter');
-  const mains = menuItems.filter(item => item.category === 'main');
-  const desserts = menuItems.filter(item => item.category === 'dessert');
-  
-  // Handle fix menu selection
-  const handleFixMenuSelect = (menuId: string) => {
-    const selected = fixMenuOptions.find(menu => menu.id === menuId) || null;
-    onFixMenuSelected(selected);
-    
-    // Clear a la carte selections if switching to fix menu
-    if (selected && selectedALaCarteItems.length > 0) {
+  const [menuType, setMenuType] = useState<'fixed' | 'alacarte'>(selectedFixMenu ? 'fixed' : 'alacarte');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+
+  const guestCount = parseInt(guests) || 0;
+
+  // Sabit menüleri çekme
+  const { data: fixedMenus = [], isLoading: isLoadingFixedMenus } = useQuery({
+    queryKey: ['fixedMenus'],
+    queryFn: fetchFixedMenus,
+  });
+
+  // Menü kategorilerini çekme
+  const { data: menuCategories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['menuCategories'],
+    queryFn: () => import('@/services/menuService').then(module => module.fetchMenuCategories()),
+  });
+
+  // Seçili kategoriye göre menü öğelerini çekme
+  const { data: menuItems = [], isLoading: isLoadingMenuItems } = useQuery({
+    queryKey: ['menuItems', selectedCategoryId],
+    queryFn: () => fetchMenuItems(selectedCategoryId !== 'all' ? selectedCategoryId : undefined),
+  });
+
+  // Sayfa yüklendiğinde veya guests değiştiğinde miktar değerlerini güncelle
+  useEffect(() => {
+    // A la carte öğeler için quantites nesnesini güncelle
+    const newQuantities = { ...quantities };
+    selectedALaCarteItems.forEach(item => {
+      newQuantities[item.item.id] = item.quantity;
+    });
+    setQuantities(newQuantities);
+  }, [selectedALaCarteItems, guests]);
+
+  // Fix menü seçimi
+  const handleFixedMenuSelect = (menu: FixMenuOption | null) => {
+    onFixMenuSelected(menu);
+    if (menu) {
+      setMenuType('fixed');
+      // A la carte seçimlerini temizle
       onALaCarteItemsSelected([]);
     }
   };
-  
-  // Handle a la carte item quantity change
-  const handleQuantityChange = (item: MenuItem, change: number) => {
-    const existingItem = selectedALaCarteItems.find(i => i.item.id === item.id);
+
+  // A la carte öğe miktarlarını güncelle
+  const handleQuantityChange = (item: MenuItem, quantity: number) => {
+    // Yeni miktarları güncelle
+    const newQuantities = { ...quantities, [item.id]: quantity };
+    setQuantities(newQuantities);
+
+    // Seçili öğeleri güncelle (miktar > 0 olan öğeler)
+    const selectedItems = Object.keys(newQuantities)
+      .filter(itemId => newQuantities[itemId] > 0)
+      .map(itemId => {
+        const selectedItem = menuItems.find(mi => mi.id === itemId);
+        return {
+          item: selectedItem as MenuItem,
+          quantity: newQuantities[itemId]
+        };
+      });
+
+    onALaCarteItemsSelected(selectedItems);
     
-    if (existingItem) {
-      // If item exists, update quantity or remove if becomes 0
-      const newQuantity = Math.max(0, existingItem.quantity + change);
-      
-      if (newQuantity === 0) {
-        // Remove item if quantity is 0
-        onALaCarteItemsSelected(selectedALaCarteItems.filter(i => i.item.id !== item.id));
-      } else {
-        // Update quantity
-        onALaCarteItemsSelected(
-          selectedALaCarteItems.map(i => 
-            i.item.id === item.id ? { ...i, quantity: newQuantity } : i
-          )
-        );
-      }
-    } else if (change > 0) {
-      // Add new item with quantity 1
-      onALaCarteItemsSelected([...selectedALaCarteItems, { item, quantity: 1 }]);
-    }
-    
-    // Clear fix menu selection if adding a la carte items
-    if (change > 0 && selectedFixMenu) {
+    if (selectedItems.length > 0) {
+      setMenuType('alacarte');
+      // Fix menü seçimini temizle
       onFixMenuSelected(null);
     }
   };
-  
-  // Get quantity of an item
-  const getQuantity = (itemId: string) => {
-    const item = selectedALaCarteItems.find(i => i.item.id === itemId);
-    return item ? item.quantity : 0;
+
+  // Kategori değişikliği
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
   };
-  
-  // Calculate subtotal
-  const calculateSubtotal = () => {
-    if (menuType === 'fix' && selectedFixMenu) {
-      return selectedFixMenu.price * parseInt(guests);
+
+  // Menü türü değişikliği
+  const handleMenuTypeChange = (type: 'fixed' | 'alacarte') => {
+    setMenuType(type);
+    if (type === 'fixed') {
+      onALaCarteItemsSelected([]);
     } else {
-      return selectedALaCarteItems.reduce(
-        (sum, { item, quantity }) => sum + (item.price * quantity),
-        0
-      );
+      onFixMenuSelected(null);
     }
+  };
+
+  // İskelet yükleme arayüzü
+  const renderSkeletons = (count: number) => {
+    return Array(count)
+      .fill(0)
+      .map((_, i) => (
+        <Card key={`skeleton-${i}`} className="mb-4">
+          <CardContent className="p-0">
+            <div className="flex flex-col md:flex-row">
+              <Skeleton className="h-40 md:w-1/3" />
+              <div className="p-4 flex-1">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ));
   };
 
   return (
     <div className="py-6">
-      <div className="pb-6">
+      <div className="mb-8">
         <h3 className="text-lg font-semibold mb-2">Menü Seçimi</h3>
-        <p className="text-muted-foreground mb-6">
-          Fix menü veya alakart sipariş seçeneğinden birini tercih edebilirsiniz.
+        <p className="text-muted-foreground mb-4">
+          Fix menü seçebilir veya a la carte sipariş verebilirsiniz. {guestCount} kişilik rezervasyonunuz için uygun seçimi yapınız.
         </p>
-        
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 mb-8">
-          <Button
-            variant={menuType === 'fix' ? "default" : "outline"}
-            className="flex-1 h-auto py-3"
-            onClick={() => setMenuType('fix')}
+
+        <div className="mb-6">
+          <RadioGroup
+            value={menuType}
+            onValueChange={(value) => handleMenuTypeChange(value as 'fixed' | 'alacarte')}
+            className="flex flex-col md:flex-row gap-4"
           >
-            <div className="text-left">
-              <div className="font-medium">Fix Menü</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Kişi başı tek fiyat, önceden belirlenmiş menüler
-              </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="fixed" id="fixed" />
+              <Label htmlFor="fixed" className="font-medium">Fix Menü</Label>
             </div>
-          </Button>
-          
-          <Button
-            variant={menuType === 'alacarte' ? "default" : "outline"}
-            className="flex-1 h-auto py-3"
-            onClick={() => setMenuType('alacarte')}
-          >
-            <div className="text-left">
-              <div className="font-medium">Alakart Sipariş</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                İstediğiniz yemekleri seçin, porsiyon bazında ödeme yapın
-              </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="alacarte" id="alacarte" />
+              <Label htmlFor="alacarte" className="font-medium">A La Carte</Label>
             </div>
-          </Button>
+          </RadioGroup>
         </div>
       </div>
 
-      {/* Fix Menu Options */}
-      {menuType === 'fix' && (
-        <div className="space-y-6">
-          <RadioGroup 
-            value={selectedFixMenu?.id || ''} 
-            onValueChange={handleFixMenuSelect}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {fixMenuOptions.map((menu) => (
-                <div key={menu.id} className="relative">
-                  <RadioGroupItem
-                    value={menu.id}
-                    id={menu.id}
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor={menu.id}
-                    className="flex flex-col md:flex-row gap-4 border rounded-lg p-4 cursor-pointer hover:bg-accent peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
-                  >
-                    {menu.image && (
-                      <div className="w-full md:w-1/3 h-40 md:h-auto overflow-hidden rounded-md">
-                        <img src={menu.image} alt={menu.name} className="w-full h-full object-cover" />
-                      </div>
+      <Tabs value={menuType} className="w-full">
+        {/* Fix Menü Seçimi */}
+        <TabsContent value="fixed" className="mt-0">
+          <div className="space-y-6">
+            <h4 className="text-base font-medium">Fix Menü Seçenekleri</h4>
+            
+            {isLoadingFixedMenus ? (
+              renderSkeletons(2)
+            ) : fixedMenus.length === 0 ? (
+              <Card className="p-6 text-center">
+                <Table className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                <p>Henüz fix menü paketi eklenmemiş.</p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {fixedMenus.map((menu) => (
+                  <Card 
+                    key={menu.id} 
+                    className={`cursor-pointer transition-all ${
+                      selectedFixMenu?.id === menu.id 
+                        ? 'ring-2 ring-primary' 
+                        : 'hover:border-primary/50'
+                    }`}
+                    onClick={() => handleFixedMenuSelect(
+                      selectedFixMenu?.id === menu.id ? null : menu
                     )}
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium text-lg">{menu.name}</h4>
-                        <span className="font-semibold text-primary">{menu.price} ₺</span>
-                      </div>
-                      <p className="text-muted-foreground mt-2">{menu.description}</p>
-                      <div className="mt-4 text-sm">
-                        <span className="text-muted-foreground">Kişi başı fiyat</span>
-                      </div>
-                    </div>
-                  </Label>
-                  {selectedFixMenu?.id === menu.id && (
-                    <div className="absolute top-4 right-4 h-6 w-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
-                      <Check size={14} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </RadioGroup>
-          
-          {selectedFixMenu && (
-            <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium">{selectedFixMenu.name}</h4>
-                  <p className="text-sm text-muted-foreground">{guests} kişi</p>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{calculateSubtotal()} ₺</div>
-                  <div className="text-xs text-muted-foreground">
-                    Toplam ({selectedFixMenu.price} ₺ x {guests} kişi)
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* A La Carte Options */}
-      {menuType === 'alacarte' && (
-        <div className="space-y-8">
-          {/* Starters */}
-          <div>
-            <h4 className="text-lg font-medium mb-3">Başlangıçlar</h4>
-            <div className="space-y-4">
-              {starters.map((item) => (
-                <Card key={item.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center">
-                      {item.image && (
-                        <div className="h-16 w-16 mr-4 rounded-md overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex flex-col md:flex-row">
+                        {menu.image_path && (
+                          <div className="md:w-1/3">
+                            <img 
+                              src={menu.image_path} 
+                              alt={menu.name} 
+                              className="w-full h-full object-cover aspect-video md:aspect-square"
+                            />
+                          </div>
+                        )}
+                        <div className="p-6 flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-xl font-semibold">{menu.name}</h3>
+                            <span className="text-lg text-primary font-medium">
+                              {formatPrice(menu.price)}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground mb-4">{menu.description}</p>
+                          <div className="mt-auto pt-2">
+                            <span className="text-sm text-muted-foreground">
+                              Kişi başı {formatPrice(menu.price)} ({guestCount} kişi için toplam: {formatPrice(menu.price * guestCount)})
+                            </span>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h5 className="font-medium">{item.name}</h5>
-                          <span className="font-medium">{item.price} ₺</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
                       </div>
-                      <div className="ml-4 flex items-center">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, -1)}
-                          disabled={getQuantity(item.id) === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{getQuantity(item.id)}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          {/* Main Courses */}
-          <div>
-            <h4 className="text-lg font-medium mb-3">Ana Yemekler</h4>
-            <div className="space-y-4">
-              {mains.map((item) => (
-                <Card key={item.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center">
-                      {item.image && (
-                        <div className="h-16 w-16 mr-4 rounded-md overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h5 className="font-medium">{item.name}</h5>
-                          <span className="font-medium">{item.price} ₺</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </div>
-                      <div className="ml-4 flex items-center">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, -1)}
-                          disabled={getQuantity(item.id) === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{getQuantity(item.id)}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          {/* Desserts */}
-          <div>
-            <h4 className="text-lg font-medium mb-3">Tatlılar</h4>
-            <div className="space-y-4">
-              {desserts.map((item) => (
-                <Card key={item.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center">
-                      {item.image && (
-                        <div className="h-16 w-16 mr-4 rounded-md overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h5 className="font-medium">{item.name}</h5>
-                          <span className="font-medium">{item.price} ₺</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </div>
-                      <div className="ml-4 flex items-center">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, -1)}
-                          disabled={getQuantity(item.id) === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{getQuantity(item.id)}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8" 
-                          onClick={() => handleQuantityChange(item, 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          {/* Summary */}
-          {selectedALaCarteItems.length > 0 && (
-            <div className="mt-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <h4 className="font-medium mb-2">Seçilen Ürünler</h4>
-              <div className="space-y-2">
-                {selectedALaCarteItems.map(({ item, quantity }) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>{quantity}x {item.name}</span>
-                    <span>{item.price * quantity} ₺</span>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
-                <div className="border-t pt-2 mt-4 flex justify-between font-medium">
-                  <span>Toplam</span>
-                  <span>{calculateSubtotal()} ₺</span>
+              </div>
+            )}
+            
+            {selectedFixMenu && (
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mt-6">
+                <h4 className="font-medium mb-2">Seçilen Fix Menü:</h4>
+                <div className="flex justify-between">
+                  <p>{selectedFixMenu.name}</p>
+                  <p className="font-medium">{formatPrice(selectedFixMenu.price * guestCount)}</p>
                 </div>
               </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* A La Carte Seçimi */}
+        <TabsContent value="alacarte" className="mt-0">
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-base font-medium mb-4">A La Carte Menü</h4>
+
+              {/* Kategori Seçimi */}
+              <div className="flex overflow-x-auto scrollbar-none mb-6 pb-2">
+                <Button
+                  variant={selectedCategoryId === 'all' ? 'default' : 'outline'}
+                  className="whitespace-nowrap mr-2"
+                  onClick={() => handleCategoryChange('all')}
+                >
+                  Tüm Kategoriler
+                </Button>
+                
+                {isLoadingCategories ? (
+                  <div className="flex space-x-2">
+                    {[1, 2, 3].map(i => (
+                      <Skeleton key={i} className="h-10 w-24" />
+                    ))}
+                  </div>
+                ) : (
+                  menuCategories.map(category => (
+                    <Button
+                      key={category.id}
+                      variant={selectedCategoryId === category.id ? 'default' : 'outline'}
+                      className="whitespace-nowrap mr-2"
+                      onClick={() => handleCategoryChange(category.id)}
+                    >
+                      {category.name}
+                    </Button>
+                  ))
+                )}
+              </div>
+
+              {/* Menu Items */}
+              <div className="space-y-4">
+                {isLoadingMenuItems ? (
+                  renderSkeletons(3)
+                ) : menuItems.length === 0 ? (
+                  <Card className="p-6 text-center">
+                    <Table className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <p>Bu kategoride henüz ürün bulunmamaktadır.</p>
+                  </Card>
+                ) : (
+                  menuItems.map((item) => {
+                    const quantity = quantities[item.id] || 0;
+                    
+                    return (
+                      <Card key={item.id}>
+                        <CardContent className="p-0">
+                          <div className="flex flex-col md:flex-row">
+                            {item.image_path && (
+                              <div className="md:w-1/4">
+                                <img 
+                                  src={item.image_path} 
+                                  alt={item.name} 
+                                  className="w-full h-full object-cover aspect-video md:aspect-square"
+                                />
+                              </div>
+                            )}
+                            <div className="p-4 flex-1 flex flex-col justify-between">
+                              <div>
+                                <div className="flex justify-between items-start mb-2">
+                                  <h3 className="text-lg font-medium">{item.name}</h3>
+                                  <span className="font-medium text-primary">
+                                    {formatPrice(item.price)}
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground text-sm mb-4">
+                                  {item.description}
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center justify-end mt-2">
+                                <div className="flex items-center">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleQuantityChange(item, Math.max(0, quantity - 1))}
+                                  >
+                                    -
+                                  </Button>
+                                  <Input
+                                    className="h-8 w-12 mx-1 text-center"
+                                    value={quantity}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value) || 0;
+                                      handleQuantityChange(item, Math.max(0, val));
+                                    }}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleQuantityChange(item, quantity + 1)}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      )}
+            
+            {/* Seçili Öğelerin Özeti */}
+            {selectedALaCarteItems.length > 0 && (
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mt-6">
+                <h4 className="font-medium mb-2">Seçilen Öğeler:</h4>
+                <div className="space-y-2">
+                  {selectedALaCarteItems.map(({ item, quantity }) => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <div>
+                        {item.name} x {quantity}
+                      </div>
+                      <div className="font-medium">
+                        {formatPrice(item.price * quantity)}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2 flex justify-between font-medium">
+                    <div>Toplam</div>
+                    <div>
+                      {formatPrice(
+                        selectedALaCarteItems.reduce(
+                          (sum, { item, quantity }) => sum + item.price * quantity,
+                          0
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -1,23 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
-// Define table types
-type TableType = 'window' | 'center' | 'corner' | 'booth';
-type TableSize = 2 | 4 | 6 | 8;
-
-type Table = {
-  id: number;
-  type: TableType;
-  size: TableSize;
-  position: { x: number; y: number };
-  available: boolean;
-  label: string;
-};
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchTablesByAvailability } from '@/services/tableService';
+import { Table } from './types/reservationTypes';
+import { Coffee, WineOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type TableSelectionProps = {
-  onSelectTable: (table: Table) => void;
+  onSelectTable: (table: Table | null) => void;
   selectedTable: Table | null;
   date: Date | null;
   time: string;
@@ -25,32 +18,73 @@ type TableSelectionProps = {
 };
 
 const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: TableSelectionProps) => {
-  // Sample table data - in a real app, this would come from the backend based on date/time/guests
-  const [tables] = useState<Table[]>([
-    { id: 1, type: 'window', size: 2, position: { x: 10, y: 10 }, available: true, label: 'Pencere Kenarı 2 Kişilik (1)' },
-    { id: 2, type: 'window', size: 4, position: { x: 10, y: 30 }, available: true, label: 'Pencere Kenarı 4 Kişilik (2)' },
-    { id: 3, type: 'center', size: 4, position: { x: 30, y: 20 }, available: false, label: 'Orta Alan 4 Kişilik (3)' },
-    { id: 4, type: 'center', size: 6, position: { x: 50, y: 20 }, available: true, label: 'Orta Alan 6 Kişilik (4)' },
-    { id: 5, type: 'corner', size: 4, position: { x: 70, y: 10 }, available: true, label: 'Köşe 4 Kişilik (5)' },
-    { id: 6, type: 'booth', size: 6, position: { x: 70, y: 40 }, available: true, label: 'Loca 6 Kişilik (6)' },
-    { id: 7, type: 'booth', size: 8, position: { x: 80, y: 70 }, available: false, label: 'Loca 8 Kişilik (7)' },
-    { id: 8, type: 'window', size: 2, position: { x: 10, y: 60 }, available: true, label: 'Pencere Kenarı 2 Kişilik (8)' },
-    { id: 9, type: 'center', size: 4, position: { x: 30, y: 60 }, available: true, label: 'Orta Alan 4 Kişilik (9)' },
-  ]);
-
-  // Filter tables based on guest count
+  const { toast } = useToast();
   const guestCount = parseInt(guests, 10);
-  const compatibleTables = tables.filter(table => table.available && table.size >= guestCount);
+
+  // Masa verisini Supabase'den çekme
+  const { data: tables = [], isLoading, error } = useQuery({
+    queryKey: ['tables', date?.toISOString(), time, guestCount],
+    queryFn: () => fetchTablesByAvailability(date, time, guestCount),
+    enabled: !!date && !!time && !isNaN(guestCount),
+  });
+
+  // Supabase verileri frontend için hazırla
+  const convertedTables: Table[] = tables.map(table => ({
+    id: table.id,
+    type: table.type as 'window' | 'center' | 'corner' | 'booth',
+    size: table.size,
+    position_x: table.position_x,
+    position_y: table.position_y,
+    position: { x: table.position_x, y: table.position_y },
+    available: table.available,
+    label: `${getTableTypeName(table.type)} ${table.size} Kişilik (${table.name})`,
+    name: table.name
+  }));
+
+  useEffect(() => {
+    // Eğer seçili masa varsa ve müsait değilse veya yeni guestCount için uygun değilse seçimi temizle
+    if (selectedTable) {
+      const currentTable = convertedTables.find(t => t.id === selectedTable.id);
+      if (!currentTable || !currentTable.available || currentTable.size < guestCount) {
+        onSelectTable(null);
+        
+        if (currentTable && !currentTable.available) {
+          toast({
+            title: "Masa artık müsait değil",
+            description: "Seçtiğiniz masa başka bir müşteri tarafından rezerve edildi. Lütfen başka bir masa seçin.",
+            variant: "destructive",
+          });
+        } else if (currentTable && currentTable.size < guestCount) {
+          toast({
+            title: "Masa kapasitesi yetersiz",
+            description: "Seçtiğiniz masa kişi sayınız için uygun değil. Lütfen daha büyük bir masa seçin.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  }, [convertedTables, selectedTable, guestCount, onSelectTable, toast]);
+
+  // Masa türü adını döndürür
+  function getTableTypeName(type: string): string {
+    switch (type) {
+      case 'window': return 'Pencere Kenarı';
+      case 'center': return 'Orta Alan';
+      case 'corner': return 'Köşe';
+      case 'booth': return 'Loca';
+      default: return 'Masa';
+    }
+  }
 
   const handleTableClick = (table: Table) => {
-    if (table.available) {
+    if (table.available && table.size >= guestCount) {
       onSelectTable(table);
     }
   };
 
   // Function to generate class based on table properties
   const getTableClass = (table: Table) => {
-    const baseClass = "relative flex items-center justify-center rounded-md cursor-pointer transition-all";
+    const baseClass = "relative flex items-center justify-center rounded-md cursor-pointer transition-all border-2";
     
     // Size classes
     const sizeClass = table.size <= 2 ? "w-16 h-16" :
@@ -76,6 +110,15 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
   const isCompatible = (table: Table) => {
     return table.size >= guestCount;
   };
+
+  // Error gösterimi
+  if (error) {
+    return (
+      <div className="py-6 text-center text-red-500">
+        <p>Masa bilgileri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="py-6">
@@ -122,34 +165,72 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
             Giriş/Çıkış
           </div>
           
-          {/* Tables layout */}
-          <div className="w-full h-full relative">
-            {tables.map((table) => (
-              <div
-                key={table.id}
-                className={getTableClass(table)}
-                style={{ 
-                  position: 'absolute',
-                  left: `${table.position.x}%`, 
-                  top: `${table.position.y}%`,
-                  transform: 'translate(-50%, -50%)'
-                }}
-                onClick={() => table.available && isCompatible(table) && handleTableClick(table)}
-                title={table.available ? table.label : `${table.label} (Müsait Değil)`}
-              >
-                <span className="text-xs font-medium">
-                  {`M-${table.id}`}<br/>
-                  {`${table.size} kişi`}
-                </span>
-                
-                {!isCompatible(table) && table.available && (
-                  <div className="absolute inset-0 bg-red-200 bg-opacity-30 flex items-center justify-center rounded-md">
-                    <span className="text-xs text-red-700">Yetersiz</span>
-                  </div>
-                )}
+          {/* Loading state */}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+              <div className="text-center">
+                <Skeleton className="h-12 w-12 rounded-full mx-auto mb-4" />
+                <Skeleton className="h-4 w-32 mx-auto" />
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+          
+          {/* No data state */}
+          {!isLoading && convertedTables.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center p-6 max-w-sm">
+                <WineOff className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">Masa Bulunamadı</h3>
+                <p className="text-muted-foreground text-sm">
+                  Seçtiğiniz tarih ve saatte müsait masa bulunmamaktadır. Lütfen farklı bir tarih veya saat seçiniz.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* Empty state - need date and time */}
+          {!date && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center p-6 max-w-sm">
+                <Coffee className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">Tarih ve Saat Seçimi Gerekli</h3>
+                <p className="text-muted-foreground text-sm">
+                  Müsait masaları görmek için lütfen önce bir tarih ve saat seçiniz.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* Tables layout */}
+          {!isLoading && (
+            <div className="w-full h-full relative">
+              {convertedTables.map((table) => (
+                <div
+                  key={table.id}
+                  className={getTableClass(table)}
+                  style={{ 
+                    position: 'absolute',
+                    left: `${table.position.x}%`, 
+                    top: `${table.position.y}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                  onClick={() => table.available && isCompatible(table) && handleTableClick(table)}
+                  title={table.available ? table.label : `${table.label} (Müsait Değil)`}
+                >
+                  <span className="text-xs font-medium">
+                    {table.name}<br/>
+                    {`${table.size} kişi`}
+                  </span>
+                  
+                  {!isCompatible(table) && table.available && (
+                    <div className="absolute inset-0 bg-red-200 bg-opacity-30 flex items-center justify-center rounded-md">
+                      <span className="text-xs text-red-700">Yetersiz</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 

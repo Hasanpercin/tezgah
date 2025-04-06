@@ -1,28 +1,31 @@
 
 export type Table = {
-  id: number;
+  id: string;
   type: 'window' | 'center' | 'corner' | 'booth';
-  size: 2 | 4 | 6 | 8;
-  position: { x: number; y: number };
+  size: number;
+  position_x: number;
+  position_y: number;
+  position: { x: number; y: number };  // Frontend gösterimi için
   available: boolean;
   label: string;
+  name?: string;
 };
 
 export type FixMenuOption = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  image?: string;
+  image_path?: string | null;
 };
 
 export type MenuItem = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  category: 'starter' | 'main' | 'dessert';
-  image?: string;
+  category_id: string;
+  image_path?: string | null;
 };
 
 export interface ReservationFormData {

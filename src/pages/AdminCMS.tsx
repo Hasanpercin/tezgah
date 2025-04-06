@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, LayoutDashboard, Settings, Menu, Utensils } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
 import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
+import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
 
 type Reservation = {
   id: string;
@@ -157,12 +158,15 @@ const AdminCMS = () => {
           </div>
           
           <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard size={16} /> Genel Bakış
               </TabsTrigger>
               <TabsTrigger value="reservations" className="flex items-center gap-2">
                 <Users size={16} /> Rezervasyonlar
+              </TabsTrigger>
+              <TabsTrigger value="tables" className="flex items-center gap-2">
+                <ServerCog size={16} /> Masalar
               </TabsTrigger>
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <Utensils size={16} /> Menü
@@ -175,10 +179,8 @@ const AdminCMS = () => {
               </TabsTrigger>
             </TabsList>
             
-            {/* Dashboard Tab */}
             <TabsContent value="dashboard" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Reservations Summary */}
                 <div className="col-span-1">
                   <h2 className="text-xl font-semibold mb-4">Rezervasyon Özeti</h2>
                   <div className="border rounded-lg p-4 space-y-2">
@@ -197,7 +199,6 @@ const AdminCMS = () => {
                   </div>
                 </div>
                 
-                {/* Menu Summary */}
                 <div className="col-span-1">
                   <h2 className="text-xl font-semibold mb-4">Menü Özeti</h2>
                   <div className="border rounded-lg p-4 space-y-2">
@@ -222,7 +223,6 @@ const AdminCMS = () => {
                   </div>
                 </div>
                 
-                {/* Quick Actions */}
                 <div className="col-span-1">
                   <h2 className="text-xl font-semibold mb-4">Hızlı İşlemler</h2>
                   <div className="border rounded-lg p-4 space-y-2">
@@ -232,6 +232,13 @@ const AdminCMS = () => {
                     >
                       <span>Rezervasyonları Yönet</span>
                       <Users size={16} />
+                    </button>
+                    <button 
+                      className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
+                      onClick={() => setActiveTab("tables")}
+                    >
+                      <span>Masaları Düzenle</span>
+                      <ServerCog size={16} />
                     </button>
                     <button 
                       className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
@@ -247,18 +254,10 @@ const AdminCMS = () => {
                       <span>QR Kod Oluştur</span>
                       <Menu size={16} />
                     </button>
-                    <button 
-                      className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
-                      onClick={() => setActiveTab("website")}
-                    >
-                      <span>Site İçeriğini Düzenle</span>
-                      <Settings size={16} />
-                    </button>
                   </div>
                 </div>
               </div>
               
-              {/* Recent Reservations Preview */}
               <div>
                 <h2 className="text-xl font-semibold mb-4">Son Rezervasyonlar</h2>
                 <div className="border rounded-lg overflow-hidden">
@@ -313,7 +312,6 @@ const AdminCMS = () => {
               </div>
             </TabsContent>
             
-            {/* Reservations Tab */}
             <TabsContent value="reservations" className="space-y-6">
               <ReservationsPanel
                 reservations={reservations}
@@ -324,12 +322,14 @@ const AdminCMS = () => {
               />
             </TabsContent>
             
-            {/* Menu Management Tab (New) */}
+            <TabsContent value="tables" className="space-y-6">
+              <TablesManagementPanel />
+            </TabsContent>
+            
             <TabsContent value="menu" className="space-y-6">
               <MenuManagementPanel />
             </TabsContent>
             
-            {/* Menu and QR Code Tab */}
             <TabsContent value="menu-qr" className="space-y-6">
               <MenuQRPanel 
                 menuData={menuData}
@@ -337,7 +337,6 @@ const AdminCMS = () => {
               />
             </TabsContent>
             
-            {/* Website Content Tab */}
             <TabsContent value="website" className="space-y-6">
               <WebsiteContentPanel />
             </TabsContent>

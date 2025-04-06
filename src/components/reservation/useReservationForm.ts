@@ -1,10 +1,14 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
 import { FormData, FormError } from './types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 export const useReservationForm = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -108,8 +112,25 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Rezervasyonu veritabanına kaydet
+      const { data, error } = await supabase
+        .from('reservations')
+        .insert({
+          user_id: user?.id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          date: formData.date?.toISOString().split('T')[0],
+          time: formData.time,
+          guests: parseInt(formData.guests),
+          notes: formData.notes,
+          occasion: formData.occasion,
+          status: 'pending'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
       
       // Show success message
       toast({
@@ -123,15 +144,12 @@ export const useReservationForm = () => {
       if (multiStepReservation) {
         // Create and dispatch a custom event to notify the MultiStepReservation component
         const event = new CustomEvent('reservationCompleted', { 
-          detail: { formData }
+          detail: { formData, reservationId: data.id }
         });
         multiStepReservation.dispatchEvent(event);
       }
-      
-      // Keep form data for the next steps
-      // Do not reset the form data as we'll need it for subsequent steps
-      
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Reservation error:", error.message);
       toast({
         title: "Hata",
         description: "Rezervasyon işlemi sırasında bir hata oluştu. Lütfen tekrar deneyiniz.",
