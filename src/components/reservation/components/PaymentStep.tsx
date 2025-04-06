@@ -25,7 +25,11 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   // Casting the types to match what ReservationSummary expects
   const castSelectedTable = state.selectedTable ? {
     ...state.selectedTable,
-    id: Number(state.selectedTable.id)
+    id: Number(state.selectedTable.id),
+    // Cast size to one of the expected literal types (2, 4, 6, 8)
+    size: (state.selectedTable.size <= 2 ? 2 : 
+           state.selectedTable.size <= 4 ? 4 : 
+           state.selectedTable.size <= 6 ? 6 : 8) as 2 | 4 | 6 | 8
   } : null;
 
   // Cast selectedALaCarteItems to add the required category property
