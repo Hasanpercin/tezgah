@@ -58,7 +58,7 @@ export const saveReservationFixedMenu = async (
       reservation_id: reservationId,
       fixed_menu_id: fixedMenuId,
       quantity
-    });
+    } as any);
     
   if (error) throw error;
   return data;

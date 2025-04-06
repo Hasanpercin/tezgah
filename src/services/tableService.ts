@@ -49,7 +49,7 @@ export const fetchTablesByAvailability = async (
     return [];
   }
 
-  const { data: tables, error } = await supabase
+  const { data: tables = [], error } = await supabase
     .from("tables")
     .select("*")
     .gte("size", guests)
@@ -60,7 +60,7 @@ export const fetchTablesByAvailability = async (
 
   // Her masa için müsaitlik kontrolü yap
   const availabilityResults = await Promise.all(
-    tables.map(async (table) => {
+    (tables as Table[]).map(async (table) => {
       const isAvailable = await checkTableAvailability(table.id, date, time);
       return {
         ...table,
@@ -81,7 +81,7 @@ export const reserveTable = async (
     .insert({
       reservation_id: reservationId,
       table_id: tableId
-    });
+    } as any);
     
   if (error) throw error;
   return data;

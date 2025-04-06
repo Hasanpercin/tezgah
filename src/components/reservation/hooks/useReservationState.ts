@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,7 +115,7 @@ export const useReservationState = () => {
             is_prepayment: true,
             payment_status: 'completed',
             transaction_id: txId
-          });
+          } as any);
         
         if (error) throw error;
         
@@ -137,7 +136,7 @@ export const useReservationState = () => {
             .insert({
               reservation_id: reservationId,
               table_id: state.selectedTable.id
-            });
+            } as any);
         }
         
         // Seçilen menüyü kaydet
@@ -148,7 +147,7 @@ export const useReservationState = () => {
               reservation_id: reservationId,
               fixed_menu_id: state.selectedFixMenu.id,
               quantity: parseInt(state.formData.guests)
-            });
+            } as any);
         } else if (state.selectedALaCarteItems.length > 0) {
           const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({
             reservation_id: reservationId,
@@ -158,7 +157,7 @@ export const useReservationState = () => {
           
           await supabase
             .from('reservation_menu_items')
-            .insert(menuItemInserts);
+            .insert(menuItemInserts as any[]);
         }
       }
 
@@ -216,7 +215,7 @@ export const useReservationState = () => {
               .insert({
                 reservation_id: reservationId,
                 table_id: state.selectedTable.id
-              });
+              } as any);
           }
           
           // Seçilen menüyü kaydet
@@ -228,7 +227,7 @@ export const useReservationState = () => {
                   reservation_id: reservationId,
                   fixed_menu_id: state.selectedFixMenu.id,
                   quantity: parseInt(state.formData.guests)
-                });
+                } as any);
             } else if (state.selectedALaCarteItems.length > 0) {
               const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({
                 reservation_id: reservationId,
@@ -238,7 +237,7 @@ export const useReservationState = () => {
               
               await supabase
                 .from('reservation_menu_items')
-                .insert(menuItemInserts);
+                .insert(menuItemInserts as any[]);
             }
             
             // Rezervasyon durumunu güncelle

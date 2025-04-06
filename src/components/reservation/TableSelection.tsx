@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchTablesByAvailability } from '@/services/tableService';
+import { fetchTablesByAvailability, Table as TableType } from '@/services/tableService';
 import { Table } from './types/reservationTypes';
 import { Coffee, WineOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

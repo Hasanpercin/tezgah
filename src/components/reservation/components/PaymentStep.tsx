@@ -1,85 +1,99 @@
 
 import React from 'react';
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import PaymentForm from "@/components/payments/PaymentForm";
-import ReservationSummary from "@/components/reservation/ReservationSummary";
+import { Separator } from "@/components/ui/separator";
+import { ReservationSummary } from '../ReservationSummary';
+import PaymentForm from '@/components/payments/PaymentForm';
 import { ReservationState } from '../types/reservationTypes';
 
-interface PaymentStepProps {
+type PaymentStepProps = {
   state: ReservationState;
   calculateTotal: () => number;
   handleSkipPayment: () => void;
   handlePaymentComplete: (txId: string) => void;
-  setIsPrePayment: (isPre: boolean) => void;
-}
+  setIsPrePayment: (isPrePayment: boolean) => void;
+};
 
-const PaymentStep: React.FC<PaymentStepProps> = ({
-  state,
-  calculateTotal,
+const PaymentStep: React.FC<PaymentStepProps> = ({ 
+  state, 
+  calculateTotal, 
   handleSkipPayment,
   handlePaymentComplete,
   setIsPrePayment
 }) => {
-  const { formData, selectedTable, selectedFixMenu, selectedALaCarteItems, isPrePayment } = state;
-  
   return (
-    <div className="space-y-6">
-      <div className="bg-card border rounded-lg p-6">
-        <ReservationSummary
-          date={formData.date}
-          time={formData.time}
-          guests={formData.guests}
-          selectedTable={selectedTable}
-          selectedFixMenu={selectedFixMenu}
-          selectedALaCarteItems={selectedALaCarteItems}
-          isPrePayment={isPrePayment}
+    <div className="space-y-8">
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Rezervasyon Özeti</h3>
+        <ReservationSummary 
+          formData={state.formData}
+          table={state.selectedTable}
+          fixMenu={state.selectedFixMenu}
+          alaCarteItems={state.selectedALaCarteItems}
+          total={calculateTotal()}
+          isPrePayment={state.isPrePayment}
+          onChangeIsPrePayment={setIsPrePayment}
         />
-      </div>
-      
-      <div className="bg-card border rounded-lg p-6">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Ödeme</h3>
-          <p className="text-muted-foreground">
-            Şimdi ödeme yaparak %10 indirim fırsatından yararlanın veya restoranda ödeme yapmayı tercih edin.
+      </Card>
+
+      {state.isPrePayment ? (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Ön Ödeme</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Rezervasyonunuzu tamamlamak için lütfen {calculateTotal()} TL tutarındaki ön ödemeyi gerçekleştirin. 
+            Ön ödeme rezervasyonunuzu garanti altına alır ve toplam tutardan düşülür.
           </p>
-        </div>
-        
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Button 
-            variant="outline" 
-            className="h-auto py-4"
-            onClick={handleSkipPayment}
-          >
-            <div className="text-left">
-              <div className="font-medium">Restoranda Ödeme</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Ödeme işlemini restoranda gerçekleştirin
-              </div>
-            </div>
-          </Button>
           
-          <Button 
-            variant="default"
-            className="h-auto py-4"
-            onClick={() => setIsPrePayment(true)}
-          >
-            <div className="text-left">
-              <div className="font-medium">Şimdi Öde, %10 İndirim Kazan</div>
-              <div className="text-sm text-white/80 mt-1">
-                Online ödeme ile indirimden yararlanın
-              </div>
-            </div>
-          </Button>
-        </div>
-        
-        {isPrePayment && (
           <PaymentForm 
             amount={calculateTotal()} 
             onPaymentComplete={handlePaymentComplete}
-            onCancel={() => setIsPrePayment(false)}
           />
-        )}
-      </div>
+          
+          <div className="mt-6">
+            <Separator className="my-4" />
+            <div className="flex justify-between items-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsPrePayment(false)}
+                className="text-sm"
+              >
+                Ön ödeme yapmadan devam et
+              </Button>
+              
+              <div className="text-sm text-muted-foreground">
+                Ön ödeme tutarı: <strong>{calculateTotal()} TL</strong>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Ödeme Bilgisi</h3>
+          <p className="text-muted-foreground mb-4">
+            Ön ödeme yapmadan devam etmeyi seçtiniz. Ödemeyi restoranda yapabilirsiniz.
+          </p>
+          <p className="font-semibold">Toplam tutar: {calculateTotal()} TL</p>
+          
+          <div className="mt-6">
+            <Separator className="my-4" />
+            <div className="flex justify-between items-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsPrePayment(true)}
+              >
+                Yine de ön ödeme yap
+              </Button>
+              
+              <Button 
+                onClick={handleSkipPayment}
+              >
+                Ödeme Yapmadan Devam Et
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

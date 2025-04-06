@@ -32,7 +32,7 @@ interface TableData {
 export const TablesManagementPanel = () => {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("list");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<TableData | null>(null);
@@ -52,7 +52,7 @@ export const TablesManagementPanel = () => {
   }, []);
 
   const loadTables = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("tables")
@@ -60,7 +60,7 @@ export const TablesManagementPanel = () => {
         .order("name", { ascending: true });
       
       if (error) throw error;
-      setTables(data || []);
+      setTables(data as TableData[] || []);
     } catch (error: any) {
       console.error("Error loading tables:", error.message);
       toast({
@@ -69,7 +69,7 @@ export const TablesManagementPanel = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -105,7 +105,7 @@ export const TablesManagementPanel = () => {
             position_x: formData.position_x,
             position_y: formData.position_y,
             is_active: formData.is_active,
-          })
+          } as any)
           .eq("id", editingTable.id);
         
         if (result.error) throw result.error;
@@ -116,7 +116,7 @@ export const TablesManagementPanel = () => {
         });
       } else {
         // Create new table
-        result = await supabase.from("tables").insert([formData]);
+        result = await supabase.from("tables").insert([formData as any]);
         
         if (result.error) throw result.error;
         
