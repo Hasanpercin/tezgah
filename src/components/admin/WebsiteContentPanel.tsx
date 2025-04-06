@@ -7,13 +7,16 @@ import {
   Home, 
   Image as ImageIcon, 
   Info,
-  Phone
+  Phone,
+  UserCircle,
+  Award
 } from "lucide-react";
 
 import { HomepageContent } from "./website-content/HomepageContent";
 import { AboutContent } from "./website-content/AboutContent";
 import { GalleryContent } from "./website-content/GalleryContent";
 import { ContactContent } from "./website-content/ContactContent";
+import { HeaderImagesContent } from "./website-content/HeaderImagesContent";
 
 export const WebsiteContentPanel = () => {
   const { toast } = useToast();
@@ -35,7 +38,7 @@ export const WebsiteContentPanel = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="homepage">
                 <Home size={16} className="mr-2" /> Anasayfa
               </TabsTrigger>
@@ -47,6 +50,9 @@ export const WebsiteContentPanel = () => {
               </TabsTrigger>
               <TabsTrigger value="contact">
                 <Phone size={16} className="mr-2" /> İletişim
+              </TabsTrigger>
+              <TabsTrigger value="headers">
+                <UserCircle size={16} className="mr-2" /> Header Görselleri
               </TabsTrigger>
             </TabsList>
 
@@ -68,6 +74,11 @@ export const WebsiteContentPanel = () => {
             {/* Contact Content */}
             <TabsContent value="contact" className="space-y-6">
               <ContactContent onSave={handleSaveChanges} />
+            </TabsContent>
+            
+            {/* Header Images Content */}
+            <TabsContent value="headers" className="space-y-6">
+              <HeaderImagesContent onSave={handleSaveChanges} />
             </TabsContent>
           </Tabs>
         </CardContent>

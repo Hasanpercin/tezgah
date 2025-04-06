@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReservationTable } from "./ReservationTable";
 import { ReservationCalendar } from "./ReservationCalendar";
 import { format } from "date-fns";
-import { Users } from "lucide-react";
+import { Users, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,10 +34,12 @@ export const ReservationsPanel = ({
 }: ReservationsPanelProps) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReservations = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         let query = supabase.from("reservations").select("*");
         
@@ -52,6 +54,8 @@ export const ReservationsPanel = ({
           throw error;
         }
 
+        console.log("Fetched reservations:", data);
+
         if (data) {
           const formattedReservations = data.map(res => ({
             ...res,
@@ -64,8 +68,9 @@ export const ReservationsPanel = ({
 
           setReservations(formattedReservations);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching reservations:", error);
+        setError("Rezervasyonlar yüklenirken bir hata oluştu");
       } finally {
         setIsLoading(false);
       }
@@ -116,6 +121,16 @@ export const ReservationsPanel = ({
           {isLoading ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center p-8 text-red-500">
+              <AlertCircle className="h-10 w-10 mb-2" />
+              <p>{error}</p>
+            </div>
+          ) : filteredReservations.length === 0 ? (
+            <div className="text-center p-8">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">Bu tarihte rezervasyon bulunmuyor</p>
             </div>
           ) : (
             <ReservationTable 

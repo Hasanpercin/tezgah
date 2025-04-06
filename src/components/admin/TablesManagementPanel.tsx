@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Edit, Plus, Save, Coffee } from "lucide-react";
+import { Trash2, Edit, Plus, Save, Coffee, Move } from "lucide-react";
 
 interface TableData {
   id?: string;
@@ -36,6 +36,10 @@ export const TablesManagementPanel = () => {
   const [activeTab, setActiveTab] = useState("list");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<TableData | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedTable, setDraggedTable] = useState<string | null>(null);
+  const [isPositionSaved, setIsPositionSaved] = useState(true);
+  const layoutRef = useRef<HTMLDivElement>(null);
   
   // Form state
   const [formData, setFormData] = useState<TableData>({
@@ -135,6 +139,103 @@ export const TablesManagementPanel = () => {
       toast({
         title: "Hata",
         description: error.message || "Masa kaydedilirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTableDragStart = (e: React.MouseEvent, tableId: string) => {
+    if (activeTab !== "layout") return;
+    setDraggedTable(tableId);
+    setIsDragging(true);
+    e.preventDefault(); // Prevent default browser drag behavior
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !draggedTable || !layoutRef.current) return;
+
+    // Calculate the bounds of the layout container
+    const rect = layoutRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Calculate position as percentage of container
+    const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
+
+    // Update table position in local state
+    setTables(prevTables => 
+      prevTables.map(table => 
+        table.id === draggedTable 
+          ? { ...table, position_x: percentX, position_y: percentY }
+          : table
+      )
+    );
+    setIsPositionSaved(false);
+  };
+
+  const handleMouseUp = async () => {
+    if (!isDragging || !draggedTable) return;
+
+    const draggedTableData = tables.find(t => t.id === draggedTable);
+    if (draggedTableData) {
+      try {
+        const { error } = await supabase
+          .from("tables")
+          .update({
+            position_x: draggedTableData.position_x,
+            position_y: draggedTableData.position_y
+          })
+          .eq("id", draggedTable);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Konum Güncellendi",
+          description: "Masa konumu başarıyla kaydedildi.",
+        });
+        setIsPositionSaved(true);
+      } catch (error: any) {
+        console.error("Error updating table position:", error.message);
+        toast({
+          title: "Hata",
+          description: "Masa konumu kaydedilirken bir hata oluştu.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    setIsDragging(false);
+    setDraggedTable(null);
+  };
+
+  const handleSaveAllPositions = async () => {
+    try {
+      // For each table in the tables array, update its position in the database
+      for (const table of tables) {
+        if (table.id) {
+          const { error } = await supabase
+            .from("tables")
+            .update({
+              position_x: table.position_x,
+              position_y: table.position_y
+            })
+            .eq("id", table.id);
+          
+          if (error) throw error;
+        }
+      }
+      
+      toast({
+        title: "Konumlar Güncellendi",
+        description: "Tüm masa konumları başarıyla kaydedildi.",
+      });
+      setIsPositionSaved(true);
+    } catch (error: any) {
+      console.error("Error updating table positions:", error.message);
+      toast({
+        title: "Hata",
+        description: "Masa konumları kaydedilirken bir hata oluştu.",
         variant: "destructive",
       });
     }
@@ -400,7 +501,7 @@ export const TablesManagementPanel = () => {
                       </span>
                     </TableCell>
                     <TableCell>{table.size} kişi</TableCell>
-                    <TableCell>{table.position_x}%, {table.position_y}%</TableCell>
+                    <TableCell>{Math.round(table.position_x)}%, {Math.round(table.position_y)}%</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         table.is_active 
@@ -461,16 +562,35 @@ export const TablesManagementPanel = () => {
         
         <TabsContent value="layout">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Masa Yerleşim Planı</CardTitle>
+              {!isPositionSaved && (
+                <Button onClick={handleSaveAllPositions}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Konumları Kaydet
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-gray-400 p-8 rounded-lg min-h-[500px] relative">
+              <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="flex items-center text-sm text-yellow-700">
+                  <Move className="mr-2 h-4 w-4" />
+                  Masaları sürükleyerek yerleşim düzenini ayarlayabilirsiniz. Değişiklikleri kaydetmeyi unutmayın.
+                </p>
+              </div>
+              
+              <div 
+                className="border-2 border-gray-400 p-8 rounded-lg min-h-[500px] relative"
+                ref={layoutRef}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 bg-white px-3 py-1 text-xs border border-gray-400 rounded-md">
                   Giriş/Çıkış
                 </div>
                 
-                {/* Table layout preview */}
+                {/* Table layout with draggable tables */}
                 <div className="w-full h-full relative">
                   {tables.map((table) => {
                     // Masa türüne göre renk sınıfı belirle
@@ -484,17 +604,21 @@ export const TablesManagementPanel = () => {
                                      table.size <= 4 ? "w-20 h-20" : 
                                      table.size <= 6 ? "w-24 h-24" : "w-28 h-28";
                     
+                    // Sürüklenen masa için ek sınıf
+                    const draggingClass = table.id === draggedTable ? "ring-2 ring-primary shadow-lg z-10" : "";
+                    
                     return (
                       <div
                         key={table.id}
-                        className={`absolute flex items-center justify-center rounded-md border-2 ${typeClass} ${sizeClass} ${!table.is_active ? 'opacity-40' : ''}`}
+                        className={`absolute flex items-center justify-center rounded-md border-2 ${typeClass} ${sizeClass} ${draggingClass} ${!table.is_active ? 'opacity-40' : ''} cursor-move`}
                         style={{ 
                           left: `${table.position_x}%`, 
                           top: `${table.position_y}%`,
                           transform: 'translate(-50%, -50%)'
                         }}
+                        onMouseDown={(e) => table.id && handleTableDragStart(e, table.id)}
                       >
-                        <span className="text-xs font-medium">
+                        <span className="text-xs font-medium text-center select-none pointer-events-none">
                           {table.name}<br/>
                           {`${table.size} kişi`}
                         </span>
