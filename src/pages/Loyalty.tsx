@@ -1,3 +1,4 @@
+
 import Hero from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -5,71 +6,191 @@ import { Button } from '@/components/ui/button';
 import { Gift, Coffee, Award, Info } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+// Puan geçmişi tipi
+type PointHistory = {
+  id: string;
+  date: string;
+  description: string;
+  points: number;
+};
+
+// Ödül tipi
+type Reward = {
+  id: number;
+  name: string;
+  points: number;
+  icon: JSX.Element;
+  available: boolean;
+};
 
 const Loyalty = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
-  
-  // Updated heroImage with the uploaded image
-  const heroImage = "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
-  
-  // Example loyalty data
-  const loyaltyData = {
-    points: 150,
+  const [loyaltyData, setLoyaltyData] = useState({
+    points: 0,
     level: 'Bronz',
     nextLevel: 'Gümüş',
     pointsToNextLevel: 100,
     totalPointsForNextLevel: 250,
-    progress: 60, // percentage
-    history: [
-      { id: 1, date: '15 Nisan 2025', description: 'Rezervasyon', points: 50 },
-      { id: 2, date: '10 Nisan 2025', description: 'Yemek Siparişi', points: 75 },
-      { id: 3, date: '5 Mart 2025', description: 'Özel Etkinlik Katılımı', points: 25 }
-    ]
+    progress: 60, // yüzde
+  });
+
+  const [pointHistory, setPointHistory] = useState<PointHistory[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  
+  // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login', { state: { from: '/loyalty' } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Sadakat puanları ve seviye bilgilerini yükle
+  useEffect(() => {
+    const fetchLoyaltyData = async () => {
+      if (user) {
+        try {
+          const { data: loyaltyPoints, error: loyaltyError } = await supabase
+            .from('loyalty_points')
+            .select('points, level')
+            .eq('user_id', user.id)
+            .single();
+
+          if (loyaltyError) throw loyaltyError;
+          
+          if (loyaltyPoints) {
+            // Seviye ve puanlara göre bir sonraki seviyeyi belirle
+            let nextLevel = 'Gümüş';
+            let pointsToNextLevel = 250 - loyaltyPoints.points;
+            let totalPointsForNextLevel = 250;
+            
+            if (loyaltyPoints.level === 'Bronz') {
+              nextLevel = 'Gümüş';
+              pointsToNextLevel = 250 - loyaltyPoints.points;
+              totalPointsForNextLevel = 250;
+            } else if (loyaltyPoints.level === 'Gümüş') {
+              nextLevel = 'Altın';
+              pointsToNextLevel = 500 - loyaltyPoints.points;
+              totalPointsForNextLevel = 500;
+            } else if (loyaltyPoints.level === 'Altın') {
+              nextLevel = 'Platin';
+              pointsToNextLevel = 1000 - loyaltyPoints.points;
+              totalPointsForNextLevel = 1000;
+            } else {
+              nextLevel = 'VIP';
+              pointsToNextLevel = 2000 - loyaltyPoints.points;
+              totalPointsForNextLevel = 2000;
+            }
+            
+            // İlerleme yüzdesini hesapla
+            const progress = Math.min(
+              Math.round((loyaltyPoints.points / totalPointsForNextLevel) * 100), 
+              100
+            );
+            
+            setLoyaltyData({
+              points: loyaltyPoints.points,
+              level: loyaltyPoints.level,
+              nextLevel,
+              pointsToNextLevel: Math.max(0, pointsToNextLevel),
+              totalPointsForNextLevel,
+              progress,
+            });
+          }
+          
+          // Puan geçmişini yükle
+          const { data: historyData, error: historyError } = await supabase
+            .from('point_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5);
+            
+          if (historyError) throw historyError;
+          
+          if (historyData) {
+            const formattedHistory = historyData.map(item => ({
+              id: item.id,
+              description: item.description,
+              points: item.points,
+              date: new Date(item.created_at).toLocaleDateString('tr-TR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })
+            }));
+            
+            setPointHistory(formattedHistory);
+          }
+        } catch (error) {
+          console.error('Sadakat verileri yüklenirken hata:', error);
+        } finally {
+          setIsLoadingData(false);
+        }
+      }
+    };
+
+    if (isAuthenticated && user) {
+      fetchLoyaltyData();
+    }
+  }, [user, isAuthenticated]);
+
+  // Sadakat seviyesine göre ödülleri tanımla
+  const getRewards = () => {
+    const rewards: Reward[] = [
+      {
+        id: 1,
+        name: 'Ücretsiz Tatlı',
+        points: 100,
+        icon: <Coffee className="h-10 w-10 text-primary" />,
+        available: loyaltyData.points >= 100
+      },
+      {
+        id: 2,
+        name: 'Ücretsiz İçecek',
+        points: 150,
+        icon: <Coffee className="h-10 w-10 text-primary" />,
+        available: loyaltyData.points >= 150
+      },
+      {
+        id: 3,
+        name: '%10 İndirim',
+        points: 200,
+        icon: <Gift className="h-10 w-10 text-primary" />,
+        available: loyaltyData.points >= 200
+      },
+      {
+        id: 4,
+        name: 'Özel Masa Rezervasyonu',
+        points: 300,
+        icon: <Award className="h-10 w-10 text-primary" />,
+        available: loyaltyData.points >= 300
+      }
+    ];
+    
+    return rewards;
   };
   
-  // Rewards list
-  const rewards = [
-    {
-      id: 1,
-      name: 'Ücretsiz Tatlı',
-      points: 100,
-      icon: <Coffee className="h-10 w-10 text-primary" />,
-      available: true
-    },
-    {
-      id: 2,
-      name: 'Ücretsiz İçecek',
-      points: 150,
-      icon: <Coffee className="h-10 w-10 text-primary" />,
-      available: true
-    },
-    {
-      id: 3,
-      name: '%10 İndirim',
-      points: 200,
-      icon: <Gift className="h-10 w-10 text-primary" />,
-      available: false
-    },
-    {
-      id: 4,
-      name: 'Özel Masa Rezervasyonu',
-      points: 300,
-      icon: <Award className="h-10 w-10 text-primary" />,
-      available: false
-    }
-  ];
+  // Updated heroImage with the uploaded image
+  const heroImage = "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
+
+  if (isLoading || isLoadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
-    return null; // Return null since useEffect will redirect
+    return null; // useEffect içinde yönlendirme yapılacak
   }
 
   return (
@@ -133,7 +254,7 @@ const Loyalty = () => {
               <h2 className="text-2xl font-semibold mb-6">Ödülleriniz</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-                {rewards.map(reward => (
+                {getRewards().map(reward => (
                   <Card key={reward.id} className={`p-6 relative ${!reward.available && 'opacity-60'}`}>
                     <div className="flex items-center gap-4">
                       <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -162,15 +283,21 @@ const Loyalty = () => {
                   <h2 className="text-xl font-semibold mb-4">Puan Geçmişi</h2>
                   
                   <div className="space-y-4">
-                    {loyaltyData.history.map(item => (
-                      <div key={item.id} className="flex justify-between items-center pb-3 border-b">
-                        <div>
-                          <p className="font-medium">{item.description}</p>
-                          <p className="text-sm text-muted-foreground">{item.date}</p>
+                    {pointHistory.length > 0 ? (
+                      pointHistory.map(item => (
+                        <div key={item.id} className="flex justify-between items-center pb-3 border-b">
+                          <div>
+                            <p className="font-medium">{item.description}</p>
+                            <p className="text-sm text-muted-foreground">{item.date}</p>
+                          </div>
+                          <div className="text-primary font-semibold">+{item.points}</div>
                         </div>
-                        <div className="text-primary font-semibold">+{item.points}</div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        Henüz puan geçmişi bulunmuyor.
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </Card>

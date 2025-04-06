@@ -1,3 +1,4 @@
+
 import Hero from '@/components/Hero';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -7,61 +8,158 @@ import { Card } from '@/components/ui/card';
 import { User, History, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
+// Rezervasyon tipi
+type Reservation = {
+  id: string;
+  date: string;
+  time: string;
+  guests: string;
+  status: string;
+};
 
 const Profile = () => {
   const { toast } = useToast();
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, logout, user, profile, updateProfile, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const [isUpdating, setIsUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [activeSidebar, setActiveSidebar] = useState('profile');
-  
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
+  const [loyaltyPoints, setLoyaltyPoints] = useState({ points: 0, level: 'Bronz' });
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   
   const [userData, setUserData] = useState({
-    name: user?.name || 'Ahmet Yılmaz',
-    email: 'ahmet@example.com',
-    phone: '0532 123 4567',
-    address: 'Atatürk Mah. Örnek Sok. No:123 İstanbul',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
   });
-
-  const reservations = [
-    {
-      id: '1',
-      date: '23 Nisan 2025',
-      time: '19:30',
-      guests: '4 Kişi',
-      status: 'Onaylandı'
-    },
-    {
-      id: '2',
-      date: '15 Mart 2025',
-      time: '20:00',
-      guests: '2 Kişi',
-      status: 'Tamamlandı'
-    }
-  ];
-
-  const updateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Profil güncellendi",
-        description: "Bilgileriniz başarıyla güncellendi.",
-        variant: "default",
+  
+  // Profil bilgilerini güncelle
+  useEffect(() => {
+    if (profile) {
+      setUserData({
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        address: profile.address || '',
       });
-    }, 1500);
+    }
+  }, [profile]);
+
+  // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login', { state: { from: '/profile' } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Sadakat puanlarını yükle
+  useEffect(() => {
+    const fetchLoyaltyPoints = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('loyalty_points')
+            .select('points, level')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+          
+          if (data) {
+            setLoyaltyPoints({
+              points: data.points,
+              level: data.level
+            });
+          }
+        } catch (error) {
+          console.error('Sadakat puanları yüklenirken hata:', error);
+        }
+      }
+    };
+
+    fetchLoyaltyPoints();
+  }, [user]);
+
+  // Rezervasyonları yükle
+  useEffect(() => {
+    const fetchReservations = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('reservations')
+            .select('id, date, time, guests, status')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          
+          if (data) {
+            const formattedReservations = data.map(res => ({
+              ...res,
+              date: new Date(res.date).toLocaleDateString('tr-TR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              }),
+              guests: `${res.guests} Kişi`
+            }));
+            
+            setReservations(formattedReservations);
+          }
+        } catch (error) {
+          console.error('Rezervasyonlar yüklenirken hata:', error);
+        }
+      }
+    };
+
+    if (activeTab === 'reservations') {
+      fetchReservations();
+    }
+  }, [user, activeTab]);
+
+  const updateUserProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    
+    try {
+      const result = await updateProfile({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Profil güncellendi",
+          description: "Bilgileriniz başarıyla güncellendi.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Güncelleme başarısız",
+          description: result.error || "Profil güncellenirken bir hata oluştu.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Profil güncellenirken hata:', error);
+      toast({
+        title: "Güncelleme başarısız",
+        description: "Beklenmeyen bir hata oluştu.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast({
       title: "Çıkış yapıldı",
       description: "Başarıyla çıkış yaptınız.",
@@ -75,11 +173,21 @@ const Profile = () => {
     setActiveTab(tab);
   };
 
-  // New heroImage using the uploaded image
   const heroImage = "/lovable-uploads/2c59c482-2fad-4bfb-b382-09d5e7c92c20.png";
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
-    return null; // Return null since useEffect will redirect
+    return null; // useEffect içinde yönlendirme yapılacak
   }
 
   const renderContent = () => {
@@ -90,7 +198,7 @@ const Profile = () => {
             <div className="p-6">
               <h2 className="text-2xl font-semibold mb-6">Profil Bilgileri</h2>
               
-              <form onSubmit={updateProfile} className="space-y-4">
+              <form onSubmit={updateUserProfile} className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1">Ad Soyad</label>
                   <Input 
@@ -114,7 +222,7 @@ const Profile = () => {
                   <label htmlFor="phone" className="block text-sm font-medium mb-1">Telefon</label>
                   <Input 
                     id="phone" 
-                    value={userData.phone}
+                    value={userData.phone || ''}
                     onChange={(e) => setUserData({...userData, phone: e.target.value})}
                   />
                 </div>
@@ -123,13 +231,13 @@ const Profile = () => {
                   <label htmlFor="address" className="block text-sm font-medium mb-1">Adres</label>
                   <Input 
                     id="address" 
-                    value={userData.address}
+                    value={userData.address || ''}
                     onChange={(e) => setUserData({...userData, address: e.target.value})}
                   />
                 </div>
                 
-                <Button type="submit" disabled={isLoading} className="mt-4">
-                  {isLoading ? 'Güncelleniyor...' : 'Profili Güncelle'}
+                <Button type="submit" disabled={isUpdating} className="mt-4">
+                  {isUpdating ? 'Güncelleniyor...' : 'Profili Güncelle'}
                 </Button>
               </form>
             </div>
@@ -154,7 +262,9 @@ const Profile = () => {
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             reservation.status === 'Onaylandı' 
                               ? 'bg-green-100 text-green-800' 
-                              : 'bg-blue-100 text-blue-800'
+                              : reservation.status === 'Tamamlandı'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {reservation.status}
                           </span>
@@ -241,7 +351,7 @@ const Profile = () => {
                     <User size={40} className="text-primary" />
                   </div>
                   <h3 className="font-medium text-xl">{userData.name}</h3>
-                  <p className="text-muted-foreground text-sm">150 Sadakat Puanı</p>
+                  <p className="text-muted-foreground text-sm">{loyaltyPoints.points} Sadakat Puanı</p>
                 </div>
                 
                 <nav className="space-y-1">

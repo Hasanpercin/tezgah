@@ -5,28 +5,52 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import Hero from '@/components/Hero';
+import { Label } from '@/components/ui/label';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState<string>('login');
+  
+  // Giriş formu
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: '',
+  });
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  // Kayıt formu
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
   const from = location.state?.from?.pathname || '/profile';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // Kullanıcı zaten giriş yapmışsa yönlendir
+  if (isAuthenticated) {
+    navigate(from, { replace: true });
+    return null;
+  }
 
-    setTimeout(() => {
-      const success = login(username, password);
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoginLoading(true);
+
+    try {
+      const { email, password } = loginData;
+      const result = await login(email, password);
       
-      if (success) {
+      if (result.success) {
         toast({
           title: "Giriş başarılı",
           description: "Hoş geldiniz!",
@@ -36,13 +60,75 @@ const Login = () => {
       } else {
         toast({
           title: "Giriş başarısız",
-          description: "Kullanıcı adı veya şifre hatalı. Lütfen tekrar deneyin.",
+          description: result.error || "Bir hata oluştu, lütfen tekrar deneyin.",
           variant: "destructive",
         });
       }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Giriş başarısız",
+        description: "Beklenmeyen bir hata oluştu.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const { name, email, password, confirmPassword } = registerData;
+    
+    // Form doğrulama
+    if (!name || !email || !password || !confirmPassword) {
+      toast({
+        title: "Eksik bilgi",
+        description: "Lütfen tüm alanları doldurun.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Şifreler eşleşmiyor",
+        description: "Girdiğiniz şifreler aynı değil.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRegisterLoading(true);
+
+    try {
+      const result = await signup(email, password, name);
       
-      setIsLoading(false);
-    }, 800);
+      if (result.success) {
+        toast({
+          title: "Kayıt başarılı",
+          description: "Hesabınız oluşturuldu ve giriş yaptınız.",
+          variant: "default",
+        });
+        navigate(from);
+      } else {
+        toast({
+          title: "Kayıt başarısız",
+          description: result.error || "Bir hata oluştu, lütfen tekrar deneyin.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Register error:", error);
+      toast({
+        title: "Kayıt başarısız",
+        description: "Beklenmeyen bir hata oluştu.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegisterLoading(false);
+    }
   };
 
   const heroImage = "/lovable-uploads/ea00899c-1323-4ef2-b182-0836dd3edf42.png";
@@ -51,8 +137,8 @@ const Login = () => {
     <div className="min-h-screen">
       <Hero 
         backgroundImage={heroImage}
-        title="Giriş Yap"
-        subtitle="Profil ve sadakat programı sayfalarına erişmek için giriş yapın"
+        title="Hesabınıza Erişin"
+        subtitle="Giriş yapın veya yeni bir hesap oluşturun"
         showButtons={false}
         overlayColor="green-600/70"
       />
@@ -61,44 +147,128 @@ const Login = () => {
         <div className="container-custom max-w-md">
           <Card>
             <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-6">Kullanıcı Girişi</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium mb-1">Kullanıcı Adı</label>
-                  <Input 
-                    id="username" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Kullanıcı adınız"
-                    required
-                  />
-                </div>
+              <Tabs 
+                defaultValue="login" 
+                value={activeTab} 
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Giriş Yap</TabsTrigger>
+                  <TabsTrigger value="register">Kayıt Ol</TabsTrigger>
+                </TabsList>
                 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium mb-1">Şifre</label>
-                  <Input 
-                    id="password" 
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Şifreniz"
-                    required
-                  />
-                </div>
+                <TabsContent value="login">
+                  <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="login-email">E-posta</Label>
+                      <Input 
+                        id="login-email" 
+                        type="email" 
+                        value={loginData.email}
+                        onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                        placeholder="E-posta adresiniz"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="login-password">Şifre</Label>
+                      <Input 
+                        id="login-password" 
+                        type="password"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                        placeholder="Şifreniz"
+                        required
+                      />
+                    </div>
+                    
+                    <Button type="submit" disabled={isLoginLoading} className="w-full">
+                      {isLoginLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+                    </Button>
+
+                    <p className="text-center text-sm text-muted-foreground">
+                      Hesabınız yok mu? 
+                      <Button 
+                        variant="link" 
+                        onClick={() => setActiveTab('register')}
+                        className="p-0 h-auto ml-1"
+                      >
+                        Kayıt olun
+                      </Button>
+                    </p>
+                  </form>
+                </TabsContent>
                 
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
-                </Button>
-              </form>
-              
-              <div className="mt-4 text-center">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Demo hesap bilgileri:</strong><br />
-                  Kullanıcı Adı: kullanici<br />
-                  Şifre: sifre123
-                </p>
-              </div>
+                <TabsContent value="register">
+                  <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="register-name">Ad Soyad</Label>
+                      <Input 
+                        id="register-name" 
+                        value={registerData.name}
+                        onChange={(e) => setRegisterData({...registerData, name: e.target.value})}
+                        placeholder="Adınız ve soyadınız"
+                        required
+                      />
+                    </div>
+                  
+                    <div>
+                      <Label htmlFor="register-email">E-posta</Label>
+                      <Input 
+                        id="register-email" 
+                        type="email" 
+                        value={registerData.email}
+                        onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+                        placeholder="E-posta adresiniz"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="register-password">Şifre</Label>
+                      <Input 
+                        id="register-password" 
+                        type="password"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                        placeholder="Şifreniz (en az 6 karakter)"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="register-confirm-password">Şifre Tekrar</Label>
+                      <Input 
+                        id="register-confirm-password" 
+                        type="password"
+                        value={registerData.confirmPassword}
+                        onChange={(e) => setRegisterData({...registerData, confirmPassword: e.target.value})}
+                        placeholder="Şifrenizi tekrar girin"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    
+                    <Button type="submit" disabled={isRegisterLoading} className="w-full">
+                      {isRegisterLoading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
+                    </Button>
+
+                    <p className="text-center text-sm text-muted-foreground">
+                      Zaten hesabınız var mı? 
+                      <Button 
+                        variant="link" 
+                        onClick={() => setActiveTab('login')}
+                        className="p-0 h-auto ml-1"
+                      >
+                        Giriş yapın
+                      </Button>
+                    </p>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </div>
           </Card>
         </div>
