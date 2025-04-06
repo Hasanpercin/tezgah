@@ -13,6 +13,8 @@ interface HeaderImageData {
   section: string;
   value: string;
   image_path?: string | null;
+  // Add the missing updated_at property to fix the error
+  updated_at?: string;
 }
 
 interface HeaderImagesContentProps {
@@ -78,28 +80,9 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
     }
   };
 
-  const handleImageUpload = async (headerKey: string, file: File) => {
+  const handleImageSelected = async (headerKey: string, imageUrl: string) => {
     try {
       setIsSaving((prev) => ({ ...prev, [headerKey]: true }));
-
-      // Get a unique filename
-      const timestamp = new Date().getTime();
-      const fileExt = file.name.split('.').pop();
-      const filePath = `header-images/${headerKey}_${timestamp}.${fileExt}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('website-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('website-images')
-        .getPublicUrl(filePath);
-
-      const imageUrl = urlData.publicUrl;
 
       // Find the header item to update
       const headerToUpdate = headerImages.find(h => h.key === headerKey);
@@ -128,10 +111,10 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
         if (onSave) onSave();
       }
     } catch (error: any) {
-      console.error("Error uploading header image:", error.message);
+      console.error("Error updating header image:", error.message);
       toast({
         title: "Hata",
-        description: "Header görselini yüklerken bir hata oluştu.",
+        description: "Header görselini güncellerken bir hata oluştu.",
         variant: "destructive",
       });
     } finally {
@@ -184,8 +167,9 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
                   )}
                   
                   <ImageUploader
-                    onImageUpload={(file) => handleImageUpload(header.key, file)}
+                    onImageSelected={(imageUrl) => handleImageSelected(header.key, imageUrl)}
                     accept="image/png, image/jpeg"
+                    folder="header-images"
                   />
                   
                   <p className="text-xs text-muted-foreground">
