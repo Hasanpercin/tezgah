@@ -21,14 +21,14 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
   const { toast } = useToast();
   const guestCount = parseInt(guests, 10);
 
-  // Masa verisini Supabase'den çekme
+  // Query tables from Supabase
   const { data: tables = [], isLoading, error } = useQuery({
     queryKey: ['tables', date?.toISOString(), time, guestCount],
     queryFn: () => fetchTablesByAvailability(date, time, guestCount),
     enabled: !!date && !!time && !isNaN(guestCount),
   });
 
-  // Supabase verileri frontend için hazırla
+  // Convert Supabase data for frontend
   const convertedTables: Table[] = tables.map(table => ({
     id: table.id,
     type: table.type as 'window' | 'center' | 'corner' | 'booth',
@@ -42,7 +42,12 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
   }));
 
   useEffect(() => {
-    // Eğer seçili masa varsa ve müsait değilse veya yeni guestCount için uygun değilse seçimi temizle
+    // Reset selected table if no tables are available
+    if (tables.length === 0 && selectedTable) {
+      onSelectTable(null);
+    }
+    
+    // Check if selected table is still available
     if (selectedTable) {
       const currentTable = convertedTables.find(t => t.id === selectedTable.id);
       if (!currentTable || !currentTable.available || currentTable.size < guestCount) {
@@ -65,7 +70,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
     }
   }, [convertedTables, selectedTable, guestCount, onSelectTable, toast]);
 
-  // Masa türü adını döndürür
+  // Function to get table type name
   function getTableTypeName(type: string): string {
     switch (type) {
       case 'window': return 'Pencere Kenarı';
@@ -111,11 +116,21 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
     return table.size >= guestCount;
   };
 
-  // Error gösterimi
+  // Check for console errors
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching tables:", error);
+    }
+    console.log("Current query params:", { date, time, guestCount });
+    console.log("Tables data:", tables);
+  }, [error, date, time, guestCount, tables]);
+
+  // Error display
   if (error) {
     return (
       <div className="py-6 text-center text-red-500">
         <p>Masa bilgileri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
+        <p className="text-sm mt-2">Hata detayı: {String(error)}</p>
       </div>
     );
   }
@@ -201,7 +216,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
             </div>
           )}
           
-          {/* Tables layout - Improved container to ensure tables stay within bounds */}
+          {/* Tables layout */}
           {!isLoading && date && (
             <div className="w-full h-full relative overflow-hidden">
               {convertedTables.map((table) => (

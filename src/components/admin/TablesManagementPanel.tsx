@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +40,6 @@ export const TablesManagementPanel = () => {
   const [isPositionSaved, setIsPositionSaved] = useState(true);
   const layoutRef = useRef<HTMLDivElement>(null);
   
-  // Form state
   const [formData, setFormData] = useState<TableData>({
     name: '',
     type: 'center',
@@ -99,7 +97,6 @@ export const TablesManagementPanel = () => {
       let result;
       
       if (editingTable?.id) {
-        // Update existing table
         result = await supabase
           .from("tables")
           .update({
@@ -119,7 +116,6 @@ export const TablesManagementPanel = () => {
           description: "Masa başarıyla güncellendi.",
         });
       } else {
-        // Create new table
         result = await supabase.from("tables").insert([formData as any]);
         
         if (result.error) throw result.error;
@@ -130,7 +126,6 @@ export const TablesManagementPanel = () => {
         });
       }
       
-      // Reset form and close dialog
       handleCloseDialog();
       loadTables();
       
@@ -148,22 +143,19 @@ export const TablesManagementPanel = () => {
     if (activeTab !== "layout") return;
     setDraggedTable(tableId);
     setIsDragging(true);
-    e.preventDefault(); // Prevent default browser drag behavior
+    e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !draggedTable || !layoutRef.current) return;
 
-    // Calculate the bounds of the layout container
     const rect = layoutRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Calculate position as percentage of container
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
-    // Update table position in local state
     setTables(prevTables => 
       prevTables.map(table => 
         table.id === draggedTable 
@@ -211,7 +203,6 @@ export const TablesManagementPanel = () => {
 
   const handleSaveAllPositions = async () => {
     try {
-      // For each table in the tables array, update its position in the database
       for (const table of tables) {
         if (table.id) {
           const { error } = await supabase
@@ -293,7 +284,6 @@ export const TablesManagementPanel = () => {
     });
   };
 
-  // Masa türüne göre renk sınıfı
   const getTypeColorClass = (type: string) => {
     switch (type) {
       case 'window': return 'text-blue-600 bg-blue-100';
@@ -304,7 +294,6 @@ export const TablesManagementPanel = () => {
     }
   };
 
-  // Masa türü için Türkçe çeviri
   const getTypeTranslation = (type: string) => {
     switch (type) {
       case 'window': return 'Pencere Kenarı';
@@ -315,7 +304,6 @@ export const TablesManagementPanel = () => {
     }
   };
 
-  // Gösterge paneli
   const renderDashboard = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <Card>
@@ -347,7 +335,6 @@ export const TablesManagementPanel = () => {
     </div>
   );
 
-  // Masaların listesi
   const renderTableList = () => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -590,21 +577,17 @@ export const TablesManagementPanel = () => {
                   Giriş/Çıkış
                 </div>
                 
-                {/* Table layout with draggable tables */}
                 <div className="w-full h-full relative">
                   {tables.map((table) => {
-                    // Masa türüne göre renk sınıfı belirle
                     const typeClass = table.type === 'window' ? "bg-blue-100 border-blue-300" :
                                      table.type === 'center' ? "bg-green-100 border-green-300" :
                                      table.type === 'corner' ? "bg-yellow-100 border-yellow-300" :
                                      "bg-purple-100 border-purple-300";
                     
-                    // Masa büyüklüğü için sınıf belirle
                     const sizeClass = table.size <= 2 ? "w-16 h-16" :
                                      table.size <= 4 ? "w-20 h-20" : 
                                      table.size <= 6 ? "w-24 h-24" : "w-28 h-28";
                     
-                    // Sürüklenen masa için ek sınıf
                     const draggingClass = table.id === draggedTable ? "ring-2 ring-primary shadow-lg z-10" : "";
                     
                     return (

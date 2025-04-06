@@ -44,7 +44,7 @@ export const ReservationsPanel = ({
         let query = supabase.from("reservations").select("*");
         
         if (selectedDate) {
-          const dateString = new Date(selectedDate).toISOString().split('T')[0];
+          const dateString = format(selectedDate, 'yyyy-MM-dd');
           query = query.eq('date', dateString);
         }
 
@@ -63,7 +63,8 @@ export const ReservationsPanel = ({
             guests: String(res.guests),
             name: res.name || "İsimsiz",
             email: res.email || "",
-            phone: res.phone || ""
+            phone: res.phone || "",
+            status: res.status as "Onaylandı" | "Beklemede" | "İptal"
           })) as Reservation[];
 
           setReservations(formattedReservations);
