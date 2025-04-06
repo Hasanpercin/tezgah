@@ -22,6 +22,21 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   handlePaymentComplete,
   setIsPrePayment
 }) => {
+  // Casting the types to match what ReservationSummary expects
+  const castSelectedTable = state.selectedTable ? {
+    ...state.selectedTable,
+    id: Number(state.selectedTable.id)
+  } : null;
+
+  // Cast selectedALaCarteItems to add the required category property
+  const castSelectedALaCarteItems = state.selectedALaCarteItems.map(item => ({
+    item: {
+      ...item.item,
+      category: 'main' as 'starter' | 'main' | 'dessert' // Default to 'main' as fallback
+    },
+    quantity: item.quantity
+  }));
+
   return (
     <div className="space-y-8">
       <Card className="p-6">
@@ -30,9 +45,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           date={state.formData.date}
           time={state.formData.time}
           guests={state.formData.guests}
-          selectedTable={state.selectedTable}
+          selectedTable={castSelectedTable}
           selectedFixMenu={state.selectedFixMenu}
-          selectedALaCarteItems={state.selectedALaCarteItems}
+          selectedALaCarteItems={castSelectedALaCarteItems}
           isPrePayment={state.isPrePayment}
         />
       </Card>
