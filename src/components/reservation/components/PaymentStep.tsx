@@ -27,13 +27,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Rezervasyon Özeti</h3>
         <ReservationSummary 
-          formData={state.formData}
-          table={state.selectedTable}
-          fixMenu={state.selectedFixMenu}
-          alaCarteItems={state.selectedALaCarteItems}
-          total={calculateTotal()}
+          date={state.formData.date}
+          time={state.formData.time}
+          guests={state.formData.guests}
+          selectedTable={state.selectedTable}
+          selectedFixMenu={state.selectedFixMenu}
+          selectedALaCarteItems={state.selectedALaCarteItems}
           isPrePayment={state.isPrePayment}
-          onChangeIsPrePayment={setIsPrePayment}
         />
       </Card>
 
