@@ -1,6 +1,4 @@
 
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -23,12 +21,12 @@ type Reservation = {
   guests: string;
   occasion?: string;
   notes?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "Onaylandı" | "Beklemede" | "İptal";
 };
 
 type ReservationTableProps = {
   reservations: Reservation[];
-  onStatusChange: (id: string, newStatus: "confirmed" | "pending" | "cancelled") => void;
+  onStatusChange: (id: string, newStatus: "Onaylandı" | "Beklemede" | "İptal") => void;
 };
 
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {
@@ -45,6 +43,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
       <TableHeader>
         <TableRow>
           <TableHead>Misafir</TableHead>
+          <TableHead>İletişim</TableHead>
           <TableHead>Tarih & Saat</TableHead>
           <TableHead>Kişi</TableHead>
           <TableHead>Durum</TableHead>
@@ -55,8 +54,19 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
         {reservations.map((res) => (
           <TableRow key={res.id}>
             <TableCell>
-              <div className="font-medium">{res.name}</div>
-              <div className="text-sm text-muted-foreground">{res.phone}</div>
+              <div className="font-medium">{res.name || "İsimsiz"}</div>
+              {res.occasion && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {res.occasion === "birthday" ? "Doğum Günü" :
+                   res.occasion === "anniversary" ? "Yıl Dönümü" :
+                   res.occasion === "business" ? "İş Yemeği" :
+                   res.occasion === "date" ? "Romantik Akşam Yemeği" : "Özel"}
+                </div>
+              )}
+            </TableCell>
+            <TableCell>
+              <div className="text-sm">{res.phone}</div>
+              <div className="text-xs text-muted-foreground">{res.email}</div>
             </TableCell>
             <TableCell>
               {format(new Date(res.date), "dd.MM.yyyy")} {res.time}
@@ -68,13 +78,13 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
             </TableCell>
             <TableCell>
               <Badge className={`${
-                res.status === "confirmed" 
+                res.status === "Onaylandı" 
                   ? "bg-green-100 text-green-800 hover:bg-green-100" 
-                  : res.status === "pending" 
+                  : res.status === "Beklemede" 
                   ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" 
                   : "bg-red-100 text-red-800 hover:bg-red-100"
               }`}>
-                {res.status === "confirmed" ? "Onaylı" : res.status === "pending" ? "Beklemede" : "İptal"}
+                {res.status}
               </Badge>
             </TableCell>
             <TableCell>
@@ -86,19 +96,19 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem 
-                    onClick={() => onStatusChange(res.id, "confirmed")}
+                    onClick={() => onStatusChange(res.id, "Onaylandı")}
                     className="text-green-600"
                   >
                     Onayla
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => onStatusChange(res.id, "pending")}
+                    onClick={() => onStatusChange(res.id, "Beklemede")}
                     className="text-yellow-600"
                   >
                     Beklet
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => onStatusChange(res.id, "cancelled")}
+                    onClick={() => onStatusChange(res.id, "İptal")}
                     className="text-red-600"
                   >
                     İptal Et

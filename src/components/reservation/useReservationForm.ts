@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
@@ -112,25 +113,20 @@ export const useReservationForm = () => {
         .from('reservations')
         .insert({
           user_id: user?.id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
           date: formData.date?.toISOString().split('T')[0],
           time: formData.time,
           guests: parseInt(formData.guests),
           notes: formData.notes,
           occasion: formData.occasion,
-          status: 'pending'
+          status: 'Beklemede'
         })
         .select()
         .single();
       
       if (error) throw error;
-      
-      if (!user?.id && formData.name && formData.phone) {
-        console.log("Anonim rezervasyon için profil bilgileri:", {
-          name: formData.name,
-          phone: formData.phone,
-          email: formData.email
-        });
-      }
       
       toast({
         title: "Rezervasyon Alındı",

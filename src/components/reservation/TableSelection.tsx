@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchTablesByAvailability, Table as TableType } from '@/services/tableService';
+import { fetchTablesByAvailability } from '@/services/tableService';
 import { Table } from './types/reservationTypes';
 import { Coffee, WineOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -155,11 +155,11 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
         </div>
       </div>
 
-      <Card className="p-6 relative bg-slate-50 border-dashed">
+      <Card className="p-6 relative bg-slate-50 border-dashed overflow-hidden">
         <div className="absolute top-4 left-4 text-xs font-medium text-muted-foreground">Restoran Yerleşimi</div>
         
         {/* Restaurant walls */}
-        <div className="border-2 border-gray-400 p-8 rounded-lg min-h-[400px] relative">
+        <div className="border-2 border-gray-400 p-8 rounded-lg min-h-[400px] w-full relative">
           {/* Entry/Exit */}
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 bg-white px-3 py-1 text-xs border border-gray-400 rounded-md">
             Giriş/Çıkış
@@ -176,7 +176,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
           )}
           
           {/* No data state */}
-          {!isLoading && convertedTables.length === 0 && (
+          {!isLoading && convertedTables.length === 0 && date && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-6 max-w-sm">
                 <WineOff className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -201,9 +201,9 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
             </div>
           )}
           
-          {/* Tables layout */}
-          {!isLoading && (
-            <div className="w-full h-full relative">
+          {/* Tables layout - Improved container to ensure tables stay within bounds */}
+          {!isLoading && date && (
+            <div className="w-full h-full relative overflow-hidden">
               {convertedTables.map((table) => (
                 <div
                   key={table.id}
@@ -217,7 +217,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
                   onClick={() => table.available && isCompatible(table) && handleTableClick(table)}
                   title={table.available ? table.label : `${table.label} (Müsait Değil)`}
                 >
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-medium text-center">
                     {table.name}<br/>
                     {`${table.size} kişi`}
                   </span>

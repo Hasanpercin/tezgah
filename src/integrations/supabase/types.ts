@@ -432,11 +432,14 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          email: string | null
           guests: number
           has_prepayment: boolean | null
           id: string
+          name: string | null
           notes: string | null
           occasion: string | null
+          phone: string | null
           selected_items: Json | null
           status: string
           time: string
@@ -447,11 +450,14 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          email?: string | null
           guests: number
           has_prepayment?: boolean | null
           id?: string
+          name?: string | null
           notes?: string | null
           occasion?: string | null
+          phone?: string | null
           selected_items?: Json | null
           status?: string
           time: string
@@ -462,11 +468,14 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          email?: string | null
           guests?: number
           has_prepayment?: boolean | null
           id?: string
+          name?: string | null
           notes?: string | null
           occasion?: string | null
+          phone?: string | null
           selected_items?: Json | null
           status?: string
           time?: string

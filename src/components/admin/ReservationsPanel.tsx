@@ -5,6 +5,8 @@ import { ReservationTable } from "./ReservationTable";
 import { ReservationCalendar } from "./ReservationCalendar";
 import { format } from "date-fns";
 import { Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Reservation = {
   id: string;
@@ -16,24 +18,59 @@ type Reservation = {
   guests: string;
   occasion?: string;
   notes?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "Onaylandı" | "Beklemede" | "İptal";
 };
 
 type ReservationsPanelProps = {
-  reservations: Reservation[];
   selectedDate: Date | undefined;
   onSelectDate: (date: Date | undefined) => void;
-  onStatusChange: (id: string, newStatus: "confirmed" | "pending" | "cancelled") => void;
-  isLoading: boolean;
+  onStatusChange: (id: string, newStatus: "Onaylandı" | "Beklemede" | "İptal") => void;
 };
 
 export const ReservationsPanel = ({
-  reservations,
   selectedDate,
   onSelectDate,
-  onStatusChange,
-  isLoading
+  onStatusChange
 }: ReservationsPanelProps) => {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchReservations = async () => {
+      setIsLoading(true);
+      try {
+        let query = supabase.from("reservations").select("*");
+        
+        if (selectedDate) {
+          const dateString = new Date(selectedDate).toISOString().split('T')[0];
+          query = query.eq('date', dateString);
+        }
+
+        const { data, error } = await query.order('date', { ascending: true });
+        
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const formattedReservations = data.map(res => ({
+            ...res,
+            date: new Date(res.date),
+            guests: String(res.guests)
+          })) as Reservation[];
+
+          setReservations(formattedReservations);
+        }
+      } catch (error) {
+        console.error("Error fetching reservations:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReservations();
+  }, [selectedDate]);
+
   const filteredReservations = selectedDate 
     ? reservations.filter(res => {
         const resDate = new Date(res.date);

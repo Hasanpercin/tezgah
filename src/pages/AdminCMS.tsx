@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +9,7 @@ import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
 import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 type Reservation = {
   id: string;
@@ -19,67 +21,17 @@ type Reservation = {
   guests: string;
   occasion?: string;
   notes?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "Onaylandı" | "Beklemede" | "İptal";
 };
 
 const AdminCMS = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [isLoadingReservations, setIsLoadingReservations] = useState(false);
-  const [menuData, setMenuData] = useState<MenuCategoryType[]>([]);
   const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+  const [menuData, setMenuData] = useState<MenuCategoryType[]>([]);
 
-  // Fetching reservations (Mock data for now)
-  useEffect(() => {
-    if (activeTab === "reservations" || activeTab === "dashboard") {
-      setIsLoadingReservations(true);
-      
-      // Simulating API call
-      setTimeout(() => {
-        const mockReservations: Reservation[] = [
-          {
-            id: "r1",
-            name: "Ahmet Yılmaz",
-            email: "ahmet@example.com",
-            phone: "05321234567",
-            date: new Date(),
-            time: "19:30",
-            guests: "4",
-            occasion: "birthday",
-            status: "confirmed"
-          },
-          {
-            id: "r2",
-            name: "Ayşe Demir",
-            email: "ayse@example.com",
-            phone: "05335556677",
-            date: new Date(),
-            time: "20:00",
-            guests: "2",
-            status: "pending"
-          },
-          {
-            id: "r3",
-            name: "Mehmet Kaya",
-            email: "mehmet@example.com",
-            phone: "05441234567",
-            date: new Date(Date.now() + 86400000), // tomorrow
-            time: "12:30",
-            guests: "6",
-            notes: "Pencere kenarı tercih edilir",
-            status: "confirmed"
-          }
-        ];
-        
-        setReservations(mockReservations);
-        setIsLoadingReservations(false);
-      }, 1000);
-    }
-  }, [activeTab]);
-
-  // Fetching menu data directly
+  // Menü verisini yükleme
   useEffect(() => {
     if (activeTab === "menu-qr" || activeTab === "dashboard") {
       setIsLoadingMenu(true);
@@ -135,15 +87,27 @@ const AdminCMS = () => {
   }, [activeTab]);
 
   // Handle status change
-  const handleStatusChange = (id: string, newStatus: "confirmed" | "pending" | "cancelled") => {
-    setReservations(current => 
-      current.map(res => res.id === id ? {...res, status: newStatus} : res)
-    );
-    
-    toast({
-      title: "Durum Güncellendi",
-      description: `Rezervasyon durumu ${newStatus === "confirmed" ? "onaylandı" : newStatus === "pending" ? "beklemede" : "iptal edildi"}.`,
-    });
+  const handleStatusChange = async (id: string, newStatus: "Onaylandı" | "Beklemede" | "İptal") => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Durum Güncellendi",
+        description: `Rezervasyon durumu ${newStatus} olarak güncellendi.`,
+      });
+    } catch (error) {
+      console.error("Error updating reservation status:", error);
+      toast({
+        title: "Hata",
+        description: "Durum güncellenirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -180,24 +144,9 @@ const AdminCMS = () => {
             </TabsList>
             
             <TabsContent value="dashboard" className="space-y-6">
+              {/* Dashboard içeriği - mock verileri kaldırıp gerçek verileri kullanacağız */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="col-span-1">
-                  <h2 className="text-xl font-semibold mb-4">Rezervasyon Özeti</h2>
-                  <div className="border rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                      <span>Bugün</span>
-                      <span className="font-medium">{reservations.filter(r => new Date(r.date).toDateString() === new Date().toDateString()).length} rezervasyon</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 rounded">
-                      <span>Bu Hafta</span>
-                      <span className="font-medium">{reservations.length} rezervasyon</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                      <span>Onay Bekleyen</span>
-                      <span className="font-medium">{reservations.filter(r => r.status === "pending").length} rezervasyon</span>
-                    </div>
-                  </div>
-                </div>
+                <DashboardSummaryCard />
                 
                 <div className="col-span-1">
                   <h2 className="text-xl font-semibold mb-4">Menü Özeti</h2>
@@ -258,67 +207,14 @@ const AdminCMS = () => {
                 </div>
               </div>
               
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Son Rezervasyonlar</h2>
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-border">
-                      <thead>
-                        <tr className="bg-muted">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ad Soyad</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tarih</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Saat</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Kişi</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Durum</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-card divide-y divide-border">
-                        {isLoadingReservations ? (
-                          <tr>
-                            <td colSpan={5} className="px-4 py-6 text-center">
-                              <div className="flex justify-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          reservations.slice(0, 3).map((reservation) => (
-                            <tr key={reservation.id}>
-                              <td className="px-4 py-3 whitespace-nowrap">{reservation.name}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                {new Date(reservation.date).toLocaleDateString('tr-TR')}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">{reservation.time}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">{reservation.guests}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                                  reservation.status === "confirmed"
-                                    ? "bg-green-100 text-green-800"
-                                    : reservation.status === "pending"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}>
-                                  {reservation.status === "confirmed" ? "Onaylandı" : 
-                                   reservation.status === "pending" ? "Beklemede" : "İptal Edildi"}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+              <DashboardRecentReservations />
             </TabsContent>
             
             <TabsContent value="reservations" className="space-y-6">
               <ReservationsPanel
-                reservations={reservations}
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
                 onStatusChange={handleStatusChange}
-                isLoading={isLoadingReservations}
               />
             </TabsContent>
             
@@ -341,6 +237,187 @@ const AdminCMS = () => {
               <WebsiteContentPanel />
             </TabsContent>
           </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Dashboard özet kartı bileşeni
+const DashboardSummaryCard = () => {
+  const [reservationStats, setReservationStats] = useState({
+    today: 0,
+    thisWeek: 0,
+    pending: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReservationStats = async () => {
+      setIsLoading(true);
+      try {
+        // Tüm rezervasyonları çek
+        const { data, error } = await supabase.from('reservations').select('*');
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Bugünkü rezervasyonlar
+          const today = new Date().toISOString().split('T')[0];
+          const todayReservations = data.filter(r => r.date === today);
+          
+          // Bu haftaki rezervasyonlar (son 7 gün)
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          const thisWeekReservations = data.filter(r => {
+            const reservationDate = new Date(r.date);
+            return reservationDate >= oneWeekAgo;
+          });
+          
+          // Bekleyen rezervasyonlar
+          const pendingReservations = data.filter(r => r.status === 'Beklemede');
+          
+          setReservationStats({
+            today: todayReservations.length,
+            thisWeek: thisWeekReservations.length,
+            pending: pendingReservations.length
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching reservation stats:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReservationStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="col-span-1">
+        <h2 className="text-xl font-semibold mb-4">Rezervasyon Özeti</h2>
+        <div className="border rounded-lg p-4 space-y-2">
+          <div className="animate-pulse h-8 bg-muted rounded mb-2"></div>
+          <div className="animate-pulse h-8 bg-muted rounded mb-2"></div>
+          <div className="animate-pulse h-8 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="col-span-1">
+      <h2 className="text-xl font-semibold mb-4">Rezervasyon Özeti</h2>
+      <div className="border rounded-lg p-4 space-y-2">
+        <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
+          <span>Bugün</span>
+          <span className="font-medium">{reservationStats.today} rezervasyon</span>
+        </div>
+        <div className="flex justify-between items-center p-2 rounded">
+          <span>Bu Hafta</span>
+          <span className="font-medium">{reservationStats.thisWeek} rezervasyon</span>
+        </div>
+        <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
+          <span>Onay Bekleyen</span>
+          <span className="font-medium">{reservationStats.pending} rezervasyon</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Son rezervasyonlar bileşeni
+const DashboardRecentReservations = () => {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentReservations = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .order('date', { ascending: true })
+          .limit(3);
+        
+        if (error) throw error;
+        
+        if (data) {
+          const formattedReservations = data.map(res => ({
+            ...res,
+            date: new Date(res.date),
+            guests: String(res.guests)
+          })) as Reservation[];
+          
+          setReservations(formattedReservations);
+        }
+      } catch (error) {
+        console.error("Error fetching recent reservations:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecentReservations();
+  }, []);
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Son Rezervasyonlar</h2>
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-border">
+            <thead>
+              <tr className="bg-muted">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ad Soyad</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tarih</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Saat</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Kişi</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Durum</th>
+              </tr>
+            </thead>
+            <tbody className="bg-card divide-y divide-border">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center">
+                    <div className="flex justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : reservations.length > 0 ? (
+                reservations.map((reservation) => (
+                  <tr key={reservation.id}>
+                    <td className="px-4 py-3 whitespace-nowrap">{reservation.name}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {new Date(reservation.date).toLocaleDateString('tr-TR')}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{reservation.time}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{reservation.guests}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        reservation.status === "Onaylandı"
+                          ? "bg-green-100 text-green-800"
+                          : reservation.status === "Beklemede"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}>
+                        {reservation.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+                    Henüz rezervasyon bulunmuyor
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
