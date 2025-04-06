@@ -10,19 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
-
-type Reservation = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  date: Date;
-  time: string;
-  guests: string;
-  occasion?: string;
-  notes?: string;
-  status: "Onaylandı" | "Beklemede" | "İptal";
-};
+import { type Reservation } from "./ReservationsPanel";
 
 type ReservationTableProps = {
   reservations: Reservation[];
@@ -65,8 +53,8 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
               )}
             </TableCell>
             <TableCell>
-              <div className="text-sm">{res.phone}</div>
-              <div className="text-xs text-muted-foreground">{res.email}</div>
+              <div className="text-sm">{res.phone || "Belirtilmedi"}</div>
+              <div className="text-xs text-muted-foreground">{res.email || "Belirtilmedi"}</div>
             </TableCell>
             <TableCell>
               {format(new Date(res.date), "dd.MM.yyyy")} {res.time}

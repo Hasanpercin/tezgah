@@ -8,7 +8,7 @@ import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Reservation = {
+export type Reservation = {
   id: string;
   name: string;
   email: string;
@@ -56,7 +56,10 @@ export const ReservationsPanel = ({
           const formattedReservations = data.map(res => ({
             ...res,
             date: new Date(res.date),
-            guests: String(res.guests)
+            guests: String(res.guests),
+            name: res.name || "İsimsiz",
+            email: res.email || "",
+            phone: res.phone || ""
           })) as Reservation[];
 
           setReservations(formattedReservations);

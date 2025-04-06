@@ -1,28 +1,14 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
-import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
+import { ReservationsPanel, type Reservation } from "@/components/admin/ReservationsPanel";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
 import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
 import { supabase } from "@/integrations/supabase/client";
-
-type Reservation = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  date: Date;
-  time: string;
-  guests: string;
-  occasion?: string;
-  notes?: string;
-  status: "Onaylandı" | "Beklemede" | "İptal";
-};
 
 const AdminCMS = () => {
   const { toast } = useToast();
@@ -348,7 +334,10 @@ const DashboardRecentReservations = () => {
           const formattedReservations = data.map(res => ({
             ...res,
             date: new Date(res.date),
-            guests: String(res.guests)
+            guests: String(res.guests),
+            name: res.name || "İsimsiz",
+            email: res.email || "",
+            phone: res.phone || ""
           })) as Reservation[];
           
           setReservations(formattedReservations);

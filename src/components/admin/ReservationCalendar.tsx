@@ -13,7 +13,7 @@ type Reservation = {
   guests: string;
   occasion?: string;
   notes?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "Onaylandı" | "Beklemede" | "İptal";
 };
 
 type ReservationCalendarProps = {
