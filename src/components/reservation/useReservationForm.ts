@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
@@ -63,7 +62,6 @@ export const useReservationForm = () => {
       [name]: value,
     });
     
-    // Clear error when field is edited
     if (errors[name as keyof FormData]) {
       setErrors({
         ...errors,
@@ -78,7 +76,6 @@ export const useReservationForm = () => {
       [name]: value,
     });
     
-    // Clear error when field is edited
     if (errors[name as keyof FormData]) {
       setErrors({
         ...errors,
@@ -93,7 +90,6 @@ export const useReservationForm = () => {
       date: date || null,
     });
     
-    // Clear error when field is edited
     if (errors.date) {
       setErrors({
         ...errors,
@@ -112,15 +108,10 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Fix: Update the fields to match the database schema
-      // Store contact info in contact fields and not directly in the reservations table
       const { data, error } = await supabase
         .from('reservations')
         .insert({
           user_id: user?.id || null,
-          name: formData.name,
-          // Remove email field as it's not in the schema
-          phone: formData.phone,
           date: formData.date?.toISOString().split('T')[0],
           time: formData.time,
           guests: parseInt(formData.guests),
@@ -133,17 +124,22 @@ export const useReservationForm = () => {
       
       if (error) throw error;
       
-      // Show success message
+      if (!user?.id && formData.name && formData.phone) {
+        console.log("Anonim rezervasyon için profil bilgileri:", {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email
+        });
+      }
+      
       toast({
         title: "Rezervasyon Alındı",
         description: `${formData.name} adına ${formData.date ? format(formData.date, 'dd MMMM yyyy') : ''} tarihinde ${formData.time} saati için ${formData.guests} kişilik rezervasyon alınmıştır.`,
         variant: "default",
       });
 
-      // Trigger next step in the parent MultiStepReservation component
       const multiStepReservation = document.querySelector('[data-reservation-step]');
       if (multiStepReservation) {
-        // Create and dispatch a custom event to notify the MultiStepReservation component
         const event = new CustomEvent('reservationCompleted', { 
           detail: { formData, reservationId: data.id }
         });
