@@ -31,12 +31,16 @@ export const TableLayout = ({
     if (!isDragging || !draggedTable || !layoutRef.current) return;
 
     const rect = layoutRef.current.getBoundingClientRect();
+    
+    // Calculate position relative to the container
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Convert to percentages of container width and height
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
+    // Update the table position
     const newTables = updatedTables.map(table => 
       table.id === draggedTable 
         ? { ...table, position_x: percentX, position_y: percentY }
@@ -44,9 +48,13 @@ export const TableLayout = ({
     );
     
     setUpdatedTables(newTables);
+    // Mark positions as unsaved when tables are moved
+    if (isPositionSaved) {
+      setIsPositionSaved(false);
+    }
   };
 
-  const handleMouseUp = async () => {
+  const handleMouseUp = () => {
     if (!isDragging || !draggedTable) return;
     setIsDragging(false);
     setDraggedTable(null);
