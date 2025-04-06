@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ReservationSummary } from '../ReservationSummary';
+import ReservationSummary from '../ReservationSummary';
 import PaymentForm from '@/components/payments/PaymentForm';
 import { ReservationState } from '../types/reservationTypes';
 
