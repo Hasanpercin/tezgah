@@ -112,13 +112,14 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Rezervasyonu veritabanına kaydet
+      // Fix: Update the fields to match the database schema
+      // Store contact info in contact fields and not directly in the reservations table
       const { data, error } = await supabase
         .from('reservations')
         .insert({
           user_id: user?.id || null,
           name: formData.name,
-          email: formData.email,
+          // Remove email field as it's not in the schema
           phone: formData.phone,
           date: formData.date?.toISOString().split('T')[0],
           time: formData.time,
