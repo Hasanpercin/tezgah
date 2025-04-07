@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -328,7 +329,8 @@ const DashboardRecentReservations = () => {
           const formattedReservations = data.map(res => ({
             ...res,
             date: new Date(res.date),
-            guests: String(res.guests),
+            // Convert guests to number to match Reservation type
+            guests: Number(res.guests),
             name: res.name || "İsimsiz",
             email: res.email || "",
             phone: res.phone || ""
