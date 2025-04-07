@@ -21,6 +21,7 @@ export const useReservationState = () => {
     selectedTable: null,
     selectedFixMenu: null,
     selectedALaCarteItems: [],
+    selectAtRestaurant: false,
     isPrePayment: true,
     transactionId: null,
     basicFormCompleted: false,
@@ -195,8 +196,10 @@ export const useReservationState = () => {
       case 1: // Table selection
         return state.selectedTable !== null;
       case 2: // Menu selection
-        // FIX: Allow proceeding if either a fixed menu is selected OR at least one a la carte item is selected
-        return state.selectedFixMenu !== null || state.selectedALaCarteItems.length > 0;
+        // Allow proceeding if either a fixed menu is selected OR at least one a la carte item is selected OR select at restaurant is true
+        return state.selectedFixMenu !== null || 
+               state.selectedALaCarteItems.length > 0 || 
+               state.selectAtRestaurant;
       case 3: // Payment & summary
         return !state.isPrePayment || state.transactionId !== null; // If not pre-paying, can proceed without transaction
       default:
@@ -298,14 +301,27 @@ export const useReservationState = () => {
   const setSelectedFixMenu = (menu: FixMenuOption | null) => {
     setState({
       ...state,
-      selectedFixMenu: menu
+      selectedFixMenu: menu,
+      selectedALaCarteItems: [],
+      selectAtRestaurant: false
     });
   };
 
   const setSelectedALaCarteItems = (items: { item: MenuItem, quantity: number }[]) => {
     setState({
       ...state,
-      selectedALaCarteItems: items
+      selectedALaCarteItems: items,
+      selectedFixMenu: null,
+      selectAtRestaurant: false
+    });
+  };
+
+  const setSelectAtRestaurant = (select: boolean) => {
+    setState({
+      ...state,
+      selectAtRestaurant: select,
+      selectedFixMenu: null,
+      selectedALaCarteItems: []
     });
   };
 
@@ -330,6 +346,7 @@ export const useReservationState = () => {
     setSelectedTable,
     setSelectedFixMenu,
     setSelectedALaCarteItems,
+    setSelectAtRestaurant,
     setIsPrePayment
   };
 };

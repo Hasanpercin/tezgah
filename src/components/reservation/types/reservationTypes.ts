@@ -43,6 +43,7 @@ export interface ReservationState {
   selectedTable: Table | null;
   selectedFixMenu: FixMenuOption | null;
   selectedALaCarteItems: { item: MenuItem, quantity: number }[];
+  selectAtRestaurant: boolean;
   isPrePayment: boolean;
   transactionId: string | null;
   basicFormCompleted: boolean;

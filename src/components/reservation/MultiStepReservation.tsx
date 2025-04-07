@@ -26,6 +26,7 @@ const MultiStepReservation = () => {
     setSelectedTable,
     setSelectedFixMenu,
     setSelectedALaCarteItems,
+    setSelectAtRestaurant,
     setIsPrePayment
   } = useReservationState();
   
@@ -63,8 +64,10 @@ const MultiStepReservation = () => {
             <MenuSelection
               onFixMenuSelected={setSelectedFixMenu}
               onALaCarteItemsSelected={setSelectedALaCarteItems}
+              onSelectAtRestaurant={setSelectAtRestaurant}
               selectedFixMenu={state.selectedFixMenu}
               selectedALaCarteItems={state.selectedALaCarteItems}
+              selectAtRestaurant={state.selectAtRestaurant}
               guests={state.formData.guests}
             />
           </div>

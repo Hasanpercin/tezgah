@@ -16,19 +16,25 @@ import { FixMenuOption, MenuItem } from './types/reservationTypes';
 type MenuSelectionProps = {
   onFixMenuSelected: (menu: FixMenuOption | null) => void;
   onALaCarteItemsSelected: (items: { item: MenuItem; quantity: number }[]) => void;
+  onSelectAtRestaurant: (selected: boolean) => void;
   selectedFixMenu: FixMenuOption | null;
   selectedALaCarteItems: { item: MenuItem; quantity: number }[];
+  selectAtRestaurant: boolean;
   guests: string;
 };
 
 const MenuSelection = ({
   onFixMenuSelected,
   onALaCarteItemsSelected,
+  onSelectAtRestaurant,
   selectedFixMenu,
   selectedALaCarteItems,
+  selectAtRestaurant,
   guests,
 }: MenuSelectionProps) => {
-  const [menuType, setMenuType] = useState<'fixed' | 'alacarte'>(selectedFixMenu ? 'fixed' : 'alacarte');
+  const [menuType, setMenuType] = useState<'fixed' | 'alacarte' | 'atrestaurant'>(
+    selectAtRestaurant ? 'atrestaurant' : selectedFixMenu ? 'fixed' : 'alacarte'
+  );
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
 
@@ -67,8 +73,9 @@ const MenuSelection = ({
     onFixMenuSelected(menu);
     if (menu) {
       setMenuType('fixed');
-      // A la carte seçimlerini temizle
+      // A la carte seçimlerini ve restoranda seçim opsiyonunu temizle
       onALaCarteItemsSelected([]);
+      onSelectAtRestaurant(false);
     }
   };
 
@@ -93,8 +100,9 @@ const MenuSelection = ({
     
     if (selectedItems.length > 0) {
       setMenuType('alacarte');
-      // Fix menü seçimini temizle
+      // Fix menü seçimini ve restoranda seçim opsiyonunu temizle
       onFixMenuSelected(null);
+      onSelectAtRestaurant(false);
     }
   };
 
@@ -104,12 +112,19 @@ const MenuSelection = ({
   };
 
   // Menü türü değişikliği
-  const handleMenuTypeChange = (type: 'fixed' | 'alacarte') => {
+  const handleMenuTypeChange = (type: 'fixed' | 'alacarte' | 'atrestaurant') => {
     setMenuType(type);
+    
     if (type === 'fixed') {
       onALaCarteItemsSelected([]);
-    } else {
+      onSelectAtRestaurant(false);
+    } else if (type === 'alacarte') {
       onFixMenuSelected(null);
+      onSelectAtRestaurant(false);
+    } else if (type === 'atrestaurant') {
+      onFixMenuSelected(null);
+      onALaCarteItemsSelected([]);
+      onSelectAtRestaurant(true);
     }
   };
 
@@ -138,13 +153,13 @@ const MenuSelection = ({
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-2">Menü Seçimi</h3>
         <p className="text-muted-foreground mb-4">
-          Fix menü seçebilir veya a la carte sipariş verebilirsiniz. {guestCount} kişilik rezervasyonunuz için uygun seçimi yapınız.
+          Fix menü seçebilir, a la carte sipariş verebilir veya restoranda seçim yapabilirsiniz. {guestCount} kişilik rezervasyonunuz için uygun seçimi yapınız.
         </p>
 
         <div className="mb-6">
           <RadioGroup
             value={menuType}
-            onValueChange={(value) => handleMenuTypeChange(value as 'fixed' | 'alacarte')}
+            onValueChange={(value) => handleMenuTypeChange(value as 'fixed' | 'alacarte' | 'atrestaurant')}
             className="flex flex-col md:flex-row gap-4"
           >
             <div className="flex items-center space-x-2">
@@ -154,6 +169,10 @@ const MenuSelection = ({
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="alacarte" id="alacarte" />
               <Label htmlFor="alacarte" className="font-medium">A La Carte</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="atrestaurant" id="atrestaurant" />
+              <Label htmlFor="atrestaurant" className="font-medium">Restoranda seçim yapacağım</Label>
             </div>
           </RadioGroup>
         </div>
@@ -372,6 +391,21 @@ const MenuSelection = ({
                 </div>
               </div>
             )}
+          </div>
+        </TabsContent>
+
+        {/* Restoranda Seçim Yapacağım */}
+        <TabsContent value="atrestaurant" className="mt-0">
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="text-center mb-4">
+                <h4 className="text-lg font-medium">Restoranda Menü Seçimi</h4>
+                <p className="text-muted-foreground mt-2">
+                  Restoranda yemek seçimlerinizi masa başında yapmak istediğinizi belirtmiş bulunmaktasınız. 
+                  Rezervasyonunuz onaylandığında, masanız hazır olacak ve menü seçimlerinizi restoranda yapabileceksiniz.
+                </p>
+              </div>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
