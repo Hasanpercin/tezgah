@@ -56,3 +56,18 @@ export interface ReservationState {
   basicFormCompleted: boolean;
   formData: ReservationFormData;
 }
+
+// Define the steps for the reservation process
+export const STEPS = [
+  { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
+  { id: 1, name: "Masa Seçimi", icon: "Users" },
+  { id: 2, name: "Menü Seçimi", icon: "Utensils" },
+  { id: 3, name: "Özet & Ödeme", icon: "CreditCard" },
+  { id: 4, name: "Onay", icon: "CheckCircle" }
+];
+
+export interface ReservationSummaryProps {
+  state: ReservationState;
+  calculateTotal: () => number;
+  showPaymentInfo?: boolean;
+}

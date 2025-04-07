@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import ReservationSummary from '../ReservationSummary';
-import { ReservationState } from '../types/reservationTypes';
+import { ReservationState, ReservationSummaryProps } from '../types/reservationTypes';
 
 interface ConfirmationStepProps {
   state: ReservationState;

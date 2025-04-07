@@ -1,169 +1,172 @@
 
-import { formatPrice } from '@/services/menuService';
+import React from 'react';
+import { Card } from "@/components/ui/card";
 import { format } from 'date-fns';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Users, Clock, Utensils, MapPin, FileText } from 'lucide-react';
-import { FixMenuOption } from './types/reservationTypes';
+import { tr } from 'date-fns/locale';
+import { ReservationSummaryProps } from './types/reservationTypes';
 
-export type ReservationSummaryProps = {
-  formData: {
-    name: string;
-    email: string;
-    phone: string;
-    date: Date | null;
-    time: string;
-    guests: string;
-    notes?: string;
-  };
-  selectedTable: {
-    id: number | string;
-    name?: string;
-    size: 2 | 4 | 6 | 8;
-    type: 'window' | 'center' | 'corner' | 'booth';
-  } | null;
-  selectedFixMenu: FixMenuOption | null;
-  selectedALaCarteItems: { 
-    item: {
-      id: string;
-      name: string;
-      price: number;
-    }, 
-    quantity: number 
-  }[];
-  selectAtRestaurant: boolean;
-  totalAmount?: number;
-};
-
-const ReservationSummary: React.FC<ReservationSummaryProps> = ({
-  formData,
-  selectedTable,
-  selectedFixMenu,
-  selectedALaCarteItems,
-  selectAtRestaurant,
-  totalAmount
+const ReservationSummary: React.FC<ReservationSummaryProps> = ({ 
+  state, 
+  calculateTotal,
+  showPaymentInfo = true 
 }) => {
+  // Format date
+  const formattedDate = state.formData.date 
+    ? format(new Date(state.formData.date), 'PP', { locale: tr }) 
+    : '';
+
   return (
-    <Card className="border">
-      <CardContent className="pt-6">
-        <h3 className="text-xl font-semibold mb-4">Rezervasyon Özeti</h3>
+    <div className="space-y-4">
+      {/* Reservation Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm font-medium">İsim</p>
+          <p className="text-base">{state.formData.name}</p>
+        </div>
         
-        {/* Personal & Reservation Details */}
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Users className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">{formData.name}</p>
-              <p className="text-sm text-muted-foreground">{formData.email}</p>
-              <p className="text-sm text-muted-foreground">{formData.phone}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <CalendarDays className="h-5 w-5 text-muted-foreground" />
-            <p>
-              {formData.date 
-                ? format(formData.date, 'dd.MM.yyyy') 
-                : 'Tarih seçilmedi'}
+        <div>
+          <p className="text-sm font-medium">İletişim Bilgileri</p>
+          <p className="text-base">{state.formData.email}</p>
+          <p className="text-sm text-muted-foreground">{state.formData.phone}</p>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium">Tarih & Saat</p>
+          <p className="text-base">{formattedDate}, {state.formData.time}</p>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium">Misafir Sayısı</p>
+          <p className="text-base">{state.formData.guests} Kişi</p>
+        </div>
+        
+        {state.formData.occasion && (
+          <div>
+            <p className="text-sm font-medium">Özel Gün</p>
+            <p className="text-base">
+              {state.formData.occasion === 'birthday' ? 'Doğum Günü' :
+               state.formData.occasion === 'anniversary' ? 'Yıldönümü' :
+               state.formData.occasion === 'business' ? 'İş Yemeği' :
+               state.formData.occasion === 'date' ? 'Romantik Akşam Yemeği' : 'Diğer'}
             </p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-muted-foreground" />
-            <p>{formData.time || 'Saat seçilmedi'}</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <p>{formData.guests} Kişi</p>
-          </div>
-          
-          {formData.notes && formData.notes.trim() !== '' && (
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-sm">{formData.notes}</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Table Details */}
-        <Separator className="my-4" />
-        <div className="mb-4">
-          <h4 className="font-semibold mb-2 flex items-center gap-2">
-            <MapPin className="h-4 w-4" /> Masa
-          </h4>
-          
-          {selectedTable ? (
-            <div className="text-sm pl-6">
-              <p>
-                {selectedTable.name || `Masa #${selectedTable.id}`}
-                <span className="ml-2 text-muted-foreground">
-                  ({selectedTable.size} Kişilik, 
-                  {selectedTable.type === 'window' ? ' Pencere Kenarı' : 
-                   selectedTable.type === 'corner' ? ' Köşe' : 
-                   selectedTable.type === 'center' ? ' Orta' : 
-                   selectedTable.type === 'booth' ? ' Alan' : ''}
-                  )
-                </span>
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground pl-6">Henüz masa seçilmedi</p>
-          )}
-        </div>
-        
-        {/* Menu Details */}
-        <Separator className="my-4" />
-        <div>
-          <h4 className="font-semibold mb-2 flex items-center gap-2">
-            <Utensils className="h-4 w-4" /> Menü
-          </h4>
-          
-          {selectAtRestaurant ? (
-            <p className="text-sm pl-6">Menü seçimi restoranda yapılacak</p>
-          ) : selectedFixMenu ? (
-            <div className="pl-6">
-              <p className="font-medium">{selectedFixMenu.name}</p>
-              <div className="flex justify-between mt-1 text-sm">
-                <span>
-                  {selectedFixMenu.quantity || formData.guests} x {formatPrice(selectedFixMenu.price)}
-                </span>
-                <span className="font-medium">
-                  {formatPrice(selectedFixMenu.price * (selectedFixMenu.quantity || parseInt(formData.guests)))}
-                </span>
-              </div>
-            </div>
-          ) : selectedALaCarteItems.length > 0 ? (
-            <div className="pl-6">
-              <p className="font-medium mb-2">A La Carte</p>
-              <div className="space-y-1 text-sm">
-                {selectedALaCarteItems.map(({item, quantity}) => (
-                  <div key={item.id} className="flex justify-between">
-                    <span>{item.name} x {quantity}</span>
-                    <span>{formatPrice(item.price * quantity)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground pl-6">Henüz menü seçilmedi</p>
-          )}
-        </div>
-        
-        {/* Total */}
-        {totalAmount !== undefined && (
-          <>
-            <Separator className="my-4" />
-            <div className="flex justify-between items-center pt-2">
-              <p className="font-semibold">Toplam</p>
-              <p className="font-semibold text-xl text-primary">
-                {formatPrice(totalAmount)}
-              </p>
-            </div>
-          </>
         )}
-      </CardContent>
-    </Card>
+        
+        {state.formData.notes && (
+          <div className="col-span-2">
+            <p className="text-sm font-medium">Notlar</p>
+            <p className="text-base">{state.formData.notes}</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Table Information */}
+      {state.selectedTable && (
+        <div className="border-t pt-4 mt-4">
+          <h4 className="font-medium mb-2">Masa Bilgisi</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium">Masa</p>
+              <p className="text-base">{state.selectedTable.name || state.selectedTable.label}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium">Konum</p>
+              <p className="text-base">
+                {state.selectedTable.type === 'window' ? 'Pencere Kenarı' :
+                 state.selectedTable.type === 'center' ? 'Orta Bölüm' :
+                 state.selectedTable.type === 'corner' ? 'Köşe' : 'Özel Bölüm'}
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium">Kapasite</p>
+              <p className="text-base">{state.selectedTable.size} Kişilik</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Menu Information */}
+      {!state.selectAtRestaurant && (
+        <div className="border-t pt-4 mt-4">
+          <h4 className="font-medium mb-2">Menü Bilgisi</h4>
+          {state.selectedFixMenu ? (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <p className="font-medium">{state.selectedFixMenu.name}</p>
+                  <p className="text-sm text-muted-foreground">{state.selectedFixMenu.description}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">{state.selectedFixMenu.price} TL</p>
+                  <p className="text-sm text-muted-foreground">
+                    {state.selectedFixMenu.quantity || parseInt(state.formData.guests)} × {state.selectedFixMenu.price} TL
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-between border-t pt-2 mt-2">
+                <p className="text-base font-medium">Toplam</p>
+                <p className="text-lg font-bold">
+                  {state.selectedFixMenu.price * (state.selectedFixMenu.quantity || parseInt(state.formData.guests))} TL
+                </p>
+              </div>
+            </div>
+          ) : state.selectedALaCarteItems.length > 0 ? (
+            <div>
+              {state.selectedALaCarteItems.map((orderItem, index) => (
+                <div key={orderItem.item.id} className="flex justify-between items-center mb-2">
+                  <div>
+                    <p className="font-medium">{orderItem.item.name}</p>
+                    <p className="text-sm text-muted-foreground">{orderItem.quantity} adet</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{orderItem.item.price} TL</p>
+                    <p className="text-sm text-muted-foreground">{orderItem.quantity} × {orderItem.item.price} TL</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between border-t pt-2 mt-2">
+                <p className="text-base font-medium">Toplam</p>
+                <p className="text-lg font-bold">
+                  {state.selectedALaCarteItems.reduce((sum, item) => 
+                    sum + (item.item.price * item.quantity), 0)} TL
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">Menü seçilmedi</p>
+          )}
+        </div>
+      )}
+      
+      {/* Payment Information */}
+      {showPaymentInfo && (
+        <div className="border-t pt-4 mt-4">
+          <h4 className="font-medium mb-2">Ödeme Bilgisi</h4>
+          {state.isPrePayment ? (
+            <>
+              <div className="flex justify-between items-center mb-1">
+                <p>Ön Ödeme Tutarı</p>
+                <p className="font-medium">{calculateTotal()} TL</p>
+              </div>
+              <div className="text-sm text-muted-foreground mb-2">
+                %10 ön ödeme indirimi uygulandı
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground mb-2">
+              Ödeme restoranda yapılacak
+            </p>
+          )}
+          
+          <div className="flex justify-between items-center pt-2 border-t">
+            <p className="text-base font-medium">Toplam Tutar</p>
+            <p className="text-lg font-bold">{calculateTotal()} TL</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

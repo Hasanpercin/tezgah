@@ -1,5 +1,5 @@
 
-import { Spinner } from "lucide-react";
+import { Loader } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export const ReservationContent: React.FC<ReservationContentProps> = ({
   if (isLoading) {
     return (
       <div className="md:col-span-2 flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
