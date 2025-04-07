@@ -8,6 +8,14 @@ import { fetchTablesByAvailability } from '@/services/tableService';
 import { Table } from './types/reservationTypes';
 import { Coffee, WineOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Table as UITable, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 
 type TableSelectionProps = {
   onSelectTable: (table: Table | null) => void;
@@ -81,40 +89,21 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
     }
   }
 
+  // Function to get badge color class based on table type
+  function getTableTypeClass(type: string): string {
+    switch (type) {
+      case 'window': return 'bg-blue-100 text-blue-800';
+      case 'center': return 'bg-green-100 text-green-800';
+      case 'corner': return 'bg-yellow-100 text-yellow-800';
+      case 'booth': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
   const handleTableClick = (table: Table) => {
     if (table.available && table.size >= guestCount) {
       onSelectTable(table);
     }
-  };
-
-  // Function to generate class based on table properties
-  const getTableClass = (table: Table) => {
-    const baseClass = "absolute flex items-center justify-center rounded-md cursor-pointer transition-all border-2 shadow-sm";
-    
-    // Size classes
-    const sizeClass = table.size <= 2 ? "w-16 h-16" :
-                      table.size <= 4 ? "w-20 h-20" : 
-                      table.size <= 6 ? "w-24 h-24" : "w-28 h-28";
-    
-    // Type/location classes
-    const typeClass = table.type === 'window' ? "bg-blue-100 border-blue-300" :
-                      table.type === 'center' ? "bg-green-100 border-green-300" :
-                      table.type === 'corner' ? "bg-yellow-100 border-yellow-300" :
-                      table.type === 'booth' ? "bg-purple-100 border-purple-300" :
-                      "bg-red-100 border-red-300";
-    
-    // Availability classes
-    const availClass = !table.available ? "opacity-40 cursor-not-allowed" : "";
-    
-    // Selected class
-    const selectedClass = selectedTable?.id === table.id ? "ring-2 ring-primary ring-offset-2 shadow-md" : "";
-    
-    return `${baseClass} ${sizeClass} ${typeClass} ${availClass} ${selectedClass}`;
-  };
-  
-  // Calculate if table is compatible with party size
-  const isCompatible = (table: Table) => {
-    return table.size >= guestCount;
   };
 
   // Check for console errors
@@ -169,83 +158,95 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
         </div>
       </div>
 
-      <Card className="p-6 relative bg-slate-50 border-dashed overflow-hidden">
-        <div className="absolute top-4 left-4 text-xs font-medium text-muted-foreground">Restoran Yerleşimi</div>
-        
-        {/* Restaurant walls */}
-        <div className="border-2 border-dashed border-gray-400 p-8 rounded-lg min-h-[400px] w-full relative">
-          {/* Entry/Exit */}
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 bg-white px-3 py-1 text-xs border border-gray-400 rounded-md">
-            Giriş/Çıkış
+      <Card className="p-6">
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2 ml-4">
+              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-[160px]" />
+            </div>
           </div>
-          
-          {/* Loading state */}
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-              <div className="text-center">
-                <Skeleton className="h-12 w-12 rounded-full mx-auto mb-4" />
-                <Skeleton className="h-4 w-32 mx-auto" />
-              </div>
-            </div>
-          )}
-          
-          {/* No data state */}
-          {!isLoading && convertedTables.length === 0 && date && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center p-6 max-w-sm">
-                <WineOff className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="font-semibold mb-2">Masa Bulunamadı</h3>
-                <p className="text-muted-foreground text-sm">
-                  Seçtiğiniz tarih ve saatte müsait masa bulunmamaktadır. Lütfen farklı bir tarih veya saat seçiniz.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {/* Empty state - need date and time */}
-          {!date && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center p-6 max-w-sm">
-                <Coffee className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="font-semibold mb-2">Tarih ve Saat Seçimi Gerekli</h3>
-                <p className="text-muted-foreground text-sm">
-                  Müsait masaları görmek için lütfen önce bir tarih ve saat seçiniz.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {/* Tables layout */}
-          {!isLoading && date && (
-            <div className="w-full h-full relative overflow-hidden">
+        )}
+        
+        {/* No data state */}
+        {!isLoading && convertedTables.length === 0 && date && (
+          <div className="text-center py-12">
+            <WineOff className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="font-semibold mb-2">Masa Bulunamadı</h3>
+            <p className="text-muted-foreground text-sm">
+              Seçtiğiniz tarih ve saatte müsait masa bulunmamaktadır. Lütfen farklı bir tarih veya saat seçiniz.
+            </p>
+          </div>
+        )}
+        
+        {/* Empty state - need date and time */}
+        {!date && (
+          <div className="text-center py-12">
+            <Coffee className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="font-semibold mb-2">Tarih ve Saat Seçimi Gerekli</h3>
+            <p className="text-muted-foreground text-sm">
+              Müsait masaları görmek için lütfen önce bir tarih ve saat seçiniz.
+            </p>
+          </div>
+        )}
+        
+        {/* Tables list view */}
+        {!isLoading && date && convertedTables.length > 0 && (
+          <UITable>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Masa</TableHead>
+                <TableHead>Tür</TableHead>
+                <TableHead>Kapasite</TableHead>
+                <TableHead>Durum</TableHead>
+                <TableHead>İşlem</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {convertedTables.map((table) => (
-                <div
+                <TableRow 
                   key={table.id}
-                  className={getTableClass(table)}
-                  style={{ 
-                    left: `${table.position.x}%`, 
-                    top: `${table.position.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    userSelect: 'none'
-                  }}
-                  onClick={() => table.available && isCompatible(table) && handleTableClick(table)}
-                  title={table.available ? table.label : `${table.label} (Müsait Değil)`}
+                  className={selectedTable?.id === table.id ? 'bg-primary/10' : ''}
                 >
-                  <span className="text-xs font-medium text-center">
-                    {table.name}<br/>
-                    {`${table.size} kişi`}
-                  </span>
-                  
-                  {!isCompatible(table) && table.available && (
-                    <div className="absolute inset-0 bg-red-200 bg-opacity-30 flex items-center justify-center rounded-md">
-                      <span className="text-xs text-red-700">Yetersiz</span>
-                    </div>
-                  )}
-                </div>
+                  <TableCell className="font-medium">{table.name}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getTableTypeClass(table.type)}`}>
+                      {getTableTypeName(table.type)}
+                    </span>
+                  </TableCell>
+                  <TableCell>{table.size} Kişilik</TableCell>
+                  <TableCell>
+                    {table.available && table.size >= guestCount ? (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                        Müsait
+                      </span>
+                    ) : table.available ? (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Yetersiz Kapasiteli
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                        Dolu
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant={table.available && table.size >= guestCount ? "default" : "outline"}
+                      size="sm"
+                      disabled={!table.available || table.size < guestCount}
+                      onClick={() => handleTableClick(table)}
+                    >
+                      {selectedTable?.id === table.id ? "Seçili" : "Seç"}
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))}
-            </div>
-          )}
-        </div>
+            </TableBody>
+          </UITable>
+        )}
       </Card>
 
       <div className="mt-6">

@@ -23,6 +23,7 @@ export const fetchTables = async () => {
   return data as Table[];
 };
 
+// Check if the table is available, accounting for the 90-minute buffer after existing reservations
 export const checkTableAvailability = async (
   tableId: string, 
   date: Date, 
@@ -31,17 +32,19 @@ export const checkTableAvailability = async (
   try {
     const formattedDate = date.toISOString().split('T')[0];
     
-    // Check if the table is already reserved for this date and time
-    // Using correct query structure for Supabase joins
+    // Parse the requested reservation time
+    const [requestHour, requestMinute] = time.split(':').map(Number);
+    const requestTimeInMinutes = requestHour * 60 + requestMinute;
+    
+    // Get all reservations for this table on the given date
     const { data, error } = await supabase
       .from("reservation_tables")
       .select(`
         reservation_id,
-        reservations!inner(date, time, status)
+        reservations!inner(id, date, time, status)
       `)
       .eq("table_id", tableId)
       .eq("reservations.date", formattedDate)
-      .eq("reservations.time", time)
       .neq("reservations.status", "İptal");
     
     if (error) {
@@ -49,8 +52,29 @@ export const checkTableAvailability = async (
       throw error;
     }
     
-    // If there are no results, the table is available
-    return data.length === 0;
+    // If there are no reservations, the table is available
+    if (!data || data.length === 0) {
+      return true;
+    }
+    
+    // Check if any existing reservation conflicts with the requested time
+    // (within 90 minutes before or after)
+    const bufferMinutes = 90;
+    
+    for (const reservation of data) {
+      if (reservation.reservations) {
+        const reservedTime = reservation.reservations.time;
+        const [resHour, resMinute] = reservedTime.split(':').map(Number);
+        const reservedTimeInMinutes = resHour * 60 + resMinute;
+        
+        // Check if the requested time is within 90 minutes of an existing reservation
+        if (Math.abs(requestTimeInMinutes - reservedTimeInMinutes) < bufferMinutes) {
+          return false; // Conflict found
+        }
+      }
+    }
+    
+    return true; // No conflicts
   } catch (err) {
     console.error("Error checking table availability:", err);
     return false; // Error case - assume unavailable to be safe
@@ -88,48 +112,18 @@ export const fetchTablesByAvailability = async (
       return [];
     }
     
-    // Check availability for each table
-    const formattedDate = date.toISOString().split('T')[0];
+    // Check availability for each table, now with the 90-minute buffer rule
+    const availableTables = await Promise.all(
+      tables.map(async (table) => {
+        const isAvailable = await checkTableAvailability(table.id, date, time);
+        return {
+          ...table,
+          available: isAvailable
+        };
+      })
+    );
     
-    // Get all reservations for this date and time
-    const { data: reservations = [], error: reservationsError } = await supabase
-      .from("reservations")
-      .select("id, status")
-      .eq("date", formattedDate)
-      .eq("time", time)
-      .neq("status", "İptal");
-    
-    if (reservationsError) {
-      console.error("Error fetching reservations:", reservationsError);
-      throw reservationsError;
-    }
-    
-    if (reservations.length === 0) {
-      // No reservations for this date/time, all tables are available
-      return tables.map(table => ({ ...table, available: true }));
-    }
-    
-    // Get all reserved tables for these reservations
-    const reservationIds = reservations.map(res => res.id);
-    const { data: reservedTables = [], error: reservedTablesError } = await supabase
-      .from("reservation_tables")
-      .select("table_id")
-      .in("reservation_id", reservationIds);
-    
-    if (reservedTablesError) {
-      console.error("Error fetching reserved tables:", reservedTablesError);
-      throw reservedTablesError;
-    }
-    
-    // Create a set of reserved table IDs for quick lookup
-    const reservedTableIds = new Set(reservedTables.map(rt => rt.table_id));
-    
-    // Mark tables as available or not
-    return tables.map(table => ({
-      ...table,
-      available: !reservedTableIds.has(table.id)
-    }));
-    
+    return availableTables;
   } catch (err) {
     console.error("Error in fetchTablesByAvailability:", err);
     throw err;

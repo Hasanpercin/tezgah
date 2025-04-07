@@ -3,7 +3,14 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Plus, Trash2, Coffee } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { TableDialog } from "./TableDialog";
 import { TableData } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -65,7 +72,6 @@ export const TableList = ({ tables, loading, onEdit, onDelete, onAddNew }: Table
                   <TableHead>Masa Adı</TableHead>
                   <TableHead>Tür</TableHead>
                   <TableHead>Kapasite</TableHead>
-                  <TableHead>Konum (X,Y)</TableHead>
                   <TableHead>Durum</TableHead>
                   <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
@@ -80,7 +86,6 @@ export const TableList = ({ tables, loading, onEdit, onDelete, onAddNew }: Table
                       </span>
                     </TableCell>
                     <TableCell>{table.size} kişi</TableCell>
-                    <TableCell>{Math.round(table.position_x)}%, {Math.round(table.position_y)}%</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         table.is_active 
