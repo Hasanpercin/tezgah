@@ -27,7 +27,7 @@ const Reservation = () => {
                   <Clock className="mt-1 flex-shrink-0 text-primary" size={20} />
                   <div>
                     <p className="font-medium">Pazartesi - Cuma</p>
-                    <p className="text-muted-foreground">11:00 - 23:00</p>
+                    <p className="text-muted-foreground">11:00 - 24:00</p>
                   </div>
                 </div>
                 
@@ -35,7 +35,7 @@ const Reservation = () => {
                   <Clock className="mt-1 flex-shrink-0 text-primary" size={20} />
                   <div>
                     <p className="font-medium">Cumartesi - Pazar</p>
-                    <p className="text-muted-foreground">10:00 - 00:00</p>
+                    <p className="text-muted-foreground">11:00 - 02:00</p>
                   </div>
                 </div>
               </div>
