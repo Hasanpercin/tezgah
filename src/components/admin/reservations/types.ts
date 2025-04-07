@@ -16,4 +16,5 @@ export interface Reservation {
   notes?: string | null;
   has_prepayment?: boolean | null;
   total_amount?: number | null;
+  user_id?: string;  // Add user_id to match database schema
 }
