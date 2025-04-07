@@ -72,7 +72,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white/20 py-6 text-center text-sm opacity-70">
-          <p className="\xA9 2025 Tezgah Ala\xE7at\u0131. T\xFCm Haklar\u0131 Sakl\u0131d\u0131r.">&copy; {currentYear} Lezzet Durağı. Tüm Hakları Saklıdır.</p>
+          <p className="">&copy; {currentYear} Lezzet Durağı. Tüm Hakları Saklıdır.</p>
         </div>
       </div>
     </footer>;
