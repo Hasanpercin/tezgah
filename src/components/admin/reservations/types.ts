@@ -1,6 +1,8 @@
 
+// Define the status types for reservations
 export type ReservationStatus = "Onaylandı" | "Beklemede" | "İptal";
 
+// Define the main Reservation interface
 export interface Reservation {
   id: string;
   name: string | null;
@@ -8,7 +10,7 @@ export interface Reservation {
   phone: string | null;
   date: Date;
   time: string;
-  guests: number;  // Changed from string to number to match database
+  guests: number;  // Ensuring this is number type to match database
   status: ReservationStatus;
   occasion?: string | null;
   notes?: string | null;

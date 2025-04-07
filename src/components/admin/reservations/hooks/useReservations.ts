@@ -25,8 +25,10 @@ export const useReservations = (selectedDate: Date | undefined) => {
       status: item.status as ReservationStatus,
       // Convert date string to Date object
       date: new Date(item.date),
+      // Ensure guests is a number
+      guests: Number(item.guests),
       // Keep other fields as is - updated Reservation type now matches DB schema
-    })) as unknown as Reservation[];
+    })) as Reservation[];
   };
   
   const {
