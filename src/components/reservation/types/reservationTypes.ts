@@ -3,7 +3,7 @@
 
 export interface Table {
   id: string | number;
-  size: number;  // Changed from union type to number to match actual data
+  size: number;  // Using number type for size to match database
   type: 'window' | 'center' | 'corner' | 'booth';
   position_x: number;
   position_y: number;
@@ -32,7 +32,7 @@ export interface FixMenuOption {
   description?: string;
   price: number;
   image_path?: string;
-  quantity?: number; // Added quantity field
+  quantity?: number;
 }
 
 export interface ReservationFormData {
@@ -41,7 +41,7 @@ export interface ReservationFormData {
   phone: string;
   date: Date | null;
   time: string;
-  guests: string;
+  guests: string; // Keep as string for form handling, convert to number when sending to API
   notes: string;
   occasion?: string;
 }

@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { FormData, FormError } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useReservationForm = () => {
   const { toast } = useToast();
@@ -109,10 +110,35 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
+      // First, check if we need to create a profile for this user
+      let userId = user?.id;
+      
+      // If no authenticated user, create a temporary profile
+      if (!userId) {
+        // Generate a UUID for an anonymous user
+        userId = uuidv4();
+        
+        // Create a profile first
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone
+          });
+        
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw profileError;
+        }
+      }
+      
+      // Now create the reservation with the user_id
       const { data, error } = await supabase
         .from('reservations')
         .insert({
-          user_id: user?.id || null,
+          user_id: userId,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
