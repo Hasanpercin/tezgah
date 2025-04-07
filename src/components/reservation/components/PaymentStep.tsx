@@ -22,37 +22,14 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   handlePaymentComplete,
   setIsPrePayment
 }) => {
-  // Casting the types to match what ReservationSummary expects
-  const castSelectedTable = state.selectedTable ? {
-    ...state.selectedTable,
-    id: Number(state.selectedTable.id),
-    // Cast size to one of the expected literal types (2, 4, 6, 8)
-    size: (state.selectedTable.size <= 2 ? 2 : 
-           state.selectedTable.size <= 4 ? 4 : 
-           state.selectedTable.size <= 6 ? 6 : 8) as 2 | 4 | 6 | 8
-  } : null;
-
-  // Cast selectedALaCarteItems to add the required category property
-  const castSelectedALaCarteItems = state.selectedALaCarteItems.map(item => ({
-    item: {
-      ...item.item,
-      category: 'main' as 'starter' | 'main' | 'dessert' // Default to 'main' as fallback
-    },
-    quantity: item.quantity
-  }));
-
   return (
     <div className="space-y-8">
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Rezervasyon Özeti</h3>
         <ReservationSummary 
-          date={state.formData.date}
-          time={state.formData.time}
-          guests={state.formData.guests}
-          selectedTable={castSelectedTable}
-          selectedFixMenu={state.selectedFixMenu}
-          selectedALaCarteItems={castSelectedALaCarteItems}
-          isPrePayment={state.isPrePayment}
+          state={state}
+          calculateTotal={calculateTotal}
+          showPaymentInfo={false}
         />
       </Card>
 
