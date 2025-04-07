@@ -32,8 +32,8 @@ const MenuCategory = ({ categories }: MenuCategoryProps) => {
           <button
             key={category.id}
             onClick={() => setActiveCategory(category.id)}
-            className={`menu-category-tab whitespace-nowrap ${
-              activeCategory === category.id ? 'active' : 'border-transparent'
+            className={`menu-category-tab whitespace-nowrap px-4 py-2 border-b-2 font-medium transition-colors ${
+              activeCategory === category.id ? 'text-primary border-primary' : 'border-transparent hover:text-primary/80 hover:border-primary/30'
             }`}
           >
             {category.name}

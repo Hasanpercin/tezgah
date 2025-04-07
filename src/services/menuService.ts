@@ -101,6 +101,123 @@ export const fetchMenuItemsByCategory = async () => {
   return menuWithItems;
 };
 
+// Add function to seed menu data
+export const seedMenuData = async () => {
+  try {
+    // First, check if we have the required categories
+    const requiredCategories = [
+      { name: "Zeytinyağlılar", display_order: 1 },
+      { name: "Ana Yemekler", display_order: 2 },
+      { name: "Salatalar", display_order: 3 },
+      { name: "Tatlılar", display_order: 4 },
+    ];
+    
+    // Create a map to store category IDs
+    const categoryMap: Record<string, string> = {};
+    
+    // Check and add categories if they don't exist
+    for (const category of requiredCategories) {
+      const { data: existingCategories, error: fetchError } = await supabase
+        .from("menu_categories")
+        .select("id")
+        .eq("name", category.name);
+      
+      if (fetchError) throw fetchError;
+      
+      if (existingCategories && existingCategories.length > 0) {
+        // Category exists, save its ID
+        categoryMap[category.name] = existingCategories[0].id;
+      } else {
+        // Category doesn't exist, create it
+        const { data: newCategory, error: insertError } = await supabase
+          .from("menu_categories")
+          .insert(category)
+          .select("id")
+          .single();
+        
+        if (insertError) throw insertError;
+        if (newCategory) {
+          categoryMap[category.name] = newCategory.id;
+        }
+      }
+    }
+    
+    // Define the menu items from the table
+    const menuItems = [
+      // Zeytinyağlılar
+      { name: "Portakallı Rezene, Arapsaçı", price: 220, category_name: "Zeytinyağlılar", display_order: 1 },
+      { name: "Koruklu Taze Fasulye", price: 240, category_name: "Zeytinyağlılar", display_order: 2 },
+      { name: "Defneli Barbunya Yemeği", price: 240, category_name: "Zeytinyağlılar", display_order: 3 },
+      { name: "Koruklu Bamya Yemeği", price: 260, category_name: "Zeytinyağlılar", display_order: 4 },
+      { name: "Cevizli Biber Dolması", price: 260, category_name: "Zeytinyağlılar", display_order: 5 },
+      { name: "Karaköy Zeytinyağı ile Taze Bezelye", price: 280, category_name: "Zeytinyağlılar", display_order: 6 },
+      { name: "Kabak Çiçeği Dolması", price: 350, category_name: "Zeytinyağlılar", display_order: 7 },
+      { name: "Kuşkonmazlı Enginarlı Yaz Pilavı", price: 350, category_name: "Zeytinyağlılar", display_order: 8 },
+      
+      // Ana Yemekler
+      { name: "Selanik Yemeği (Lobdes)", price: 320, category_name: "Ana Yemekler", display_order: 1 },
+      { name: "Kuzu Etli Enginar Yemeği (Girit Usulü)", price: 450, category_name: "Ana Yemekler", display_order: 2 },
+      { name: "Damla Sakızı Yaprağında Odun Ateşi Lezzeti Levrek/Çipura", price: 520, category_name: "Ana Yemekler", display_order: 3 },
+      { name: "Göçmen Yemeği", price: 600, category_name: "Ana Yemekler", display_order: 4 },
+      
+      // Salatalar
+      { name: "Ada Otu Salatası", price: 220, category_name: "Salatalar", display_order: 1 },
+      { name: "Köz Patlıcan Salatası", price: 240, category_name: "Salatalar", display_order: 2 },
+      { name: "Yaz Salatası", price: 240, category_name: "Salatalar", display_order: 3 },
+      
+      // Tatlılar
+      { name: "Itırlı Muhallebi", price: 180, category_name: "Tatlılar", display_order: 1 },
+      { name: "San Sebastian Cheseecake", price: 220, category_name: "Tatlılar", display_order: 2 },
+      { name: "Ruby San Sebastian Cheseecake", price: 240, category_name: "Tatlılar", display_order: 3 },
+      { name: "Lavantalı Tiramisu", price: 240, category_name: "Tatlılar", display_order: 4 },
+      { name: "Çeşme Limonlu Tiramisu", price: 240, category_name: "Tatlılar", display_order: 5 },
+      { name: "Bitter San Sebastian", price: 250, category_name: "Tatlılar", display_order: 6 },
+      { name: "Alaçatı'nın Tatlı Enginarı", price: 250, category_name: "Tatlılar", display_order: 7 },
+      { name: "Kül suyunda Kalburabastı", price: 260, category_name: "Tatlılar", display_order: 8 },
+      { name: "Baklava Chesecake", price: 260, category_name: "Tatlılar", display_order: 9 },
+    ];
+    
+    // Add items to their respective categories
+    for (const item of menuItems) {
+      const { category_name, ...menuItem } = item;
+      
+      const category_id = categoryMap[category_name];
+      if (!category_id) continue; // Skip if category not found (which shouldn't happen)
+      
+      // Check if the item already exists
+      const { data: existingItems, error: fetchError } = await supabase
+        .from("menu_items")
+        .select("id")
+        .eq("name", menuItem.name)
+        .eq("category_id", category_id);
+      
+      if (fetchError) throw fetchError;
+      
+      if (existingItems && existingItems.length === 0) {
+        // Item doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from("menu_items")
+          .insert({
+            ...menuItem,
+            category_id,
+            is_in_stock: true,
+            is_featured: false,
+            is_vegetarian: category_name === "Zeytinyağlılar" || category_name === "Salatalar",
+            is_vegan: category_name === "Zeytinyağlılar" || category_name === "Salatalar",
+            description: null
+          });
+        
+        if (insertError) throw insertError;
+      }
+    }
+    
+    return { success: true, message: "Menü başarıyla güncellendi" };
+  } catch (error: any) {
+    console.error("Error seeding menu data:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Utility function to format price
 export const formatPrice = (price: number) => {
   return new Intl.NumberFormat('tr-TR', {

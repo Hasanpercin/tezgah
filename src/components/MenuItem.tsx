@@ -35,9 +35,9 @@ const MenuItem = ({ name, description, price, image, id, isInStock = true }: Men
           <div className={`flex-1 p-4 ${!image ? 'w-full' : ''}`}>
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-xl font-playfair font-semibold">{name}</h3>
-              <span className="text-lg font-semibold text-primary ml-4">{price}</span>
+              <span className="text-lg font-semibold text-primary ml-4 whitespace-nowrap">{price}</span>
             </div>
-            <p className="text-muted-foreground">{description}</p>
+            {description && <p className="text-muted-foreground">{description}</p>}
           </div>
         </div>
       </CardContent>
