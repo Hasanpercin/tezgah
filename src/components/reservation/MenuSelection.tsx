@@ -36,6 +36,8 @@ const MenuSelection = ({
   const [menuType, setMenuType] = useState<'fixed' | 'alacarte' | 'atrestaurant' | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  // Add a state for fixed menu quantities
+  const [fixMenuQuantities, setFixMenuQuantities] = useState<{ [key: string]: number }>({});
 
   const guestCount = parseInt(guests) || 0;
 
@@ -72,17 +74,57 @@ const MenuSelection = ({
       newQuantities[item.item.id] = item.quantity;
     });
     setQuantities(newQuantities);
-  }, [selectedALaCarteItems, guests]);
+
+    // Initialize fixed menu quantity if selected
+    if (selectedFixMenu) {
+      setFixMenuQuantities({ 
+        [selectedFixMenu.id]: fixMenuQuantities[selectedFixMenu.id] || 1 
+      });
+    }
+  }, [selectedALaCarteItems, guests, selectedFixMenu]);
 
   // Fix menü seçimi
   const handleFixedMenuSelect = (menu: FixMenuOption | null) => {
-    onFixMenuSelected(menu);
     if (menu) {
+      // If selecting a menu, set its quantity to 1 by default if not already set
+      const newFixMenuQuantities = { 
+        [menu.id]: fixMenuQuantities[menu.id] || 1 
+      };
+      setFixMenuQuantities(newFixMenuQuantities);
+      
+      // Set the selected menu with quantity information
+      const menuWithQuantity = {
+        ...menu,
+        quantity: fixMenuQuantities[menu.id] || 1
+      };
+      
+      onFixMenuSelected(menuWithQuantity as FixMenuOption);
       setMenuType('fixed');
+      
       // A la carte seçimlerini ve restoranda seçim opsiyonunu temizle
       onALaCarteItemsSelected([]);
       onSelectAtRestaurant(false);
+    } else {
+      onFixMenuSelected(null);
     }
+  };
+
+  // Handle fixed menu quantity change
+  const handleFixMenuQuantityChange = (menu: FixMenuOption, quantity: number) => {
+    // Update quantity state
+    const newFixMenuQuantities = {
+      ...fixMenuQuantities,
+      [menu.id]: quantity
+    };
+    setFixMenuQuantities(newFixMenuQuantities);
+
+    // Update the selected menu with new quantity
+    const menuWithQuantity = {
+      ...menu,
+      quantity: quantity
+    };
+    
+    onFixMenuSelected(menuWithQuantity as FixMenuOption);
   };
 
   // A la carte öğe miktarlarını güncelle
@@ -124,6 +166,10 @@ const MenuSelection = ({
     if (type === 'fixed') {
       onALaCarteItemsSelected([]);
       onSelectAtRestaurant(false);
+      // If no fixed menu is selected yet, don't change anything
+      if (!selectedFixMenu && fixedMenus.length > 0) {
+        // Don't auto-select the first menu, just set the type
+      }
     } else if (type === 'alacarte') {
       onFixMenuSelected(null);
       onSelectAtRestaurant(false);
@@ -230,11 +276,57 @@ const MenuSelection = ({
                             </span>
                           </div>
                           <p className="text-muted-foreground mb-4">{menu.description}</p>
-                          <div className="mt-auto pt-2">
-                            <span className="text-sm text-muted-foreground">
-                              Kişi başı {formatPrice(menu.price)} ({guestCount} kişi için toplam: {formatPrice(menu.price * guestCount)})
-                            </span>
-                          </div>
+                          
+                          {selectedFixMenu?.id === menu.id && (
+                            <div className="flex items-center mt-4">
+                              <div className="flex items-center border rounded-md">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-r-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const currentQty = fixMenuQuantities[menu.id] || 1;
+                                    handleFixMenuQuantityChange(menu, Math.max(1, currentQty - 1));
+                                  }}
+                                >
+                                  -
+                                </Button>
+                                <Input
+                                  className="h-8 w-12 border-0 text-center"
+                                  value={fixMenuQuantities[menu.id] || 1}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    const val = parseInt(e.target.value) || 1;
+                                    handleFixMenuQuantityChange(menu, Math.max(1, val));
+                                  }}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-l-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const currentQty = fixMenuQuantities[menu.id] || 1;
+                                    handleFixMenuQuantityChange(menu, currentQty + 1);
+                                  }}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                              <span className="ml-4 text-sm text-muted-foreground">
+                                {guestCount} kişi için toplam: {formatPrice(menu.price * (fixMenuQuantities[menu.id] || 1))}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {!selectedFixMenu || selectedFixMenu.id !== menu.id ? (
+                            <div className="mt-auto pt-2">
+                              <span className="text-sm text-muted-foreground">
+                                Kişi başı {formatPrice(menu.price)} ({guestCount} kişi için toplam: {formatPrice(menu.price * guestCount)})
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </CardContent>
@@ -247,8 +339,10 @@ const MenuSelection = ({
               <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mt-6">
                 <h4 className="font-medium mb-2">Seçilen Fix Menü:</h4>
                 <div className="flex justify-between">
-                  <p>{selectedFixMenu.name}</p>
-                  <p className="font-medium">{formatPrice(selectedFixMenu.price * guestCount)}</p>
+                  <p>{selectedFixMenu.name} x {fixMenuQuantities[selectedFixMenu.id] || 1}</p>
+                  <p className="font-medium">
+                    {formatPrice(selectedFixMenu.price * (fixMenuQuantities[selectedFixMenu.id] || 1))}
+                  </p>
                 </div>
               </div>
             )}
@@ -261,7 +355,7 @@ const MenuSelection = ({
             <div>
               <h4 className="text-base font-medium mb-4">A La Carte Menü</h4>
 
-              {/* Kategori Seçimi - "Tüm Kategoriler" seçeneği kaldırıldı */}
+              {/* Kategori Seçimi */}
               <div className="flex overflow-x-auto scrollbar-none mb-6 pb-2">
                 {isLoadingCategories ? (
                   <div className="flex space-x-2">

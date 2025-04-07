@@ -7,24 +7,42 @@ import { ReservationContent } from "./ReservationContent";
 import { useReservations } from "./hooks/useReservations";
 import { Reservation, ReservationStatus } from "./types";
 
-type ReservationsPanelProps = {
-  selectedDate: Date | undefined;
-  onSelectDate: (date: Date | undefined) => void;
-  onStatusChange: (id: string, newStatus: ReservationStatus) => void;
-};
+export const ReservationsPanel = () => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { toast } = useToast();
+  const { reservations, isLoading, error, mutate } = useReservations(selectedDate);
 
-export const ReservationsPanel = ({
-  selectedDate,
-  onSelectDate,
-  onStatusChange
-}: ReservationsPanelProps) => {
-  const { reservations, isLoading, error } = useReservations(selectedDate);
-
+  const handleStatusChange = async (id: string, newStatus: ReservationStatus) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local data
+      mutate();
+      
+      toast({
+        title: "Durum Güncellendi",
+        description: `Rezervasyon durumu ${newStatus} olarak güncellendi.`,
+      });
+    } catch (error: any) {
+      console.error("Error updating reservation status:", error.message);
+      toast({
+        title: "Hata",
+        description: "Durum güncellenirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <ReservationCalendarSidebar 
         selectedDate={selectedDate}
-        onSelectDate={onSelectDate}
+        onSelectDate={setSelectedDate}
         reservations={reservations}
       />
       
@@ -33,7 +51,7 @@ export const ReservationsPanel = ({
         isLoading={isLoading}
         error={error}
         selectedDate={selectedDate}
-        onStatusChange={onStatusChange}
+        onStatusChange={handleStatusChange}
       />
     </div>
   );

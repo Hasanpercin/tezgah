@@ -26,6 +26,19 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
     );
   }
 
+  // Helper function to get the appropriate badge style based on status
+  const getBadgeStyle = (status: string) => {
+    switch(status) {
+      case "Onaylandı": 
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case "Beklemede": 
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      case "İptal": 
+      default:
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -65,13 +78,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
               </div>
             </TableCell>
             <TableCell>
-              <Badge className={`${
-                res.status === "Onaylandı" 
-                  ? "bg-green-100 text-green-800 hover:bg-green-100" 
-                  : res.status === "Beklemede" 
-                  ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" 
-                  : "bg-red-100 text-red-800 hover:bg-red-100"
-              }`}>
+              <Badge className={getBadgeStyle(res.status)}>
                 {res.status}
               </Badge>
             </TableCell>

@@ -88,7 +88,9 @@ export const useReservationState = () => {
     let subtotal = 0;
     
     if (state.selectedFixMenu) {
-      subtotal = state.selectedFixMenu.price * parseInt(state.formData.guests);
+      // If the selectedFixMenu has a quantity property, use it
+      const quantity = state.selectedFixMenu.quantity || parseInt(state.formData.guests);
+      subtotal = state.selectedFixMenu.price * quantity;
     } else {
       subtotal = state.selectedALaCarteItems.reduce(
         (sum, { item, quantity }) => sum + (item.price * quantity),
@@ -148,7 +150,7 @@ export const useReservationState = () => {
             .insert({
               reservation_id: reservationId,
               fixed_menu_id: state.selectedFixMenu.id,
-              quantity: parseInt(state.formData.guests)
+              quantity: state.selectedFixMenu.quantity || parseInt(state.formData.guests)
             } as any);
         } else if (state.selectedALaCarteItems.length > 0) {
           const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({
@@ -270,7 +272,7 @@ export const useReservationState = () => {
                 .insert({
                   reservation_id: reservationId,
                   fixed_menu_id: state.selectedFixMenu.id,
-                  quantity: parseInt(state.formData.guests)
+                  quantity: state.selectedFixMenu.quantity || parseInt(state.formData.guests)
                 } as any);
             } else if (state.selectedALaCarteItems.length > 0) {
               const menuItemInserts = state.selectedALaCarteItems.map(({ item, quantity }) => ({

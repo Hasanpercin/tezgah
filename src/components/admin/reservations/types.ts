@@ -9,7 +9,9 @@ export interface Reservation {
   date: Date;
   time: string;
   guests: string;
+  status: ReservationStatus;
   occasion?: string;
   notes?: string;
-  status: ReservationStatus;
+  has_prepayment?: boolean;
+  total_amount?: number;
 }

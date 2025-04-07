@@ -1,60 +1,67 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Spinner } from "lucide-react";
 import { format } from "date-fns";
-import { Users, AlertCircle } from "lucide-react";
+import { tr } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
 import { ReservationTable } from "../ReservationTable";
 import { Reservation, ReservationStatus } from "./types";
 
-interface ReservationContentProps {
+type ReservationContentProps = {
   reservations: Reservation[];
   isLoading: boolean;
-  error: string | null;
+  error: any;
   selectedDate: Date | undefined;
   onStatusChange: (id: string, newStatus: ReservationStatus) => void;
-}
+};
 
-export const ReservationContent = ({
+export const ReservationContent: React.FC<ReservationContentProps> = ({
   reservations,
   isLoading,
   error,
   selectedDate,
   onStatusChange
-}: ReservationContentProps) => {
+}) => {
+  if (isLoading) {
+    return (
+      <div className="md:col-span-2 flex items-center justify-center h-64">
+        <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="md:col-span-2 flex flex-col items-center justify-center h-64">
+        <div className="text-destructive mb-2">Rezervasyonlar yüklenirken hata oluştu.</div>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Tekrar Dene
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <Card className="md:col-span-2">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>
-            {selectedDate ? format(selectedDate, "d MMMM yyyy") : "Tüm"} Rezervasyonlar
-          </span>
-          <Badge variant="secondary" className="text-base px-2 py-1">
+    <div className="md:col-span-2 border rounded-lg">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold">
+            {selectedDate ? (
+              format(selectedDate, "d MMMM yyyy", { locale: tr })
+            ) : (
+              "Seçilen Tarih"
+            )}
+            <span className="ml-2 text-muted-foreground">Rezervasyonlar</span>
+          </h2>
+          <div className="text-sm font-medium bg-primary/10 text-primary py-1 px-3 rounded-full">
             {reservations.length} rezervasyon
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center p-8 text-red-500">
-            <AlertCircle className="h-10 w-10 mb-2" />
-            <p>{error}</p>
-          </div>
-        ) : reservations.length === 0 ? (
-          <div className="text-center p-8">
-            <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Bu tarihte rezervasyon bulunmuyor</p>
-          </div>
-        ) : (
-          <ReservationTable 
-            reservations={reservations} 
-            onStatusChange={onStatusChange} 
-          />
-        )}
-      </CardContent>
-    </Card>
+        </div>
+
+        <ReservationTable 
+          reservations={reservations} 
+          onStatusChange={onStatusChange} 
+        />
+      </div>
+    </div>
   );
 };
