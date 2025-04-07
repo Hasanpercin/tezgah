@@ -1,20 +1,11 @@
-
 import Hero from '@/components/Hero';
 import { Clock, Phone } from 'lucide-react';
 import MultiStepReservation from '@/components/reservation/MultiStepReservation';
-
 const Reservation = () => {
   const heroImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       {/* Hero Section */}
-      <Hero 
-        backgroundImage={heroImage}
-        title="Rezervasyon"
-        subtitle="Özel anlarınız için masanızı şimdiden ayırtın"
-        showButtons={false}
-      />
+      <Hero backgroundImage={heroImage} title="Rezervasyon" subtitle="Özel anlarınız için masanızı şimdiden ayırtın" showButtons={false} />
       
       {/* Reservation Content */}
       <section className="section-padding bg-white">
@@ -54,7 +45,7 @@ const Reservation = () => {
                 
                 <div className="flex items-center space-x-3 group hover:bg-white/50 p-2 rounded-md transition-colors">
                   <Phone className="flex-shrink-0 text-secondary" size={20} />
-                  <p className="font-medium">+90 212 123 45 67</p>
+                  <p className="font-medium">+90 554 434 60 68</p>
                 </div>
                 
                 <p className="mt-4 text-sm text-muted-foreground">
@@ -70,8 +61,6 @@ const Reservation = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Reservation;
