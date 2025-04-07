@@ -210,6 +210,45 @@ export const useReservationState = () => {
   // Go to next step
   const handleNextStep = async () => {
     if (currentStep < 4 && canProceed()) {
+      // "Restoranda seçim yapacağım" seçeneği seçildiğinde ödeme adımını atla
+      if (currentStep === 2 && state.selectAtRestaurant) {
+        try {
+          // Seçilen masayı kaydet
+          if (reservationId && state.selectedTable) {
+            await supabase
+              .from('reservation_tables')
+              .insert({
+                reservation_id: reservationId,
+                table_id: state.selectedTable.id
+              } as any);
+          }
+
+          // Rezervasyon durumunu güncelle
+          await supabase
+            .from('reservations')
+            .update({
+              status: 'confirmed',
+              total_amount: 0
+            })
+            .eq('id', reservationId);
+
+          // Direk onay sayfasına geç
+          setCurrentStep(4);
+          
+          // Scroll to top
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        } catch (error: any) {
+          console.error("Reservation update error:", error.message);
+          toast({
+            title: "Hata",
+            description: "Rezervasyon bilgileri güncellenirken bir hata oluştu.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       // Eğer 3. adımda ön ödeme yapmadan devam ediyorsak
       if (currentStep === 3 && !state.isPrePayment) {
         try {

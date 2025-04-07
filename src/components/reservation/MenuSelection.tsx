@@ -32,10 +32,9 @@ const MenuSelection = ({
   selectAtRestaurant,
   guests,
 }: MenuSelectionProps) => {
-  const [menuType, setMenuType] = useState<'fixed' | 'alacarte' | 'atrestaurant'>(
-    selectAtRestaurant ? 'atrestaurant' : selectedFixMenu ? 'fixed' : 'alacarte'
-  );
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  // Initialize with no menu type selected
+  const [menuType, setMenuType] = useState<'fixed' | 'alacarte' | 'atrestaurant' | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
 
   const guestCount = parseInt(guests) || 0;
@@ -52,10 +51,17 @@ const MenuSelection = ({
     queryFn: () => import('@/services/menuService').then(module => module.fetchMenuCategories()),
   });
 
+  // Set default category if none selected and categories are loaded
+  useEffect(() => {
+    if (selectedCategoryId === '' && menuCategories.length > 0) {
+      setSelectedCategoryId(menuCategories[0]?.id || '');
+    }
+  }, [menuCategories, selectedCategoryId]);
+
   // Seçili kategoriye göre menü öğelerini çekme
   const { data: menuItems = [], isLoading: isLoadingMenuItems } = useQuery({
     queryKey: ['menuItems', selectedCategoryId],
-    queryFn: () => fetchMenuItems(selectedCategoryId !== 'all' ? selectedCategoryId : undefined),
+    queryFn: () => fetchMenuItems(selectedCategoryId !== '' ? selectedCategoryId : undefined),
   });
 
   // Sayfa yüklendiğinde veya guests değiştiğinde miktar değerlerini güncelle
@@ -158,7 +164,7 @@ const MenuSelection = ({
 
         <div className="mb-6">
           <RadioGroup
-            value={menuType}
+            value={menuType || ''}
             onValueChange={(value) => handleMenuTypeChange(value as 'fixed' | 'alacarte' | 'atrestaurant')}
             className="flex flex-col md:flex-row gap-4"
           >
@@ -178,7 +184,7 @@ const MenuSelection = ({
         </div>
       </div>
 
-      <Tabs value={menuType} className="w-full">
+      <Tabs value={menuType || ''} className="w-full">
         {/* Fix Menü Seçimi */}
         <TabsContent value="fixed" className="mt-0">
           <div className="space-y-6">
@@ -255,16 +261,8 @@ const MenuSelection = ({
             <div>
               <h4 className="text-base font-medium mb-4">A La Carte Menü</h4>
 
-              {/* Kategori Seçimi */}
+              {/* Kategori Seçimi - "Tüm Kategoriler" seçeneği kaldırıldı */}
               <div className="flex overflow-x-auto scrollbar-none mb-6 pb-2">
-                <Button
-                  variant={selectedCategoryId === 'all' ? 'default' : 'outline'}
-                  className="whitespace-nowrap mr-2"
-                  onClick={() => handleCategoryChange('all')}
-                >
-                  Tüm Kategoriler
-                </Button>
-                
                 {isLoadingCategories ? (
                   <div className="flex space-x-2">
                     {[1, 2, 3].map(i => (

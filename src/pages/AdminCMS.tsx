@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
+import { CreditCard, Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
 import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
 import { type Reservation, type ReservationStatus } from "@/components/admin/reservations/types";
@@ -11,6 +11,7 @@ import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
 import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentSettingsPanel } from "@/components/admin/PaymentSettingsPanel";
 
 const AdminCMS = () => {
   const { toast } = useToast();
@@ -110,7 +111,7 @@ const AdminCMS = () => {
           </div>
           
           <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard size={16} /> Genel Bakış
               </TabsTrigger>
@@ -125,6 +126,9 @@ const AdminCMS = () => {
               </TabsTrigger>
               <TabsTrigger value="menu-qr" className="flex items-center gap-2">
                 <Menu size={16} /> QR Kod
+              </TabsTrigger>
+              <TabsTrigger value="payment" className="flex items-center gap-2">
+                <CreditCard size={16} /> Ödeme
               </TabsTrigger>
               <TabsTrigger value="website" className="flex items-center gap-2">
                 <Settings size={16} /> Site İçeriği
@@ -186,10 +190,10 @@ const AdminCMS = () => {
                     </button>
                     <button 
                       className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
-                      onClick={() => setActiveTab("menu-qr")}
+                      onClick={() => setActiveTab("payment")}
                     >
-                      <span>QR Kod Oluştur</span>
-                      <Menu size={16} />
+                      <span>Ödeme Ayarları</span>
+                      <CreditCard size={16} />
                     </button>
                   </div>
                 </div>
@@ -219,6 +223,10 @@ const AdminCMS = () => {
                 menuData={menuData}
                 isLoading={isLoadingMenu}
               />
+            </TabsContent>
+            
+            <TabsContent value="payment" className="space-y-6">
+              <PaymentSettingsPanel />
             </TabsContent>
             
             <TabsContent value="website" className="space-y-6">
