@@ -10,16 +10,19 @@ export interface FixedMenuPackage {
   is_active: boolean;
 }
 
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+}
+
 export interface FixedMenuItem {
   id: string;
   package_id: string;
   menu_item_id: string;
   quantity: number;
-  menu_item?: {
-    name: string;
-    description: string;
-    price: number;
-  };
+  menu_item?: MenuItem;
 }
 
 export const fetchFixedMenus = async () => {

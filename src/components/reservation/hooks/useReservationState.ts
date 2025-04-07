@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -194,6 +195,7 @@ export const useReservationState = () => {
       case 1: // Table selection
         return state.selectedTable !== null;
       case 2: // Menu selection
+        // FIX: Allow proceeding if either a fixed menu is selected OR at least one a la carte item is selected
         return state.selectedFixMenu !== null || state.selectedALaCarteItems.length > 0;
       case 3: // Payment & summary
         return !state.isPrePayment || state.transactionId !== null; // If not pre-paying, can proceed without transaction

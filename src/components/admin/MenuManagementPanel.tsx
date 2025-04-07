@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { MenuCategoriesTable } from "./menu/MenuCategoriesTable";
 import { MenuItemsTable } from "./menu/MenuItemsTable";
-import { MenuItemForm } from "./menu/MenuItemForm";
+import { FixedMenusTable } from "./menu/FixedMenusTable";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus } from "lucide-react";
 import { MenuCategory } from "@/services/menuService";
@@ -173,9 +173,10 @@ export const MenuManagementPanel = () => {
         
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-2 mb-6">
+            <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="categories">Kategoriler</TabsTrigger>
               <TabsTrigger value="items">Menü Öğeleri</TabsTrigger>
+              <TabsTrigger value="fixedmenus">Fix Menüler</TabsTrigger>
             </TabsList>
             
             <TabsContent value="categories" className="space-y-4">
@@ -202,6 +203,10 @@ export const MenuManagementPanel = () => {
             
             <TabsContent value="items">
               <MenuItemsTable categories={categories} />
+            </TabsContent>
+
+            <TabsContent value="fixedmenus">
+              <FixedMenusTable />
             </TabsContent>
           </Tabs>
         </CardContent>
