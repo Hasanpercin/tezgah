@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -26,7 +25,8 @@ export const useReservations = (selectedDate: Date | undefined) => {
       status: item.status as ReservationStatus,
       // Convert date string to Date object
       date: new Date(item.date),
-    })) as Reservation[];
+      // Keep other fields as is - updated Reservation type now matches DB schema
+    })) as unknown as Reservation[];
   };
   
   const {

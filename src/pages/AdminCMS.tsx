@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
-import { ReservationsPanel } from "@/components/admin/ReservationsPanel";
+import { ReservationsPanel } from "@/components/admin/reservations/ReservationsPanel";
 import { type Reservation, type ReservationStatus } from "@/components/admin/reservations/types";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
@@ -20,12 +19,10 @@ const AdminCMS = () => {
   const [isLoadingMenu, setIsLoadingMenu] = useState(true);
   const [menuData, setMenuData] = useState<MenuCategoryType[]>([]);
 
-  // Menü verisini yükleme
   useEffect(() => {
     if (activeTab === "menu-qr" || activeTab === "dashboard") {
       setIsLoadingMenu(true);
       
-      // Hardcoded menu data to avoid issues with imports
       const menuCategories: MenuCategoryType[] = [
         {
           id: "starters",
@@ -67,7 +64,6 @@ const AdminCMS = () => {
         }
       ];
       
-      // Simulate API call delay
       setTimeout(() => {
         setMenuData(menuCategories);
         setIsLoadingMenu(false);
@@ -75,7 +71,6 @@ const AdminCMS = () => {
     }
   }, [activeTab]);
 
-  // Handle status change
   const handleStatusChange = async (id: string, newStatus: "Onaylandı" | "Beklemede" | "İptal") => {
     try {
       const { error } = await supabase
@@ -136,7 +131,6 @@ const AdminCMS = () => {
             </TabsList>
             
             <TabsContent value="dashboard" className="space-y-6">
-              {/* Dashboard içeriği - mock verileri kaldırıp gerçek verileri kullanacağız */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <DashboardSummaryCard />
                 
@@ -203,11 +197,7 @@ const AdminCMS = () => {
             </TabsContent>
             
             <TabsContent value="reservations" className="space-y-6">
-              <ReservationsPanel
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                onStatusChange={handleStatusChange}
-              />
+              <ReservationsPanel />
             </TabsContent>
             
             <TabsContent value="tables" className="space-y-6">
@@ -239,7 +229,6 @@ const AdminCMS = () => {
   );
 };
 
-// Dashboard özet kartı bileşeni
 const DashboardSummaryCard = () => {
   const [reservationStats, setReservationStats] = useState({
     today: 0,
@@ -252,17 +241,14 @@ const DashboardSummaryCard = () => {
     const fetchReservationStats = async () => {
       setIsLoading(true);
       try {
-        // Tüm rezervasyonları çek
         const { data, error } = await supabase.from('reservations').select('*');
         
         if (error) throw error;
         
         if (data) {
-          // Bugünkü rezervasyonlar
           const today = new Date().toISOString().split('T')[0];
           const todayReservations = data.filter(r => r.date === today);
           
-          // Bu haftaki rezervasyonlar (son 7 gün)
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           const thisWeekReservations = data.filter(r => {
@@ -270,7 +256,6 @@ const DashboardSummaryCard = () => {
             return reservationDate >= oneWeekAgo;
           });
           
-          // Bekleyen rezervasyonlar
           const pendingReservations = data.filter(r => r.status === 'Beklemede');
           
           setReservationStats({
@@ -323,7 +308,6 @@ const DashboardSummaryCard = () => {
   );
 };
 
-// Son rezervasyonlar bileşeni
 const DashboardRecentReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);

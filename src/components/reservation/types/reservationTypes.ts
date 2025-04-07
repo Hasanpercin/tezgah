@@ -3,7 +3,7 @@
 
 export interface Table {
   id: string | number;
-  size: 2 | 4 | 6 | 8;
+  size: number;  // Changed from union type to number to match actual data
   type: 'window' | 'center' | 'corner' | 'booth';
   position_x: number;
   position_y: number;
