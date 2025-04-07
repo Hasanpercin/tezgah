@@ -89,7 +89,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
 
   // Function to generate class based on table properties
   const getTableClass = (table: Table) => {
-    const baseClass = "relative flex items-center justify-center rounded-md cursor-pointer transition-all border-2";
+    const baseClass = "absolute flex items-center justify-center rounded-md cursor-pointer transition-all border-2 shadow-sm";
     
     // Size classes
     const sizeClass = table.size <= 2 ? "w-16 h-16" :
@@ -100,13 +100,14 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
     const typeClass = table.type === 'window' ? "bg-blue-100 border-blue-300" :
                       table.type === 'center' ? "bg-green-100 border-green-300" :
                       table.type === 'corner' ? "bg-yellow-100 border-yellow-300" :
-                      "bg-purple-100 border-purple-300";
+                      table.type === 'booth' ? "bg-purple-100 border-purple-300" :
+                      "bg-red-100 border-red-300";
     
     // Availability classes
     const availClass = !table.available ? "opacity-40 cursor-not-allowed" : "";
     
     // Selected class
-    const selectedClass = selectedTable?.id === table.id ? "ring-2 ring-primary ring-offset-2" : "";
+    const selectedClass = selectedTable?.id === table.id ? "ring-2 ring-primary ring-offset-2 shadow-md" : "";
     
     return `${baseClass} ${sizeClass} ${typeClass} ${availClass} ${selectedClass}`;
   };
@@ -121,9 +122,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
     if (error) {
       console.error("Error fetching tables:", error);
     }
-    console.log("Current query params:", { date, time, guestCount });
-    console.log("Tables data:", tables);
-  }, [error, date, time, guestCount, tables]);
+  }, [error]);
 
   // Error display
   if (error) {
@@ -174,7 +173,7 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
         <div className="absolute top-4 left-4 text-xs font-medium text-muted-foreground">Restoran Yerleşimi</div>
         
         {/* Restaurant walls */}
-        <div className="border-2 border-gray-400 p-8 rounded-lg min-h-[400px] w-full relative">
+        <div className="border-2 border-dashed border-gray-400 p-8 rounded-lg min-h-[400px] w-full relative">
           {/* Entry/Exit */}
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 bg-white px-3 py-1 text-xs border border-gray-400 rounded-md">
             Giriş/Çıkış
@@ -224,10 +223,10 @@ const TableSelection = ({ onSelectTable, selectedTable, date, time, guests }: Ta
                   key={table.id}
                   className={getTableClass(table)}
                   style={{ 
-                    position: 'absolute',
                     left: `${table.position.x}%`, 
                     top: `${table.position.y}%`,
-                    transform: 'translate(-50%, -50%)'
+                    transform: 'translate(-50%, -50%)',
+                    userSelect: 'none'
                   }}
                   onClick={() => table.available && isCompatible(table) && handleTableClick(table)}
                   title={table.available ? table.label : `${table.label} (Müsait Değil)`}

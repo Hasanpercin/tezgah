@@ -9,6 +9,7 @@ export interface Table {
   position_x: number;
   position_y: number;
   is_active: boolean;
+  available?: boolean;
 }
 
 export const fetchTables = async () => {
