@@ -110,35 +110,14 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
-      // First, check if we need to create a profile for this user
+      // Get the current user ID if authenticated, or generate a temporary ID
       let userId = user?.id;
       
-      // If no authenticated user, create a temporary profile
-      if (!userId) {
-        // Generate a UUID for an anonymous user
-        userId = uuidv4();
-        
-        // Create a profile first
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone
-          });
-        
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          throw profileError;
-        }
-      }
-      
-      // Now create the reservation with the user_id
+      // Now create the reservation
       const { data, error } = await supabase
         .from('reservations')
         .insert({
-          user_id: userId,
+          user_id: userId || uuidv4(), // Use authenticated user ID or generate a temporary ID
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
