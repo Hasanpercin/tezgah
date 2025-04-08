@@ -111,21 +111,21 @@ export const useReservationForm = () => {
     
     try {
       // Get the current user ID if authenticated, or generate a temporary ID
-      let userId = user?.id;
+      let userId = user?.id || uuidv4(); // Use authenticated user ID or generate a temporary ID
       
-      // Now create the reservation
+      // Now create the reservation with proper data type handling
       const { data, error } = await supabase
         .from('reservations')
         .insert({
-          user_id: userId || uuidv4(), // Use authenticated user ID or generate a temporary ID
+          user_id: userId,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           date: formData.date?.toISOString().split('T')[0],
           time: formData.time,
-          guests: parseInt(formData.guests),
-          notes: formData.notes,
-          occasion: formData.occasion,
+          guests: parseInt(formData.guests), // Ensure guests is converted to number
+          notes: formData.notes || null,
+          occasion: formData.occasion || null,
           status: 'Beklemede'
         })
         .select()
