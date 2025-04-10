@@ -1,138 +1,108 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import React from 'react';
 import { ReservationState } from '../types/reservationTypes';
-import { ArrowRight, CreditCard, CheckCircle, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import PaymentForm from "@/components/payments/PaymentForm";
-import { useToast } from "@/hooks/use-toast";
-import { ReservationSummary } from "../ReservationSummary";
+import PaymentForm from '@/components/payments/PaymentForm';
 
 interface PaymentStepProps {
-  state: ReservationState;
+  reservation: ReservationState;
   onPaymentComplete: (transactionId: string) => void;
 }
 
-const PaymentStep: React.FC<PaymentStepProps> = ({ state, onPaymentComplete }) => {
-  const { toast } = useToast();
-  const [isShowingForm, setIsShowingForm] = useState(false);
-  const [isPaymentComplete, setIsPaymentComplete] = useState(false);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-  
-  // Calculate the total based on selection type
+const PaymentStep: React.FC<PaymentStepProps> = ({ reservation, onPaymentComplete }) => {
+  // Calculate the subtotal based on selection type
   const calculateSubtotal = () => {
-    if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-      return state.menuSelection.selectedFixedMenu.price * parseInt(state.formData.guests);
-    } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
-      return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
+    if (reservation.menuSelection.type === 'fixed_menu' && reservation.menuSelection.selectedFixedMenu) {
+      const quantity = reservation.menuSelection.selectedFixedMenu.quantity || parseInt(reservation.formData.guests);
+      return reservation.menuSelection.selectedFixedMenu.price * quantity;
+    } else if (reservation.menuSelection.type === 'a_la_carte' && reservation.menuSelection.selectedMenuItems) {
+      return reservation.menuSelection.selectedMenuItems.reduce((sum, item) => {
         return sum + (item.price * (item.quantity || 1));
       }, 0);
     }
     return 0;
   };
-  
-  // Calculate discount
+
+  // Calculate standard discount (10%)
   const calculateDiscount = (subtotal: number) => {
-    if (subtotal >= 3000) {
-      // 15% discount for subtotals >= 3000 TL
-      return subtotal * 0.15;
-    } else if (subtotal > 0) {
-      // 10% discount for subtotals < 3000 TL
-      return subtotal * 0.10;
-    }
-    return 0;
+    // Default discount settings
+    const discountPercentage = 10;
+    return {
+      percentage: discountPercentage,
+      amount: subtotal * (discountPercentage / 100)
+    };
   };
-  
+
   const subtotal = calculateSubtotal();
   const discount = calculateDiscount(subtotal);
-  const total = subtotal - discount;
-  
-  const handlePaymentComplete = (txId: string) => {
-    setIsPaymentComplete(true);
-    setTransactionId(txId);
-    onPaymentComplete(txId);
-    
-    toast({
-      title: "Ödeme Başarılı",
-      description: "Rezervasyon için ön ödeme başarıyla tamamlandı.",
-    });
+  const total = subtotal - discount.amount;
+
+  const handlePaymentSuccess = (transactionId: string) => {
+    onPaymentComplete(transactionId);
   };
-  
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <h3 className="text-2xl font-semibold">Ödeme</h3>
       
-      <ReservationSummary state={state} />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <CreditCard className="mr-2 h-5 w-5" /> Ödeme Detayları
-          </CardTitle>
-          <CardDescription>
-            Rezervasyonunuzu tamamlamak için ön ödeme yapmanız gerekmektedir.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Ara Toplam:</span>
-              <span>{subtotal.toLocaleString('tr-TR')} ₺</span>
-            </div>
-            
-            {discount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>İndirim ({subtotal >= 3000 ? '15%' : '10%'}):</span>
-                <span>-{discount.toLocaleString('tr-TR')} ₺</span>
-              </div>
-            )}
-            
-            <Separator />
-            
-            <div className="flex justify-between font-medium text-lg">
-              <span>Toplam:</span>
-              <span>{total.toLocaleString('tr-TR')} ₺</span>
-            </div>
-          </div>
+      <div className="bg-muted p-4 rounded-md mb-6">
+        <h4 className="font-medium mb-2">Rezervasyon Özeti</h4>
+        <div className="space-y-1 text-sm">
+          <p><span className="font-medium">Ad Soyad:</span> {reservation.formData.name}</p>
+          <p><span className="font-medium">Tarih:</span> {reservation.formData.date?.toLocaleDateString('tr-TR')}</p>
+          <p><span className="font-medium">Saat:</span> {reservation.formData.time}</p>
+          <p><span className="font-medium">Kişi Sayısı:</span> {reservation.formData.guests}</p>
           
-          <Alert className="bg-amber-50 border-amber-200">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-amber-800">
-              Ön ödeme, rezervasyon tutarının tamamını kapsamaktadır. Bu tutar, rezervasyon iptal edilmediği sürece geri ödenmez.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-        <CardFooter>
-          {!isPaymentComplete ? (
-            !isShowingForm ? (
-              <Button 
-                className="w-full"
-                onClick={() => setIsShowingForm(true)}
-              >
-                Ödemeye Geç <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <div className="w-full">
-                <PaymentForm 
-                  amount={total}
-                  onPaymentComplete={handlePaymentComplete}
-                  onCancel={() => setIsShowingForm(false)}
-                />
-              </div>
-            )
-          ) : (
-            <div className="w-full p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-              <div>
-                <p className="font-medium text-green-800">Ödeme Başarılı</p>
-                <p className="text-sm text-green-600">İşlem No: {transactionId}</p>
-              </div>
+          {reservation.menuSelection.type === 'fixed_menu' && reservation.menuSelection.selectedFixedMenu && (
+            <p>
+              <span className="font-medium">Menü:</span> {reservation.menuSelection.selectedFixedMenu.name} x 
+              {reservation.menuSelection.selectedFixedMenu.quantity || reservation.formData.guests}
+            </p>
+          )}
+          
+          {reservation.menuSelection.type === 'a_la_carte' && reservation.menuSelection.selectedMenuItems && (
+            <div>
+              <span className="font-medium">Seçilen Yemekler:</span>
+              <ul className="list-disc list-inside pl-2">
+                {reservation.menuSelection.selectedMenuItems.map((item) => (
+                  <li key={item.id}>
+                    {item.name} x {item.quantity || 1}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
+
+      <div className="border-t border-b py-4 space-y-2">
+        <div className="flex justify-between">
+          <span>Ara Toplam</span>
+          <span>{subtotal.toLocaleString('tr-TR')} ₺</span>
+        </div>
+        
+        <div className="flex justify-between text-green-600">
+          <span>İndirim (%{discount.percentage})</span>
+          <span>-{discount.amount.toLocaleString('tr-TR')} ₺</span>
+        </div>
+        
+        <div className="flex justify-between font-semibold text-lg pt-2">
+          <span>Toplam</span>
+          <span>{total.toLocaleString('tr-TR')} ₺</span>
+        </div>
+      </div>
+
+      <div className="pt-4">
+        <PaymentForm 
+          amount={total} 
+          onSuccess={handlePaymentSuccess} 
+          reservationData={{
+            name: reservation.formData.name,
+            email: reservation.formData.email,
+            phone: reservation.formData.phone,
+            reservationId: "pending"
+          }}
+        />
+      </div>
     </div>
   );
 };

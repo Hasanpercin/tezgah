@@ -1,167 +1,142 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
-import { Card, CardContent } from '@/components/ui/card';
+import { Check, Calendar, Users, MapPin, Clock, FileText } from 'lucide-react';
 import { ReservationSummaryProps } from './types/reservationTypes';
-import { Calendar, Clock, Users, MapPin, CreditCard, Tag } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 
-export const ReservationSummary = ({ state }: ReservationSummaryProps) => {
-  // Calculate totals for display
-  const calculateSubtotal = () => {
-    if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-      return state.menuSelection.selectedFixedMenu.price * parseInt(state.formData.guests);
-    } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
-      return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
-        return sum + (item.price * (item.quantity || 1));
-      }, 0);
+const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
+  const getMenuTypeText = () => {
+    switch(state.menuSelection.type) {
+      case 'fixed_menu':
+        return 'Sabit Menü';
+      case 'a_la_carte':
+        return 'A La Carte Menü';
+      case 'at_restaurant':
+        return 'Restoranda Seçim';
+      default:
+        return 'Belirtilmemiş';
     }
-    return 0;
   };
   
-  const subtotal = state.payment?.amount !== undefined 
-    ? (state.payment.amount + (state.payment.discountAmount || 0))
-    : calculateSubtotal();
-    
-  const discount = state.payment?.discountAmount || 0;
-  const discountPercentage = state.payment?.discountPercentage || 0;
-  const total = subtotal - discount;
-  
   return (
-    <Card className="mb-8">
-      <CardContent className="pt-6">
-        <h3 className="text-lg font-semibold mb-4">Rezervasyon Özeti</h3>
+    <div className="py-6">
+      <div className="text-center mb-6">
+        <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+          <Check className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-green-600">Rezervasyonunuz Tamamlandı!</h2>
+        <p className="text-muted-foreground mt-2">
+          Rezervasyon detaylarınız aşağıda yer almaktadır.
+        </p>
+      </div>
+      
+      <div className="border rounded-lg p-6 bg-card">
+        <h3 className="text-xl font-semibold mb-4">Rezervasyon Bilgileri</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="flex items-start">
-              <Calendar className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+              <div className="bg-primary/10 p-2 rounded-full mr-4">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tarih</p>
                 <p className="font-medium">
-                  {state.formData.date
-                    ? format(state.formData.date, 'PPP', { locale: tr })
-                    : 'Tarih seçilmedi'}
+                  {state.formData.date ? state.formData.date.toLocaleDateString('tr-TR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  }) : 'Belirtilmemiş'}
                 </p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+              <div className="bg-primary/10 p-2 rounded-full mr-4">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Saat</p>
-                <p className="font-medium">{state.formData.time}</p>
+                <p className="font-medium">{state.formData.time || 'Belirtilmemiş'}</p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <Users className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+              <div className="bg-primary/10 p-2 rounded-full mr-4">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Kişi Sayısı</p>
-                <p className="font-medium">{state.formData.guests} Kişi</p>
+                <p className="font-medium">{state.formData.guests} kişi</p>
               </div>
             </div>
           </div>
           
           <div className="space-y-4">
             <div className="flex items-start">
-              <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+              <div className="bg-primary/10 p-2 rounded-full mr-4">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Masa</p>
                 <p className="font-medium">
-                  {state.selectedTable 
-                    ? `${state.selectedTable.name || state.selectedTable.label} (${state.selectedTable.size} kişilik)`
-                    : 'Masa seçilmedi'}
+                  {state.selectedTable ? state.selectedTable.label : 'Belirtilmemiş'}
                 </p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <Tag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+              <div className="bg-primary/10 p-2 rounded-full mr-4">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Menü Seçimi</p>
-                <div>
-                  {state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu && (
-                    <div>
-                      <Badge className="mb-1">Sabit Menü</Badge>
-                      <p className="font-medium">{state.menuSelection.selectedFixedMenu.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {state.formData.guests} kişi × {state.menuSelection.selectedFixedMenu.price.toLocaleString('tr-TR')} ₺
+                <p className="font-medium">{getMenuTypeText()}</p>
+                
+                {state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu && (
+                  <p className="text-sm mt-1">
+                    {state.menuSelection.selectedFixedMenu.name} x 
+                    {state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests)}
+                  </p>
+                )}
+                
+                {state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems && (
+                  <div className="text-sm mt-1">
+                    {state.menuSelection.selectedMenuItems.map((item, index) => (
+                      <p key={item.id}>
+                        {item.name} x {item.quantity || 1}
+                        {index < state.menuSelection.selectedMenuItems!.length - 1 ? ', ' : ''}
                       </p>
-                    </div>
-                  )}
-                  
-                  {state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems && (
-                    <div>
-                      <Badge className="mb-1">A La Carte</Badge>
-                      <p className="text-sm">
-                        {state.menuSelection.selectedMenuItems.length} farklı ürün, toplam {state.menuSelection.selectedMenuItems.reduce((sum, item) => sum + (item.quantity || 1), 0)} adet
-                      </p>
-                    </div>
-                  )}
-                  
-                  {state.menuSelection.type === 'at_restaurant' && (
-                    <p className="font-medium">Restoranda seçim yapılacak</p>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             
-            {state.payment?.isPaid && (
+            {state.payment && state.payment.isPaid && (
               <div className="flex items-start">
-                <CreditCard className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                <div className="bg-green-100 p-2 rounded-full mr-4">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Ödeme Durumu</p>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">
-                    Ön Ödeme Tamamlandı
-                  </Badge>
-                  {state.payment.transactionId && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      İşlem No: {state.payment.transactionId}
-                    </p>
-                  )}
+                  <p className="font-medium text-green-600">Ödeme Alındı ({state.payment.amount?.toLocaleString('tr-TR')} ₺)</p>
                 </div>
               </div>
             )}
           </div>
         </div>
         
-        {(state.menuSelection.type !== 'at_restaurant' || state.payment?.isPaid) && (
-          <>
-            <Separator className="my-4" />
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Ara Toplam:</span>
-                <span>{subtotal.toLocaleString('tr-TR')} ₺</span>
-              </div>
-              
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>İndirim ({discountPercentage}%):</span>
-                  <span>-{discount.toLocaleString('tr-TR')} ₺</span>
-                </div>
-              )}
-              
-              <Separator className="my-2" />
-              
-              <div className="flex justify-between font-medium">
-                <span>Toplam:</span>
-                <span>{total.toLocaleString('tr-TR')} ₺</span>
-              </div>
-            </div>
-          </>
-        )}
-        
-        {state.formData.notes && (
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="font-medium text-sm">Özel Notlar:</p>
-            <p className="text-sm">{state.formData.notes}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="mt-8 pt-4 border-t">
+          <p className="text-center text-muted-foreground">
+            Rezervasyon iptal veya değişikliği için lütfen bizimle telefonla iletişime geçiniz.
+            <br />
+            <span className="font-medium text-foreground">+90 554 434 60 68</span>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
+
+export default ReservationSummary;

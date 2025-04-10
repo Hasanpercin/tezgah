@@ -6,12 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Utensils, CreditCard, CheckCircle } from "lucide-react";
 import { useReservationState } from './hooks/useReservationState';
-import ReservationForm from './ReservationForm';
+import ReservationForm from '@/components/ReservationForm'; // Fixed import path
 import TableSelection from './TableSelection';
-import StepIndicator from './StepIndicator';
+import StepIndicator from './components/StepIndicator';
 import NavigationButtons from './NavigationButtons';
 import MenuSelection from './MenuSelection'; 
-import PaymentStep from './PaymentStep';
+import PaymentStep from './components/PaymentStep';
 import ReservationSummary from './ReservationSummary';
 import { STEPS } from './types/reservationTypes';
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +130,7 @@ const MultiStepReservation = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <div ref={containerRef} className="space-y-8">
+      <div ref={containerRef} className="space-y-8" data-reservation-step>
         <StepIndicator 
           currentStep={currentStep} 
           steps={STEPS}
