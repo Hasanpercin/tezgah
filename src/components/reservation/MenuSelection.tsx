@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from "@/components/ui/button";
-import { Check, ShoppingBag, X, MinusCircle, PlusCircle, Utensils } from "lucide-react";
+import { Check, ShoppingBag, X, MinusCircle, PlusCircle, Utensils, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
@@ -188,7 +188,10 @@ const MenuSelection = ({
       <Tabs 
         defaultValue="fixed" 
         value={activeTab} 
-        onValueChange={setActiveTab}
+        onValueChange={(value) => {
+          console.log("Tab changed to:", value);
+          setActiveTab(value);
+        }}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -260,8 +263,7 @@ const MenuSelection = ({
                     fixedMenus.map((menu) => (
                       <Card 
                         key={menu.id} 
-                        className={`cursor-pointer transition-all hover:border-primary`}
-                        onClick={() => handleSelectFixedMenu(menu)}
+                        className="border transition-all"
                       >
                         <CardHeader>
                           <CardTitle className="text-lg">{menu.name}</CardTitle>
@@ -271,6 +273,16 @@ const MenuSelection = ({
                           <div className="text-xl font-bold">₺{menu.price.toLocaleString()}</div>
                           <div className="text-sm text-muted-foreground mt-2">kişi başı</div>
                         </CardContent>
+                        <CardFooter className="flex justify-end">
+                          <Button 
+                            variant="default"
+                            onClick={() => handleSelectFixedMenu(menu)}
+                            className="flex items-center gap-1"
+                          >
+                            <Plus size={16} />
+                            Ekle
+                          </Button>
+                        </CardFooter>
                       </Card>
                     ))
                   ) : (
@@ -399,7 +411,10 @@ const MenuSelection = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={selectAtRestaurant ? "yes" : "no"} onValueChange={(value) => value === "yes" && handleSelectAtRestaurant()}>
+              <RadioGroup 
+                value={selectAtRestaurant ? "yes" : "no"} 
+                onValueChange={(value) => value === "yes" && handleSelectAtRestaurant()}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yes" id="at-restaurant" />
                   <Label htmlFor="at-restaurant">Menü seçimimi restoranda yapmak istiyorum</Label>
@@ -411,6 +426,17 @@ const MenuSelection = ({
                 Menü seçiminizi restoranda yapabilirsiniz.
               </p>
             </CardContent>
+            {!selectAtRestaurant && (
+              <CardFooter className="flex justify-end">
+                <Button
+                  onClick={handleSelectAtRestaurant}
+                  className="flex items-center gap-1"
+                >
+                  <Check size={16} />
+                  Seçimi Onayla
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
