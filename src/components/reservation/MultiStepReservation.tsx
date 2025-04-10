@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Calendar, Users, Utensils, CreditCard, CheckCircle } from "lucide-react";
 
@@ -11,6 +11,7 @@ import StepIndicator from './components/StepIndicator';
 import PaymentStep from './components/PaymentStep';
 import ConfirmationStep from './components/ConfirmationStep';
 import { useReservationState } from './hooks/useReservationState';
+import { useToast } from "@/hooks/use-toast";
 
 const MultiStepReservation = () => {
   const {
@@ -29,6 +30,20 @@ const MultiStepReservation = () => {
     setSelectAtRestaurant,
     setIsPrePayment
   } = useReservationState();
+  
+  const { toast } = useToast();
+  
+  // Devam et butonunun neden aktif olmadığını konsola yazdırmak için kontrol ediyoruz
+  useEffect(() => {
+    if (currentStep === 2) {
+      console.log("Menu Selection State:", {
+        selectedFixMenu: !!state.selectedFixMenu,
+        selectedALaCarteItems: state.selectedALaCarteItems.length,
+        selectAtRestaurant: state.selectAtRestaurant,
+        canProceed: canProceed()
+      });
+    }
+  }, [currentStep, state.selectedFixMenu, state.selectedALaCarteItems, state.selectAtRestaurant, canProceed]);
   
   return (
     <div className="container-custom max-w-5xl" ref={containerRef} data-reservation-step>
@@ -111,7 +126,17 @@ const MultiStepReservation = () => {
           
           {(currentStep < 3 || (currentStep === 3 && !state.isPrePayment)) && (
             <Button 
-              onClick={handleNextStep} 
+              onClick={() => {
+                if (canProceed()) {
+                  handleNextStep();
+                } else if (currentStep === 2) {
+                  toast({
+                    title: "Lütfen bir seçim yapın",
+                    description: "Devam etmek için fix menü, alakart menü veya restoranda seçim yapma seçeneklerinden birini seçmelisiniz.",
+                    variant: "destructive"
+                  });
+                }
+              }}
               disabled={!canProceed()}
               className="flex items-center"
             >

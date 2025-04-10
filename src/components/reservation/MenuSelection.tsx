@@ -470,12 +470,17 @@ const MenuSelection = ({
             </CardHeader>
             <CardContent className="pt-6">
               <RadioGroup 
+                defaultValue={selectAtRestaurant ? "yes" : "no"}
                 value={selectAtRestaurant ? "yes" : "no"} 
                 onValueChange={(value) => value === "yes" && handleSelectAtRestaurant()}
                 className="space-y-3"
               >
-                <div className="flex items-center space-x-3 rounded-md border p-3 bg-card shadow-sm">
-                  <RadioGroupItem value="yes" id="at-restaurant" />
+                <div className={cn(
+                  "flex items-center space-x-3 rounded-md border p-3 bg-card shadow-sm cursor-pointer",
+                  selectAtRestaurant ? "border-primary/50 bg-primary/5" : ""
+                )}
+                onClick={() => handleSelectAtRestaurant()}>
+                  <RadioGroupItem value="yes" id="at-restaurant" checked={selectAtRestaurant} />
                   <Label htmlFor="at-restaurant" className="flex-1 cursor-pointer">Menü seçimimi restoranda yapmak istiyorum</Label>
                 </div>
               </RadioGroup>

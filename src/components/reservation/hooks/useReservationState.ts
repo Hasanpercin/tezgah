@@ -201,7 +201,7 @@ export const useReservationState = () => {
         // Allow proceeding if either a fixed menu is selected OR at least one a la carte item is selected OR select at restaurant is true
         return state.selectedFixMenu !== null || 
                state.selectedALaCarteItems.length > 0 || 
-               state.selectAtRestaurant;
+               state.selectAtRestaurant === true; // Burada === true kontrolünü ekledim
       case 3: // Payment & summary
         return !state.isPrePayment || state.transactionId !== null; // If not pre-paying, can proceed without transaction
       default:
@@ -212,6 +212,8 @@ export const useReservationState = () => {
   // Go to next step
   const handleNextStep = async () => {
     if (currentStep < 4 && canProceed()) {
+      console.log("Can proceed check passed, moving to next step", { currentStep, state });
+      
       // "Restoranda seçim yapacağım" seçeneği seçildiğinde ödeme adımını atla
       if (currentStep === 2 && state.selectAtRestaurant) {
         try {
@@ -309,6 +311,17 @@ export const useReservationState = () => {
       
       // Scroll to top when changing steps
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      console.log("Can't proceed to next step", { 
+        currentStep, 
+        canProceed: canProceed(),
+        state: {
+          selectedTable: !!state.selectedTable,
+          selectedFixMenu: !!state.selectedFixMenu,
+          selectedALaCarteItems: state.selectedALaCarteItems.length,
+          selectAtRestaurant: state.selectAtRestaurant
+        }
+      });
     }
   };
   
@@ -358,6 +371,7 @@ export const useReservationState = () => {
   };
 
   const setSelectAtRestaurant = (select: boolean) => {
+    console.log("Setting selectAtRestaurant to:", select);
     setState({
       ...state,
       selectAtRestaurant: select,
