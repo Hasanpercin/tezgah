@@ -16,33 +16,36 @@ import MyReservations from './pages/MyReservations';
 import NotFound from './pages/NotFound';
 import Loyalty from './pages/Loyalty';
 import { Toaster } from './components/ui/sonner';
+import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/reservation" element={<Reservation />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-reservations" element={<MyReservations />} />
-            <Route path="/admin" element={<AdminCMS />} />
-            <Route path="/loyalty" element={<Loyalty />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <div className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/menu" element={<Menu />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/reservation" element={<Reservation />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-reservations" element={<MyReservations />} />
+              <Route path="/admin" element={<AdminCMS />} />
+              <Route path="/loyalty" element={<Loyalty />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+          <Footer />
+          <Toaster position="bottom-right" />
         </div>
-        <Footer />
-        <Toaster position="bottom-right" />
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 
