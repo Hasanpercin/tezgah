@@ -168,8 +168,15 @@ export const useReservationState = () => {
         reservationId: reservationId,
         date: state.formData.date ? state.formData.date.toISOString().split('T')[0] : null,
         time: state.formData.time,
-        guests: state.formData.guests
+        guests: state.formData.guests,
+        notes: state.formData.notes || '',
+        occasion: state.formData.occasion || '',
+        tableName: state.selectedTable?.name || state.selectedTable?.label || '',
+        tableType: state.selectedTable?.type || '',
+        tableSize: state.selectedTable?.size || 0
       };
+      
+      console.log("Sending reservation data to webhook:", webhookData);
       
       // Send data to webhook
       const response = await fetch(webhookUrl, {
@@ -177,16 +184,24 @@ export const useReservationState = () => {
         headers: {
           'Content-Type': 'application/json'
         },
+        mode: 'no-cors', // To avoid CORS issues with external webhooks
         body: JSON.stringify(webhookData)
       });
       
-      if (response.ok) {
-        console.log("Webhook notification sent successfully");
-      } else {
-        console.error("Failed to send webhook notification:", await response.text());
-      }
+      console.log("Webhook notification sent");
+      
+      toast({
+        title: "Rezervasyon Bilgileri Gönderildi",
+        description: "Rezervasyon bilgileri başarıyla sistem yöneticisine iletildi.",
+        duration: 3000,
+      });
     } catch (error: any) {
       console.error("Webhook error:", error.message);
+      toast({
+        title: "Bildirim Hatası",
+        description: "Rezervasyon bilgileri gönderilemedi, ancak rezervasyonunuz başarıyla kaydedildi.",
+        variant: "destructive",
+      });
     }
   };
 
