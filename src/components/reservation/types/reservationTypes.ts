@@ -42,5 +42,23 @@ export const STEPS = [
 
 export interface ReservationSummaryProps {
   state: ReservationState;
-  showPaymentInfo?: boolean;
+}
+
+// Add missing types that were referenced in MenuSelection.tsx
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category_id: string;
+  image_path?: string;
+}
+
+export interface FixMenuOption {
+  id: string | number;
+  name: string;
+  description?: string;
+  price: number;
+  image_path?: string;
+  quantity?: number;
 }
