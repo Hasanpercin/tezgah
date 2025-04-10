@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -270,8 +269,9 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                 <div className="space-y-8">
                   {Object.keys(menuByCategory).length > 0 ? (
                     Object.keys(menuByCategory).map((categoryId) => {
-                      // Check if at least one item has menu_categories
-                      const categoryName = menuByCategory[categoryId][0]?.menu_categories?.name || 'Kategori';
+                      // Fix: Safely access menu_categories using the service type
+                      const serviceItem = menuByCategory[categoryId][0] as ServiceMenuItem;
+                      const categoryName = serviceItem?.menu_categories?.name || 'Kategori';
                       
                       return (
                         <div key={categoryId} className="space-y-4">
