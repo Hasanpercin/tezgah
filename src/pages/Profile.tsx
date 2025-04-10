@@ -1,400 +1,314 @@
 
-import Hero from '@/components/Hero';
-import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { User, History, Settings, LogOut } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-
-// Rezervasyon tipi
-type Reservation = {
-  id: string;
-  date: string;
-  time: string;
-  guests: string;
-  status: string;
-};
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { User, Settings, Clock, Award, LogOut } from 'lucide-react';
 
 const Profile = () => {
-  const { toast } = useToast();
-  const { isAuthenticated, logout, user, profile, updateProfile, isLoading } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
-  const [activeSidebar, setActiveSidebar] = useState('profile');
-  const [loyaltyPoints, setLoyaltyPoints] = useState({ points: 0, level: 'Bronz' });
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  
-  const [userData, setUserData] = useState({
+  const [profile, setProfile] = useState({
     name: '',
     email: '',
     phone: '',
-    address: '',
+    address: ''
   });
   
-  // Profil bilgilerini güncelle
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [loyaltyLevel, setLoyaltyLevel] = useState('');
+  
+  // Grab user profile data on load
   useEffect(() => {
-    if (profile) {
-      setUserData({
-        name: profile.name || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
-        address: profile.address || '',
-      });
-    }
-  }, [profile]);
-
-  // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/login', { state: { from: '/profile' } });
+    if (!isAuthenticated && !isLoading) {
+      navigate('/login');
     }
   }, [isAuthenticated, isLoading, navigate]);
-
-  // Sadakat puanlarını yükle
+  
   useEffect(() => {
-    const fetchLoyaltyPoints = async () => {
+    const loadProfile = async () => {
       if (user) {
         try {
-          const { data, error } = await supabase
+          // Get profile info
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) throw error;
+          
+          if (profileData) {
+            setProfile({
+              name: profileData.name || '',
+              email: profileData.email || '',
+              phone: profileData.phone || '',
+              address: profileData.address || ''
+            });
+          }
+          
+          // Get loyalty info
+          const { data: loyaltyData, error: loyaltyError } = await supabase
             .from('loyalty_points')
             .select('points, level')
             .eq('user_id', user.id)
             .single();
-
-          if (error) throw error;
-          
-          if (data) {
-            setLoyaltyPoints({
-              points: data.points,
-              level: data.level
-            });
-          }
-        } catch (error) {
-          console.error('Sadakat puanları yüklenirken hata:', error);
-        }
-      }
-    };
-
-    fetchLoyaltyPoints();
-  }, [user]);
-
-  // Rezervasyonları yükle
-  useEffect(() => {
-    const fetchReservations = async () => {
-      if (user) {
-        try {
-          const { data, error } = await supabase
-            .from('reservations')
-            .select('id, date, time, guests, status')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
-          
-          if (data) {
-            const formattedReservations = data.map(res => ({
-              ...res,
-              date: new Date(res.date).toLocaleDateString('tr-TR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              }),
-              guests: `${res.guests} Kişi`
-            }));
             
-            setReservations(formattedReservations);
+          if (loyaltyError) throw loyaltyError;
+          
+          if (loyaltyData) {
+            setLoyaltyPoints(loyaltyData.points);
+            setLoyaltyLevel(loyaltyData.level);
           }
+          
         } catch (error) {
-          console.error('Rezervasyonlar yüklenirken hata:', error);
+          console.error('Error loading profile:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
-
-    if (activeTab === 'reservations') {
-      fetchReservations();
-    }
-  }, [user, activeTab]);
-
-  const updateUserProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUpdating(true);
     
+    loadProfile();
+  }, [user]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfile({
+      ...profile,
+      [name]: value
+    });
+  };
+  
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
     try {
-      const result = await updateProfile({
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        address: userData.address
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          address: profile.address,
+          updated_at: new Date()
+        })
+        .eq('id', user.id);
       
-      if (result.success) {
-        toast({
-          title: "Profil güncellendi",
-          description: "Bilgileriniz başarıyla güncellendi.",
-          variant: "default",
-        });
-      } else {
-        toast({
-          title: "Güncelleme başarısız",
-          description: result.error || "Profil güncellenirken bir hata oluştu.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Profil güncellenirken hata:', error);
+      if (error) throw error;
+      
       toast({
-        title: "Güncelleme başarısız",
-        description: "Beklenmeyen bir hata oluştu.",
-        variant: "destructive",
+        title: 'Profil Güncellendi',
+        description: 'Profil bilgileriniz başarıyla güncellendi.',
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: 'Hata',
+        description: 'Profil güncellenirken bir hata oluştu.',
+        variant: 'destructive'
       });
     } finally {
-      setIsUpdating(false);
+      setIsSaving(false);
     }
   };
-
+  
   const handleLogout = async () => {
     await logout();
-    toast({
-      title: "Çıkış yapıldı",
-      description: "Başarıyla çıkış yaptınız.",
-      variant: "default",
-    });
-    navigate('/login');
+    navigate('/');
   };
-
-  const handleSidebarClick = (tab: string) => {
-    setActiveSidebar(tab);
-    setActiveTab(tab);
-  };
-
-  const heroImage = "/lovable-uploads/2c59c482-2fad-4bfb-b382-09d5e7c92c20.png";
-
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Yükleniyor...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // useEffect içinde yönlendirme yapılacak
-  }
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'profile':
-        return (
-          <Card>
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-6">Profil Bilgileri</h2>
-              
-              <form onSubmit={updateUserProfile} className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-1">Ad Soyad</label>
-                  <Input 
-                    id="name" 
-                    value={userData.name}
-                    onChange={(e) => setUserData({...userData, name: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1">E-posta</label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={userData.email}
-                    onChange={(e) => setUserData({...userData, email: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium mb-1">Telefon</label>
-                  <Input 
-                    id="phone" 
-                    value={userData.phone || ''}
-                    onChange={(e) => setUserData({...userData, phone: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="address" className="block text-sm font-medium mb-1">Adres</label>
-                  <Input 
-                    id="address" 
-                    value={userData.address || ''}
-                    onChange={(e) => setUserData({...userData, address: e.target.value})}
-                  />
-                </div>
-                
-                <Button type="submit" disabled={isUpdating} className="mt-4">
-                  {isUpdating ? 'Güncelleniyor...' : 'Profili Güncelle'}
-                </Button>
-              </form>
-            </div>
-          </Card>
-        );
-      case 'reservations':
-        return (
-          <Card>
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-6">Rezervasyonlarım</h2>
-              
-              {reservations.length > 0 ? (
-                <div className="space-y-4">
-                  {reservations.map(reservation => (
-                    <Card key={reservation.id} className="p-4 shadow-sm">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{reservation.date} - {reservation.time}</p>
-                          <p className="text-sm text-muted-foreground">{reservation.guests}</p>
-                        </div>
-                        <div>
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            reservation.status === 'Onaylandı' 
-                              ? 'bg-green-100 text-green-800' 
-                              : reservation.status === 'Tamamlandı'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {reservation.status}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Henüz rezervasyonunuz bulunmuyor.
-                </div>
-              )}
-            </div>
-          </Card>
-        );
-      case 'settings':
-        return (
-          <Card>
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-6">Ayarlar</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Bildirim Tercihleri</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span>E-posta bildirimleri</span>
-                      <Button variant="outline" size="sm">Açık</Button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>SMS bildirimleri</span>
-                      <Button variant="outline" size="sm">Kapalı</Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Şifre Değiştir</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label htmlFor="current-password" className="block text-sm font-medium mb-1">Mevcut Şifre</label>
-                      <Input id="current-password" type="password" />
-                    </div>
-                    <div>
-                      <label htmlFor="new-password" className="block text-sm font-medium mb-1">Yeni Şifre</label>
-                      <Input id="new-password" type="password" />
-                    </div>
-                    <div>
-                      <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">Yeni Şifre Tekrar</label>
-                      <Input id="confirm-password" type="password" />
-                    </div>
-                    <Button variant="default" size="default">
-                      Şifreyi Güncelle
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="min-h-screen">
-      <Hero 
-        backgroundImage={heroImage}
-        title="Kullanıcı Profili"
-        subtitle="Hesabınızı yönetin ve sadakat puanlarınızı görüntüleyin"
-        showButtons={false}
-        overlayColor="green-600/70"
-      />
-      
-      <section className="section-padding bg-white">
+      {/* Profile Content - No Hero Section */}
+      <section className="section-padding pt-32 bg-white">
         <div className="container-custom max-w-5xl">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <div className="flex flex-col items-center mb-6">
-                  <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                    <User size={40} className="text-primary" />
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 font-playfair">Hesabım</h1>
+            <p className="text-xl text-muted-foreground">
+              Profil bilgilerinizi düzenleyin ve rezervasyonlarınızı yönetin
+            </p>
+          </div>
+          
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="profile" className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                Profil Bilgileri
+              </TabsTrigger>
+              <TabsTrigger value="reservations" className="flex items-center">
+                <Clock className="mr-2 h-4 w-4" />
+                Rezervasyonlar
+              </TabsTrigger>
+              <TabsTrigger value="loyalty" className="flex items-center">
+                <Award className="mr-2 h-4 w-4" />
+                Sadakat Programı
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="mr-2 h-5 w-5" />
+                    Profil Bilgileri
+                  </CardTitle>
+                  <CardDescription>
+                    Kişisel bilgilerinizi güncelleyin
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Ad Soyad</Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        value={profile.name}
+                        onChange={handleInputChange}
+                        placeholder="Ad Soyad"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-posta</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={profile.email}
+                        onChange={handleInputChange}
+                        placeholder="E-posta adresiniz"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefon</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleInputChange}
+                        placeholder="Telefon numaranız"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Adres</Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        value={profile.address}
+                        onChange={handleInputChange}
+                        placeholder="Adresiniz"
+                      />
+                    </div>
                   </div>
-                  <h3 className="font-medium text-xl">{userData.name}</h3>
-                  <p className="text-muted-foreground text-sm">{loyaltyPoints.points} Sadakat Puanı</p>
-                </div>
-                
-                <nav className="space-y-1">
+                </CardContent>
+                <CardFooter className="flex justify-between border-t pt-5">
                   <Button 
-                    variant={activeSidebar === 'profile' ? 'default' : 'ghost'} 
-                    className="w-full justify-start"
-                    onClick={() => handleSidebarClick('profile')}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profilim
-                  </Button>
-                  <Button 
-                    variant={activeSidebar === 'reservations' ? 'default' : 'ghost'} 
-                    className="w-full justify-start"
-                    onClick={() => handleSidebarClick('reservations')}
-                  >
-                    <History className="mr-2 h-4 w-4" />
-                    Rezervasyonlarım
-                  </Button>
-                  <Button 
-                    variant={activeSidebar === 'settings' ? 'default' : 'ghost'} 
-                    className="w-full justify-start"
-                    onClick={() => handleSidebarClick('settings')}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Ayarlar
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-destructive" 
+                    variant="outline" 
                     onClick={handleLogout}
+                    className="flex items-center gap-2"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="h-4 w-4" />
                     Çıkış Yap
                   </Button>
-                </nav>
+                  <Button 
+                    onClick={handleSaveProfile} 
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Kaydediliyor...' : 'Bilgileri Güncelle'}
+                  </Button>
+                </CardFooter>
               </Card>
-            </div>
+            </TabsContent>
             
-            <div className="lg:col-span-3">
-              {renderContent()}
-            </div>
-          </div>
+            <TabsContent value="reservations">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="mr-2 h-5 w-5" />
+                    Rezervasyonlarım
+                  </CardTitle>
+                  <CardDescription>
+                    Geçmiş ve gelecek rezervasyonlarınızı görüntüleyin
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-muted-foreground mb-4">Henüz bir rezervasyonunuz bulunmuyor</p>
+                    <Button onClick={() => navigate('/reservation')}>
+                      Rezervasyon Yap
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="loyalty">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Award className="mr-2 h-5 w-5" />
+                    Sadakat Programı
+                  </CardTitle>
+                  <CardDescription>
+                    Sadakat puanlarınız ve ödülleriniz
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col md:flex-row items-center gap-8 mb-6">
+                    <div className="bg-primary/10 p-6 rounded-lg text-center w-full md:w-auto">
+                      <p className="text-sm text-muted-foreground mb-1">Toplam Puanınız</p>
+                      <p className="text-4xl font-bold text-primary mb-1">{loyaltyPoints}</p>
+                      <p className="text-sm font-medium">{loyaltyLevel} Seviyesi</p>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h4 className="text-lg font-medium mb-2">Sadakat Programı Avantajları</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                        <li>Her 100₺ harcama için 10 puan</li>
+                        <li>Online rezervasyon için 50 bonus puan</li>
+                        <li>Özel etkinliklere katılım için 25 puan</li>
+                        <li>Doğum gününüzde puanları 2 katı kazanma</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <Button 
+                      onClick={() => navigate('/loyalty')}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Award className="h-4 w-4" />
+                      Sadakat Sayfasına Git
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
     </div>

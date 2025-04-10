@@ -8,7 +8,6 @@ import {
   Image as ImageIcon, 
   Info,
   Phone,
-  UserCircle,
   Award
 } from "lucide-react";
 
@@ -17,6 +16,7 @@ import { AboutContent } from "./website-content/AboutContent";
 import { GalleryContent } from "./website-content/GalleryContent";
 import { ContactContent } from "./website-content/ContactContent";
 import { HeaderImagesContent } from "./website-content/HeaderImagesContent";
+import { LoyaltyContent } from "./website-content/LoyaltyContent";
 
 export const WebsiteContentPanel = () => {
   const { toast } = useToast();
@@ -52,7 +52,7 @@ export const WebsiteContentPanel = () => {
                 <Phone size={16} className="mr-2" /> İletişim
               </TabsTrigger>
               <TabsTrigger value="headers">
-                <UserCircle size={16} className="mr-2" /> Header Görselleri
+                <ImageIcon size={16} className="mr-2" /> Header Görselleri
               </TabsTrigger>
               <TabsTrigger value="loyalty">
                 <Award size={16} className="mr-2" /> Sadakat
@@ -86,20 +86,7 @@ export const WebsiteContentPanel = () => {
 
             {/* Loyalty Content */}
             <TabsContent value="loyalty" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sadakat Programı İçeriği</CardTitle>
-                  <CardDescription>
-                    Sadakat programınız ile ilgili ayarları buradan yönetebilirsiniz
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Sadakat programı ayarları Supabase veritabanından otomatik olarak çekiliyor. 
-                    Ödül seviyelerini ve puan değerlerini değiştirmek için yönetici ile iletişime geçiniz.
-                  </p>
-                </CardContent>
-              </Card>
+              <LoyaltyContent onSave={handleSaveChanges} />
             </TabsContent>
           </Tabs>
         </CardContent>

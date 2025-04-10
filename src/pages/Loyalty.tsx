@@ -1,5 +1,4 @@
 
-import Hero from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ type Reward = {
 const Loyalty = () => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { content: headerContent, isLoading: isHeaderLoading } = useWebsiteContent('loyalty_header');
   
   const [loyaltyData, setLoyaltyData] = useState({
     points: 0,
@@ -177,9 +175,6 @@ const Loyalty = () => {
     
     return rewards;
   };
-  
-  // Get the hero image from the header content in CMS
-  const heroImage = headerContent.image_path || "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
 
   if (isLoading || isLoadingData) {
     return (
@@ -198,18 +193,16 @@ const Loyalty = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <Hero 
-        backgroundImage={heroImage}
-        title="Sadakat Programı"
-        subtitle="Lezzet Durağı'nın ayrıcalıklar dünyasına hoş geldiniz"
-        showButtons={false}
-        overlayColor="green-600/70"
-      />
-      
-      {/* Loyalty Content */}
-      <section className="section-padding bg-white">
+      {/* Loyalty Content - No Hero Section */}
+      <section className="section-padding pt-32 bg-white">
         <div className="container-custom max-w-6xl">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 font-playfair">Sadakat Programı</h1>
+            <p className="text-xl text-muted-foreground">
+              Lezzet Durağı'nın ayrıcalıklar dünyasına hoş geldiniz
+            </p>
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Loyalty Status */}
             <div className="lg:col-span-1">

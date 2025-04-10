@@ -36,25 +36,13 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
       const { data, error } = await supabase
         .from("website_content")
         .select("*")
-        .in('section', ['profile_header', 'loyalty_header', 'gallery_header']);
+        .eq('section', 'gallery_header');
 
       if (error) throw error;
 
       // If header images don't exist, create default entries
       if (!data || data.length === 0) {
         const defaultHeaders = [
-          {
-            section: "profile_header",
-            key: "profile_header_image",
-            value: "Profil Sayfası Header Görseli",
-            image_path: null
-          },
-          {
-            section: "loyalty_header",
-            key: "loyalty_header_image",
-            value: "Sadakat Sayfası Header Görseli",
-            image_path: null
-          },
           {
             section: "gallery_header",
             key: "gallery_header_image",
@@ -72,7 +60,7 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
         setHeaderImages(newData || []);
       } else {
         // Check if all required headers exist
-        const sections = ['profile_header', 'loyalty_header', 'gallery_header'];
+        const sections = ['gallery_header'];
         const missingHeaders: HeaderImageData[] = [];
         
         sections.forEach(section => {
@@ -170,13 +158,7 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
           let sectionTitle = "Header Görseli";
           let sectionDescription = "Sayfada gösterilecek olan banner görseli";
           
-          if (header.section === "profile_header") {
-            sectionTitle = "Profil Sayfası Header Görseli";
-            sectionDescription = "Profil sayfasında gösterilecek olan banner görseli";
-          } else if (header.section === "loyalty_header") {
-            sectionTitle = "Sadakat Sayfası Header Görseli";
-            sectionDescription = "Sadakat sayfasında gösterilecek olan banner görseli";
-          } else if (header.section === "gallery_header") {
+          if (header.section === "gallery_header") {
             sectionTitle = "Galeri Sayfası Header Görseli";
             sectionDescription = "Galeri sayfasında gösterilecek olan banner görseli";
           }
