@@ -14,7 +14,7 @@ import {
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth(); // Changed signOut to logout to match AuthContext
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   
   // Close mobile menu when route changes
@@ -86,14 +86,6 @@ const Navbar = () => {
               }
             >
               Menü
-            </NavLink>
-            <NavLink 
-              to="/reservation" 
-              className={({ isActive }) => 
-                isActive ? activeLinkClasses : linkClasses
-              }
-            >
-              Rezervasyon
             </NavLink>
             <NavLink 
               to="/about" 
@@ -193,15 +185,6 @@ const Navbar = () => {
             }
           >
             Menü
-          </NavLink>
-          <NavLink 
-            to="/reservation"
-            onClick={toggleMenu}
-            className={({ isActive }) => 
-              isActive ? mobileActiveLinkClasses : mobileLinkClasses
-            }
-          >
-            Rezervasyon
           </NavLink>
           <NavLink 
             to="/about"
