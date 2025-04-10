@@ -90,7 +90,8 @@ export const useReservationState = () => {
       case 1: // Table selection
         return state.selectedTable !== null;
       case 2: // Menu selection
-        return state.menuSelection && state.menuSelection.type !== '';  
+        // Check if menu selection type exists and is not empty
+        return state.menuSelection && state.menuSelection.type !== undefined && state.menuSelection.type.length > 0;  
       default:
         return true;
     }

@@ -6,13 +6,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Utensils, UtensilsCrossed, ChefHat, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MenuSelection, FixMenuOption } from './types/reservationTypes';
+import type { MenuSelection as MenuSelectionType, FixMenuOption } from './types/reservationTypes';
 import { useToast } from "@/hooks/use-toast";
 import { fetchFixedMenus } from "@/services/fixedMenuService";
 
 interface MenuSelectionProps {
-  value: MenuSelection;
-  onChange: (selection: MenuSelection) => void;
+  value: MenuSelectionType;
+  onChange: (selection: MenuSelectionType) => void;
   guestCount: string;
 }
 
