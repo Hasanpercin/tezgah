@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import DesktopNav from './navbar/DesktopNav';
 import MobileMenu from './navbar/MobileMenu';
 import MobileMenuButton from './navbar/MobileMenuButton';
+import { UserType } from './navbar/types';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -52,6 +53,12 @@ const Navbar = () => {
     isScrolled ? 'text-foreground' : 'text-white'
   }`;
 
+  // Convert Supabase User to our UserType
+  const userForComponents: UserType | null = user ? {
+    id: user.id,
+    email: user.email || undefined
+  } : null;
+
   return (
     <>
       <header className={navbarClasses}>
@@ -63,7 +70,7 @@ const Navbar = () => {
             linkClasses={linkClasses}
             activeLinkClasses={activeLinkClasses}
             isAuthenticated={isAuthenticated}
-            user={user}
+            user={userForComponents}
             logout={logout}
           />
           
@@ -78,7 +85,7 @@ const Navbar = () => {
         isMenuOpen={isMenuOpen}
         toggleMenu={toggleMenu}
         isAuthenticated={isAuthenticated}
-        user={user}
+        user={userForComponents}
         logout={logout}
       />
     </>

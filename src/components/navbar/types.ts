@@ -8,6 +8,6 @@ export interface NavbarProps {
 
 export interface UserType {
   id: string;
-  email: string;
+  email?: string; // Making email optional to match Supabase's User type
   // Add other user properties as needed
 }
