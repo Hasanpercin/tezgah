@@ -36,8 +36,8 @@ export interface MenuItem {
   category_id: string;
   image_path?: string;
   quantity?: number;
-  is_in_stock: boolean; // Changed from optional to required to match menuService.ts
-  display_order?: number;
+  is_in_stock: boolean;
+  display_order: number; // Changed from optional to required to match menuService.ts
   ingredients?: string;
   allergens?: string;
   is_vegetarian?: boolean;
@@ -47,6 +47,7 @@ export interface MenuItem {
   is_featured?: boolean;
   menu_categories?: {
     name: string;
+    id?: string;
   };
 }
 

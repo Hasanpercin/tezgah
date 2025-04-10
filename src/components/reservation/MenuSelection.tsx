@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Trash2, Plus, Minus, UtensilsCrossed, Menu, ShoppingCart } from "lucide-react";
 import { fetchFixedMenus } from "@/services/fixedMenuService";
 import { fetchMenuItems } from "@/services/menuService";
-import { MenuSelection } from './types/reservationTypes';
+import { MenuSelection, MenuItem as ReservationMenuItem } from './types/reservationTypes';
 import { FixedMenuPackage } from '@/services/fixedMenuService';
-import { MenuItem } from '@/services/menuService';
+import { MenuItem as ServiceMenuItem } from '@/services/menuService';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -35,12 +35,16 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     queryFn: fetchMenuItems
   });
   
-  // Local state for selected menu items
-  const [selectedMenuItems, setSelectedMenuItems] = useState<MenuItem[]>(value.selectedMenuItems || []);
+  // Local state for selected menu items - convert from service type to reservation type if needed
+  const [selectedMenuItems, setSelectedMenuItems] = useState<ReservationMenuItem[]>(
+    value.selectedMenuItems || []
+  );
+  
   // Selected fixed menu
   const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixedMenuPackage | null>(
     value.selectedFixedMenu ? fixedMenus.find(menu => menu.id === value.selectedFixedMenu?.id) || null : null
   );
+  
   // Selection type
   const [selectionType, setSelectionType] = useState<'fixed_menu' | 'a_la_carte' | 'at_restaurant'>(value.type);
   
@@ -51,7 +55,7 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     }
     acc[item.category_id].push(item);
     return acc;
-  }, {} as Record<string, MenuItem[]>);
+  }, {} as Record<string, ServiceMenuItem[]>);
   
   // Calculate subtotal
   const subtotal = selectedMenuItems.reduce((sum, item) => {
@@ -109,8 +113,14 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     });
   };
   
-  // Add item to cart
-  const addToCart = (item: MenuItem) => {
+  // Add item to cart - convert from service type to reservation type
+  const addToCart = (item: ServiceMenuItem) => {
+    // Convert service menu item to reservation menu item type
+    const reservationItem: ReservationMenuItem = {
+      ...item,
+      quantity: 1
+    };
+    
     const existingItem = selectedMenuItems.find(i => i.id === item.id);
     
     if (existingItem) {
@@ -121,7 +131,7 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
       setSelectedMenuItems(updatedItems);
     } else {
       // Add new item
-      setSelectedMenuItems([...selectedMenuItems, { ...item, quantity: 1 }]);
+      setSelectedMenuItems([...selectedMenuItems, reservationItem]);
     }
     
     if (selectionType !== 'a_la_carte') {
