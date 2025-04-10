@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,6 @@ export const useReservationState = () => {
   const [reservationId, setReservationId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Initialize state - removed menu and payment related states
   const [state, setState] = useState<ReservationState>({
     selectedTable: null,
     basicFormCompleted: false,
@@ -29,7 +27,6 @@ export const useReservationState = () => {
     }
   });
   
-  // Handle form data changes from the basic reservation form
   const handleFormDataChange = (data: Partial<ReservationFormData>) => {
     setState({
       ...state,
@@ -40,7 +37,6 @@ export const useReservationState = () => {
     });
   };
 
-  // Handle the custom event from the ReservationForm component
   useEffect(() => {
     const handleReservationCompleted = (event: CustomEvent) => {
       const newReservationId = event.detail?.reservationId;
@@ -58,7 +54,6 @@ export const useReservationState = () => {
         setReservationId(newReservationId);
       }
       
-      // First step completed, move to next step
       if (currentStep === 0) {
         setCurrentStep(1);
       }
@@ -76,7 +71,6 @@ export const useReservationState = () => {
     }
   }, [currentStep]);
 
-  // Check if current step is valid to move to next
   const canProceed = () => {
     switch (currentStep) {
       case 0: // Basic details
@@ -95,12 +89,10 @@ export const useReservationState = () => {
     }
   };
   
-  // Go to next step
   const handleNextStep = async () => {
     if (currentStep < 2 && canProceed()) {
       if (currentStep === 1) {
         try {
-          // Save selected table to database
           if (reservationId && state.selectedTable) {
             await supabase
               .from('reservation_tables')
@@ -110,7 +102,6 @@ export const useReservationState = () => {
               } as any);
           }
           
-          // Update reservation status
           await supabase
             .from('reservations')
             .update({
@@ -118,7 +109,6 @@ export const useReservationState = () => {
             })
             .eq('id', reservationId);
             
-          // Send reservation data to webhook
           await sendReservationToWebhook();
         } catch (error: any) {
           console.error("Reservation update error:", error.message);
@@ -132,7 +122,6 @@ export const useReservationState = () => {
       
       setCurrentStep(currentStep + 1);
       
-      // Scroll to top when changing steps
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       console.log("Can't proceed to next step", { 
@@ -145,22 +134,18 @@ export const useReservationState = () => {
     }
   };
   
-  // Go to previous step
   const handlePrevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
       
-      // Scroll to top when changing steps
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
   
-  // Send reservation data to webhook
   const sendReservationToWebhook = async () => {
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
       
-      // Prepare data to send to webhook
       const webhookData = {
         name: state.formData.name,
         email: state.formData.email,
@@ -178,13 +163,12 @@ export const useReservationState = () => {
       
       console.log("Sending reservation data to webhook:", webhookData);
       
-      // Send data to webhook
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        mode: 'no-cors', // To avoid CORS issues with external webhooks
+        mode: 'no-cors',
         body: JSON.stringify(webhookData)
       });
       
@@ -205,7 +189,6 @@ export const useReservationState = () => {
     }
   };
 
-  // Handlers for state updates
   const setSelectedTable = (table: Table | null) => {
     setState({
       ...state,
