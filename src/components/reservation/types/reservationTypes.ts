@@ -33,6 +33,7 @@ export interface FixMenuOption {
   price: number;
   image_path?: string;
   quantity?: number;
+  is_active?: boolean;
 }
 
 export interface ReservationFormData {

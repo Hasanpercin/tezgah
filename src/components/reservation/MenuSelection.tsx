@@ -59,6 +59,9 @@ const MenuSelection = ({
         
         if (menuItemsError) throw menuItemsError;
         
+        console.log("Fixed menus loaded:", fixedMenuData);
+        console.log("A La Carte items loaded:", menuItemsData);
+        
         setFixedMenus(fixedMenuData as FixMenuOption[]);
         setMenuItems(menuItemsData as MenuItem[]);
       } catch (error: any) {
@@ -78,6 +81,7 @@ const MenuSelection = ({
   
   // Handle selecting a fixed menu
   const handleSelectFixedMenu = (menu: FixMenuOption) => {
+    console.log("Fixed menu selected:", menu);
     // Add default quantity based on guest count
     const guestsCount = parseInt(guests) || 1;
     const menuWithQuantity: FixMenuOption = {
@@ -107,6 +111,7 @@ const MenuSelection = ({
   
   // Handle selecting an a la carte item
   const handleAddALaCarteItem = (item: MenuItem) => {
+    console.log("A La Carte item added:", item);
     const existingItemIndex = selectedALaCarteItems.findIndex(
       selected => selected.item.id === item.id
     );
@@ -155,6 +160,7 @@ const MenuSelection = ({
   
   // Handle selecting "choose at restaurant"
   const handleSelectAtRestaurant = () => {
+    console.log("Selected: Choose at restaurant");
     onSelectAtRestaurant(true);
     onFixMenuSelected(null);
     onALaCarteItemsSelected([]);
@@ -175,6 +181,12 @@ const MenuSelection = ({
       0
     );
   };
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    console.log("Tab changing to:", value);
+    setActiveTab(value);
+  };
   
   return (
     <div className="space-y-6">
@@ -188,10 +200,7 @@ const MenuSelection = ({
       <Tabs 
         defaultValue="fixed" 
         value={activeTab} 
-        onValueChange={(value) => {
-          console.log("Tab changed to:", value);
-          setActiveTab(value);
-        }}
+        onValueChange={handleTabChange}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3 mb-6">
