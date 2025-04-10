@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -269,13 +270,19 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                 <div className="space-y-8">
                   {Object.keys(menuByCategory).length > 0 ? (
                     Object.keys(menuByCategory).map((categoryId) => {
-                      const firstItem = menuByCategory[categoryId][0];
-                      const categoryName = firstItem && 
-                        firstItem.menu_categories && 
-                        typeof firstItem.menu_categories === 'object' && 
-                        firstItem.menu_categories !== null && 
-                        'name' in firstItem.menu_categories ? 
-                        String(firstItem.menu_categories.name) : 'Kategori';
+                      const firstItem = menuByCategory[categoryId][0] as ServiceMenuItem;
+                      // Safely extract the category name using type assertion
+                      let categoryName = 'Kategori';
+                      
+                      if (firstItem) {
+                        const menuCategories = firstItem.menu_categories;
+                        if (menuCategories && 
+                            typeof menuCategories === 'object' && 
+                            menuCategories !== null && 
+                            'name' in menuCategories) {
+                          categoryName = String(menuCategories.name);
+                        }
+                      }
                       
                       return (
                         <div key={categoryId} className="space-y-4">
