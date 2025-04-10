@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { Database } from '@/integrations/supabase/types'; 
 
-export type ContentSection = 'homepage' | 'about' | 'contact' | 'gallery';
+export type ContentSection = 'homepage' | 'about' | 'contact' | 'gallery' | 'gallery_header' | 'loyalty_header';
 
 export interface WebsiteContentItem {
   id: string;
