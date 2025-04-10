@@ -1,6 +1,26 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { MenuItem } from "@/components/reservation/types/reservationTypes";
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category_id: string;
+  image_path?: string;
+  quantity?: number; // For tracking selected quantity
+  is_in_stock: boolean;
+  display_order: number;
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export const fetchMenuItems = async () => {
   const { data, error } = await supabase
@@ -51,4 +71,45 @@ export const saveReservationMenuItems = async (
   if (error) throw error;
   
   return data;
+};
+
+// Adding the missing functions that are imported elsewhere
+export const fetchMenuItemsByCategory = async () => {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select(`
+      *,
+      menu_categories(*)
+    `)
+    .order('display_order', { ascending: true });
+
+  if (error) throw error;
+  return data;
+};
+
+export const fetchFeaturedMenuItems = async () => {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('is_featured', true)
+    .limit(6);
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateFeaturedMenuItem = async (id: string, isFeatured: boolean) => {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .update({ is_featured: isFeatured })
+    .eq('id', id);
+
+  if (error) throw error;
+  return data;
+};
+
+export const seedMenuData = async () => {
+  // This would be an admin function to seed menu data
+  // Implementation depends on specific requirements
+  return { success: true };
 };

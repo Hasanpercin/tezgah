@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Utensils, UtensilsCrossed, ChefHat, Store, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { MenuSelection as MenuSelectionType, FixMenuOption, MenuItem } from './types/reservationTypes';
+import type { MenuSelection as MenuSelectionType, FixMenuOption } from './types/reservationTypes';
+import { MenuItem } from '@/services/menuService';
 import { useToast } from "@/hooks/use-toast";
 import { fetchFixedMenus } from "@/services/fixedMenuService";
 import { fetchMenuItems } from "@/services/menuService";

@@ -1,51 +1,61 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Reservation, ReservationStatus } from "../types";
+import { Reservation, ReservationStatus, SelectedItems } from "../types";
 
-export const useReservations = (selectedDate: Date | undefined) => {
-  const fetchReservations = async (): Promise<Reservation[]> => {
-    if (!selectedDate) return [];
+// Convert raw Supabase data to strong typed Reservation objects
+const mapToReservations = (data: any[]): Reservation[] => {
+  return data.map(item => {
+    const selectedItems = item.selected_items ? {
+      menuSelectionType: item.selected_items.menuSelectionType || "at_restaurant",
+      fixedMenuId: item.selected_items.fixedMenuId,
+      items: item.selected_items.items || []
+    } as SelectedItems : undefined;
     
-    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return {
+      id: item.id,
+      user_id: item.user_id,
+      name: item.name || "",
+      email: item.email || "",
+      phone: item.phone || "",
+      date: new Date(item.date),
+      time: item.time,
+      guests: item.guests,
+      status: item.status as ReservationStatus,
+      notes: item.notes || "",
+      occasion: item.occasion || "",
+      selected_items: selectedItems,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    };
+  });
+};
+
+export const useReservations = (selectedDate?: Date) => {
+  const fetchReservations = async () => {
+    let query = supabase.from('reservations').select('*');
     
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("date", formattedDate)
-      .order("time", { ascending: true });
+    if (selectedDate) {
+      const dateString = selectedDate.toISOString().split('T')[0];
+      query = query.eq('date', dateString);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) throw error;
-    
-    // Transform and validate the data to match Reservation type
-    return data.map(item => ({
-      ...item,
-      // Ensure status is of type ReservationStatus
-      status: item.status as ReservationStatus,
-      // Convert date string to Date object
-      date: new Date(item.date),
-      // Ensure guests is a number
-      guests: Number(item.guests),
-      // Keep other fields as is - updated Reservation type now matches DB schema
-    })) as Reservation[];
+    return mapToReservations(data || []);
   };
-  
-  const {
-    data = [],
+
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ['reservations', selectedDate?.toISOString()],
+    queryFn: fetchReservations,
+  });
+
+  return {
+    reservations: data || [],
     isLoading,
     error,
-    refetch,
-  } = useQuery({
-    queryKey: ["reservations", selectedDate ? format(selectedDate, "yyyy-MM-dd") : "no-date"],
-    queryFn: fetchReservations,
-    enabled: !!selectedDate,
-  });
-  
-  // Function to refresh data
-  const mutate = () => {
-    refetch();
+    mutate: refetch
   };
-  
-  return { reservations: data, isLoading, error, mutate };
 };

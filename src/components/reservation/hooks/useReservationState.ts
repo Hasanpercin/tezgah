@@ -8,6 +8,7 @@ import {
   ReservationState,
   MenuSelection 
 } from '../types/reservationTypes';
+import { MenuItem } from '@/services/menuService';
 
 export const useReservationState = () => {
   const { toast } = useToast();
@@ -91,7 +92,9 @@ export const useReservationState = () => {
         return state.selectedTable !== null;
       case 2: // Menu selection
         // Check if menu selection type exists and is not empty
-        return state.menuSelection && state.menuSelection.type !== undefined && state.menuSelection.type.length > 0;  
+        return state.menuSelection && 
+               state.menuSelection.type !== undefined && 
+               state.menuSelection.type.length > 0;  
       default:
         return true;
     }
@@ -107,7 +110,7 @@ export const useReservationState = () => {
               .from('reservation_tables')
               .insert({
                 reservation_id: reservationId,
-                table_id: state.selectedTable.id
+                table_id: state.selectedTable.id.toString()
               });
             
             // Save menu selection if it's a fixed menu
@@ -116,7 +119,7 @@ export const useReservationState = () => {
                 .from('reservation_fixed_menus')
                 .insert({
                   reservation_id: reservationId,
-                  fixed_menu_id: state.menuSelection.selectedFixedMenu.id,
+                  fixed_menu_id: state.menuSelection.selectedFixedMenu.id.toString(),
                   quantity: parseInt(state.formData.guests)
                 });
             }
@@ -137,6 +140,14 @@ export const useReservationState = () => {
             }
           }
           
+          // Convert menu items to a simpler structure for JSON storage
+          const simplifiedMenuItems = state.menuSelection.selectedMenuItems?.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity || 1
+          }));
+          
           // Update reservation status and menu selection type
           await supabase
             .from('reservations')
@@ -145,7 +156,7 @@ export const useReservationState = () => {
               selected_items: { 
                 menuSelectionType: state.menuSelection.type,
                 fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
-                items: state.menuSelection.selectedMenuItems
+                items: simplifiedMenuItems || []
               }
             })
             .eq('id', reservationId);

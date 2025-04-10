@@ -1,14 +1,14 @@
 
 export type ReservationStatus = "Onaylandı" | "Beklemede" | "İptal";
 
-interface MenuItem {
+export interface MenuItem {
   id: string;
   name: string;
   price: number;
   quantity?: number;
 }
 
-interface SelectedItems {
+export interface SelectedItems {
   menuSelectionType: "fixed_menu" | "a_la_carte" | "at_restaurant";
   fixedMenuId?: string | number;
   items?: MenuItem[];
