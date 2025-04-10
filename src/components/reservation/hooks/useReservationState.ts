@@ -1,10 +1,12 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Table, 
   ReservationFormData, 
-  ReservationState 
+  ReservationState,
+  MenuSelection 
 } from '../types/reservationTypes';
 
 export const useReservationState = () => {
@@ -24,6 +26,9 @@ export const useReservationState = () => {
       time: '',
       guests: '2',
       notes: '',
+    },
+    menuSelection: {
+      type: 'at_restaurant'
     }
   });
   
@@ -84,24 +89,39 @@ export const useReservationState = () => {
         );
       case 1: // Table selection
         return state.selectedTable !== null;
+      case 2: // Menu selection
+        return state.menuSelection && state.menuSelection.type !== '';  
       default:
         return true;
     }
   };
   
   const handleNextStep = async () => {
-    if (currentStep < 2 && canProceed()) {
-      if (currentStep === 1) {
+    if (currentStep < 3 && canProceed()) {
+      if (currentStep === 2) {
         try {
           if (reservationId && state.selectedTable) {
+            // Save the table selection
             await supabase
               .from('reservation_tables')
               .insert({
                 reservation_id: reservationId,
                 table_id: state.selectedTable.id
               } as any);
+            
+            // Save menu selection if it's a fixed menu
+            if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
+              await supabase
+                .from('reservation_fixed_menus')
+                .insert({
+                  reservation_id: reservationId,
+                  fixed_menu_id: state.menuSelection.selectedFixedMenu.id,
+                  quantity: parseInt(state.formData.guests)
+                } as any);
+            }
           }
           
+          // Update reservation status
           await supabase
             .from('reservations')
             .update({
@@ -109,6 +129,7 @@ export const useReservationState = () => {
             })
             .eq('id', reservationId);
             
+          // Send webhook notification
           const webhookSuccess = await sendReservationToWebhook();
           if (webhookSuccess) {
             toast({
@@ -135,7 +156,8 @@ export const useReservationState = () => {
         currentStep, 
         canProceed: canProceed(),
         state: {
-          selectedTable: !!state.selectedTable
+          selectedTable: !!state.selectedTable,
+          menuSelection: state.menuSelection
         }
       });
     }
@@ -151,7 +173,7 @@ export const useReservationState = () => {
   
   const sendReservationToWebhook = async () => {
     try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
       
       const webhookData = {
         name: state.formData.name,
@@ -165,7 +187,9 @@ export const useReservationState = () => {
         occasion: state.formData.occasion || '',
         tableName: state.selectedTable?.name || state.selectedTable?.label || '',
         tableType: state.selectedTable?.type || '',
-        tableSize: state.selectedTable?.size || 0
+        tableSize: state.selectedTable?.size || 0,
+        menuSelectionType: state.menuSelection?.type || 'at_restaurant',
+        selectedFixedMenu: state.menuSelection?.selectedFixedMenu?.name || ''
       };
       
       console.log("Sending reservation data to webhook:", JSON.stringify(webhookData, null, 2));
@@ -211,6 +235,13 @@ export const useReservationState = () => {
       selectedTable: table
     });
   };
+  
+  const setMenuSelection = (menuSelection: MenuSelection) => {
+    setState({
+      ...state,
+      menuSelection
+    });
+  };
 
   return {
     currentStep,
@@ -220,6 +251,7 @@ export const useReservationState = () => {
     canProceed,
     handleNextStep,
     handlePrevStep,
-    setSelectedTable
+    setSelectedTable,
+    setMenuSelection
   };
 };

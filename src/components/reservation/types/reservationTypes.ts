@@ -27,24 +27,6 @@ export interface ReservationFormData {
   occasion?: string;
 }
 
-export interface ReservationState {
-  selectedTable: Table | null;
-  basicFormCompleted: boolean;
-  formData: ReservationFormData;
-}
-
-// Define the steps for the reservation process - removed menu and payment steps
-export const STEPS = [
-  { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
-  { id: 1, name: "Masa Seçimi", icon: "Users" },
-  { id: 2, name: "Onay", icon: "CheckCircle" }
-];
-
-export interface ReservationSummaryProps {
-  state: ReservationState;
-}
-
-// Add missing types that were referenced in MenuSelection.tsx
 export interface MenuItem {
   id: string;
   name: string;
@@ -61,4 +43,29 @@ export interface FixMenuOption {
   price: number;
   image_path?: string;
   quantity?: number;
+}
+
+export interface MenuSelection {
+  type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
+  selectedFixedMenu?: FixMenuOption | null;
+  selectedMenuItems?: MenuItem[];
+}
+
+export interface ReservationState {
+  selectedTable: Table | null;
+  basicFormCompleted: boolean;
+  formData: ReservationFormData;
+  menuSelection: MenuSelection;
+}
+
+// Define the steps for the reservation process - add menu selection step
+export const STEPS = [
+  { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
+  { id: 1, name: "Masa Seçimi", icon: "Users" },
+  { id: 2, name: "Menü Seçimi", icon: "Utensils" },
+  { id: 3, name: "Onay", icon: "CheckCircle" }
+];
+
+export interface ReservationSummaryProps {
+  state: ReservationState;
 }

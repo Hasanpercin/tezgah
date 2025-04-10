@@ -6,6 +6,7 @@ import { ArrowRight, ArrowLeft } from "lucide-react";
 // Import Components
 import ReservationForm from "@/components/ReservationForm";
 import TableSelection from "@/components/reservation/TableSelection";
+import MenuSelection from "@/components/reservation/MenuSelection";
 import StepIndicator from './components/StepIndicator';
 import ConfirmationStep from './components/ConfirmationStep';
 import { useReservationState } from './hooks/useReservationState';
@@ -21,7 +22,8 @@ const MultiStepReservation = () => {
     canProceed,
     handleNextStep,
     handlePrevStep,
-    setSelectedTable
+    setSelectedTable,
+    setMenuSelection
   } = useReservationState();
   
   const { toast } = useToast();
@@ -30,7 +32,7 @@ const MultiStepReservation = () => {
   // When reaching the confirmation step, add loyalty points if user is logged in
   React.useEffect(() => {
     const addLoyaltyPointsOnCompletion = async () => {
-      if (currentStep === 2 && isAuthenticated && user) {
+      if (currentStep === 3 && isAuthenticated && user) {
         try {
           // Reservation bonus
           const reservationBonus = 50;
@@ -121,8 +123,19 @@ const MultiStepReservation = () => {
           </div>
         )}
         
-        {/* Step 3: Confirmation */}
+        {/* Step 3: Menu Selection */}
         {currentStep === 2 && (
+          <div className="bg-card border rounded-lg p-6 mb-6">
+            <MenuSelection
+              value={state.menuSelection}
+              onChange={setMenuSelection}
+              guestCount={state.formData.guests}
+            />
+          </div>
+        )}
+        
+        {/* Step 4: Confirmation */}
+        {currentStep === 3 && (
           <ConfirmationStep 
             state={state}
           />
@@ -130,7 +143,7 @@ const MultiStepReservation = () => {
       </div>
       
       {/* Navigation Buttons */}
-      {currentStep < 2 && (
+      {currentStep < 3 && (
         <div className="flex justify-between mt-10">
           {currentStep > 0 ? (
             <Button 
@@ -150,7 +163,7 @@ const MultiStepReservation = () => {
             disabled={!canProceed()}
             className="flex items-center"
           >
-            {currentStep === 1 ? "Tamamla" : "Devam Et"}
+            {currentStep === 2 ? "Tamamla" : "Devam Et"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
