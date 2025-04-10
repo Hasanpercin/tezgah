@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 interface MenuSelectionProps {
   value: MenuSelection;
@@ -45,25 +46,65 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     value.selectedFixedMenu ? fixedMenus.find(menu => menu.id === value.selectedFixedMenu?.id) || null : null
   );
   
+  // Fixed menu quantity
+  const [fixedMenuQuantity, setFixedMenuQuantity] = useState<number>(parseInt(guestCount) || 1);
+  
   // Selection type
   const [selectionType, setSelectionType] = useState<'fixed_menu' | 'a_la_carte' | 'at_restaurant'>(value.type);
   
-  // Filter menu items by category
-  const menuByCategory = menuItems.reduce((acc, item) => {
-    if (!acc[item.category_id]) {
-      acc[item.category_id] = [];
+  // Filter menu items by category and create category map
+  const [menuByCategory, setMenuByCategory] = useState<Record<string, ServiceMenuItem[]>>({});
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+
+  useEffect(() => {
+    if (menuItems && menuItems.length > 0) {
+      const categorized: Record<string, ServiceMenuItem[]> = {};
+      const uniqueCategories = new Set<string>();
+      const categoryNames: {id: string, name: string}[] = [];
+      
+      menuItems.forEach(item => {
+        // Handle category information safely
+        let categoryId = 'uncategorized';
+        let categoryName = 'Diğer';
+        
+        // Check if the item has category information
+        if (item.category_id) {
+          categoryId = item.category_id;
+          
+          // Try to get category name from menu_categories if available
+          const itemAny = item as any;
+          if (itemAny.menu_categories && typeof itemAny.menu_categories === 'object' && itemAny.menu_categories?.name) {
+            categoryName = String(itemAny.menu_categories.name);
+          }
+          
+          if (!uniqueCategories.has(categoryId)) {
+            uniqueCategories.add(categoryId);
+            categoryNames.push({
+              id: categoryId,
+              name: categoryName
+            });
+          }
+        }
+        
+        if (!categorized[categoryId]) {
+          categorized[categoryId] = [];
+        }
+        
+        categorized[categoryId].push(item);
+      });
+      
+      setMenuByCategory(categorized);
+      setCategories(categoryNames);
     }
-    acc[item.category_id].push(item);
-    return acc;
-  }, {} as Record<string, ServiceMenuItem[]>);
+  }, [menuItems]);
   
   // Calculate subtotal
   const subtotal = selectedMenuItems.reduce((sum, item) => {
     return sum + (item.price * (item.quantity || 1));
   }, 0);
   
-  // Fixed menu subtotal
-  const fixedMenuSubtotal = selectedFixedMenu ? (selectedFixedMenu.price * parseInt(guestCount || "1")) : 0;
+  // Fixed menu subtotal - now using the local fixedMenuQuantity state
+  const fixedMenuSubtotal = selectedFixedMenu ? (selectedFixedMenu.price * fixedMenuQuantity) : 0;
   
   // Calculate total based on selection type
   const calculateTotal = () => {
@@ -79,10 +120,13 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
   useEffect(() => {
     onChange({
       type: selectionType,
-      selectedFixedMenu: selectionType === 'fixed_menu' ? selectedFixedMenu : null,
+      selectedFixedMenu: selectionType === 'fixed_menu' ? {
+        ...selectedFixedMenu!,
+        quantity: fixedMenuQuantity
+      } : null,
       selectedMenuItems: selectionType === 'a_la_carte' ? selectedMenuItems : undefined
     });
-  }, [selectionType, selectedFixedMenu, selectedMenuItems, onChange]);
+  }, [selectionType, selectedFixedMenu, selectedMenuItems, fixedMenuQuantity, onChange]);
 
   // Set selection type to 'at_restaurant' if all cart items are removed
   useEffect(() => {
@@ -110,6 +154,18 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     toast({
       title: "Sabit Menü İptal Edildi",
       description: "Sabit menü seçiminiz iptal edildi.",
+    });
+  };
+
+  // Handle fixed menu quantity change
+  const handleFixedMenuQuantityChange = (operation: 'increase' | 'decrease') => {
+    setFixedMenuQuantity(prev => {
+      if (operation === 'decrease' && prev > 1) {
+        return prev - 1;
+      } else if (operation === 'increase') {
+        return prev + 1;
+      }
+      return prev;
     });
   };
   
@@ -246,8 +302,37 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
               {selectedFixedMenu && (
                 <div className="mt-6 p-4 bg-muted rounded-lg">
                   <p className="font-medium">Seçilen Menü: {selectedFixedMenu.name}</p>
+                  
+                  <div className="mt-2 flex items-center">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => handleFixedMenuQuantityChange('decrease')}
+                      disabled={fixedMenuQuantity <= 1}
+                      className="h-8 w-8 rounded-r-none"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={fixedMenuQuantity}
+                      onChange={(e) => setFixedMenuQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="h-8 w-16 rounded-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => handleFixedMenuQuantityChange('increase')}
+                      className="h-8 w-8 rounded-l-none"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <span className="ml-2">adet</span>
+                  </div>
+
                   <p className="mt-2">
-                    {guestCount} kişi × {selectedFixedMenu.price.toLocaleString('tr-TR')} ₺ = {fixedMenuSubtotal.toLocaleString('tr-TR')} ₺
+                    {fixedMenuQuantity} adet × {selectedFixedMenu.price.toLocaleString('tr-TR')} ₺ = {fixedMenuSubtotal.toLocaleString('tr-TR')} ₺
                   </p>
                 </div>
               )}
@@ -268,30 +353,17 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
             <div className="mt-4 ml-7">
               <div className="grid md:grid-cols-[1fr_300px] gap-6">
                 <div className="space-y-8">
-                  {Object.keys(menuByCategory).length > 0 ? (
-                    Object.keys(menuByCategory).map((categoryId) => {
-                      const firstItem = menuByCategory[categoryId][0] as ServiceMenuItem;
-                      // Safely extract the category name
-                      let categoryName = 'Kategori';
-                      
-                      // First check if the item has the menu_categories property using type assertion
-                      // We need to use 'as any' to bypass TypeScript's type checking here
-                      const itemAsAny = firstItem as any;
-                      if (itemAsAny && 
-                          itemAsAny.menu_categories && 
-                          typeof itemAsAny.menu_categories === 'object' && 
-                          itemAsAny.menu_categories !== null && 
-                          'name' in itemAsAny.menu_categories) {
-                        categoryName = String(itemAsAny.menu_categories.name);
-                      }
+                  {categories.length > 0 ? (
+                    categories.map((category) => {
+                      const categoryItems = menuByCategory[category.id] || [];
                       
                       return (
-                        <div key={categoryId} className="space-y-4">
+                        <div key={category.id} className="space-y-4">
                           <h4 className="font-medium text-lg border-b pb-2">
-                            {categoryName}
+                            {category.name}
                           </h4>
                           <div className="grid grid-cols-1 gap-4">
-                            {menuByCategory[categoryId].map((item) => (
+                            {categoryItems.map((item) => (
                               <div key={item.id} className="flex justify-between items-center p-3 hover:bg-accent rounded-md transition-colors">
                                 <div className="flex-1">
                                   <p className="font-medium">{item.name}</p>

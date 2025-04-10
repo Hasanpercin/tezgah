@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -54,6 +55,8 @@ const Navbar = () => {
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+  
+  // Reordered menu items - moved Reservation between Menu and About
   const menuItems = [{
     path: '/',
     label: 'Anasayfa'
@@ -61,18 +64,19 @@ const Navbar = () => {
     path: '/menu',
     label: 'Menü'
   }, {
+    path: '/reservation',
+    label: 'Rezervasyon'
+  }, {
     path: '/about',
     label: 'Hakkımızda'
   }, {
     path: '/gallery',
     label: 'Galeri'
   }, {
-    path: '/reservation',
-    label: 'Rezervasyon'
-  }, {
     path: '/contact',
     label: 'İletişim'
   }];
+  
   const userMenuItems = [{
     path: '/profile',
     label: 'Profil',
@@ -93,7 +97,7 @@ const Navbar = () => {
           <div className="flex justify-between w-full">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-xl font-bold">
-                Lovable<span className="text-primary">Alaçatı</span>
+                Tezgah<span className="text-primary">Alaçatı</span>
               </Link>
             </div>
             

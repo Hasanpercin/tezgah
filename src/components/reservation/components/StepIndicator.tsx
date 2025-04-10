@@ -1,63 +1,75 @@
 
 import React from 'react';
-import { CheckIcon, ChevronRightIcon } from 'lucide-react';
-import { StepIndicatorProps } from '../types/reservationTypes';
 import { Calendar, Users, Utensils, CreditCard, CheckCircle } from 'lucide-react';
+import { StepIndicatorProps } from '../types/reservationTypes';
 
-// Map of icon names to Lucide components
-const iconMap: Record<string, React.ElementType> = {
-  Calendar,
-  Users,
-  Utensils,
-  CreditCard,
-  CheckCircle
-};
-
-const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps }) => {
+const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps, skipStep }) => {
+  // Map of icon names to Lucide components
+  const iconComponents = {
+    Calendar: Calendar,
+    Users: Users,
+    Utensils: Utensils,
+    CreditCard: CreditCard,
+    CheckCircle: CheckCircle,
+  };
+  
   return (
     <div className="py-6">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const Icon = iconMap[step.icon] || Calendar;
+      <div className="flex justify-between items-center">
+        <div className="flex-1 relative">
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-gray-200">
+            <div 
+              className="absolute top-0 left-0 h-full bg-primary transition-all"
+              style={{ 
+                width: `${Math.min(100, (currentStep / (steps.length - 1)) * 100)}%` 
+              }}
+            ></div>
+          </div>
           
-          // Determine step status
-          const isCompleted = currentStep > index;
-          const isCurrent = currentStep === index;
-          const isPending = currentStep < index;
-          
-          return (
-            <React.Fragment key={step.id}>
-              {/* Step indicator */}
-              <div className="flex flex-col items-center">
-                <div 
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                    isCompleted ? 'bg-primary text-primary-foreground' : 
-                    isCurrent ? 'bg-primary text-primary-foreground ring-4 ring-primary/30' : 
-                    'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {isCompleted ? (
-                    <CheckIcon className="w-5 h-5" />
-                  ) : (
-                    <Icon className="w-5 h-5" />
-                  )}
-                </div>
-                <span className={`mt-2 text-xs font-medium ${
-                  isCurrent ? 'text-primary' : 'text-muted-foreground'
-                }`}>
-                  {step.name}
-                </span>
-              </div>
+          <div className="flex justify-between relative z-10">
+            {steps.map((step, index) => {
+              // Don't render the payment step if it should be skipped
+              if (skipStep !== undefined && index === skipStep) {
+                return null;
+              }
               
-              {/* Connector line (except for the last item) */}
-              {index < steps.length - 1 && (
-                <div className={`flex-1 mx-2 h-0.5 ${
-                  isCompleted ? 'bg-primary' : 'bg-muted'
-                }`} />
-              )}
-            </React.Fragment>
-          );
-        })}
+              // Get the icon component for this step
+              const IconComponent = iconComponents[step.icon as keyof typeof iconComponents] || CheckCircle;
+              
+              // Determine if this step is active, completed, or upcoming
+              const isActive = index === currentStep;
+              const isCompleted = index < currentStep || (skipStep !== undefined && index > skipStep && index <= currentStep);
+              const isUpcoming = !isActive && !isCompleted;
+              
+              return (
+                <div 
+                  key={step.id}
+                  className={`flex flex-col items-center`}
+                >
+                  <div 
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isActive ? 'bg-primary text-white' : 
+                      isCompleted ? 'bg-green-100 text-green-600 border border-green-600' : 
+                      'bg-gray-100 text-gray-400'
+                    } transition-colors`}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  
+                  <p 
+                    className={`text-xs md:text-sm mt-1 text-center ${
+                      isActive ? 'text-primary font-medium' : 
+                      isCompleted ? 'text-green-600' : 
+                      'text-gray-500'
+                    }`}
+                  >
+                    {step.name}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

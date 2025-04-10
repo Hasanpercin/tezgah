@@ -81,7 +81,8 @@ export const useReservationState = () => {
   // Calculate the total based on selection type for payment
   const calculateSubtotal = () => {
     if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-      return state.menuSelection.selectedFixedMenu.price * parseInt(state.formData.guests);
+      const quantity = state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests);
+      return state.menuSelection.selectedFixedMenu.price * quantity;
     } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
       return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
         return sum + (item.price * (item.quantity || 1));
@@ -136,6 +137,55 @@ export const useReservationState = () => {
         return true;
     }
   };
+
+  // New function to skip the payment step
+  const skipPaymentStep = async () => {
+    if (state.menuSelection.type === 'at_restaurant' && currentStep === 2 && canProceed()) {
+      try {
+        if (reservationId && state.selectedTable) {
+          // Save the table selection
+          await supabase
+            .from('reservation_tables')
+            .insert({
+              reservation_id: reservationId,
+              table_id: state.selectedTable.id.toString()
+            });
+          
+          // Update reservation status for 'at_restaurant' selection
+          await supabase
+            .from('reservations')
+            .update({
+              status: 'Onaylandı',
+              selected_items: { 
+                menuSelectionType: state.menuSelection.type
+              }
+            })
+            .eq('id', reservationId);
+            
+          // Send webhook notification
+          const webhookSuccess = await sendReservationToWebhook();
+          if (webhookSuccess) {
+            toast({
+              title: "Rezervasyon Tamamlandı",
+              description: "Rezervasyon bilgileri başarıyla kaydedildi.",
+              variant: "default",
+            });
+          }
+        }
+        
+        setCurrentStep(4); // Skip to confirmation step
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+      } catch (error: any) {
+        console.error("Reservation update error:", error);
+        toast({
+          title: "Hata",
+          description: "Rezervasyon bilgileri güncellenirken bir hata oluştu: " + error.message,
+          variant: "destructive",
+        });
+      }
+    }
+  };
   
   const handleNextStep = async () => {
     if (currentStep < 4 && canProceed()) {
@@ -161,7 +211,7 @@ export const useReservationState = () => {
                 .insert({
                   reservation_id: reservationId,
                   fixed_menu_id: state.menuSelection.selectedFixedMenu.id.toString(),
-                  quantity: parseInt(state.formData.guests)
+                  quantity: state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests)
                 });
             }
 
@@ -217,6 +267,7 @@ export const useReservationState = () => {
               selected_items: { 
                 menuSelectionType: state.menuSelection.type,
                 fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
+                fixedMenuQuantity: state.menuSelection.selectedFixedMenu?.quantity,
                 items: simplifiedMenuItems || []
               }
             })
@@ -380,6 +431,7 @@ export const useReservationState = () => {
     handlePrevStep,
     setSelectedTable,
     setMenuSelection,
-    setPaymentComplete
+    setPaymentComplete,
+    skipPaymentStep
   };
 };

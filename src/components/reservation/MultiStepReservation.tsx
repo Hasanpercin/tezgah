@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 
@@ -35,14 +35,15 @@ const MultiStepReservation = () => {
     setSelectedTable,
     setMenuSelection,
     setPaymentComplete,
-    reservationId
+    reservationId,
+    skipPaymentStep
   } = useReservationState();
   
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   
   // When reaching the confirmation step, add loyalty points if user is logged in
-  React.useEffect(() => {
+  useEffect(() => {
     const addLoyaltyPointsOnCompletion = async () => {
       if (currentStep === 4 && isAuthenticated && user) {
         try {
@@ -112,10 +113,17 @@ const MultiStepReservation = () => {
     setPaymentComplete(transactionId);
   };
   
+  // Check if we should skip payment based on menu selection type
+  const shouldSkipPayment = state.menuSelection.type === 'at_restaurant';
+  
   return (
     <div className="container-custom max-w-5xl" ref={containerRef} data-reservation-step>
       {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} steps={STEPS} />
+      <StepIndicator 
+        currentStep={currentStep} 
+        steps={STEPS} 
+        skipStep={shouldSkipPayment && currentStep === 2 ? 3 : undefined} 
+      />
       
       {/* Step Content */}
       <div>
@@ -187,11 +195,19 @@ const MultiStepReservation = () => {
           
           {currentStep !== 3 && ( // Hide next button on payment step
             <Button 
-              onClick={handleNextStep}
+              onClick={() => {
+                if (currentStep === 2 && shouldSkipPayment) {
+                  skipPaymentStep();
+                } else {
+                  handleNextStep();
+                }
+              }}
               disabled={!canProceed()}
               className="flex items-center"
             >
-              {currentStep === 2 ? "Ödemeye Geç" : "Devam Et"}
+              {currentStep === 2 ? 
+                (shouldSkipPayment ? "Tamamla" : "Ödemeye Geç") : 
+                "Devam Et"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}

@@ -103,4 +103,5 @@ export interface StepIndicatorProps {
     name: string;
     icon: string;
   }>;
+  skipStep?: number;
 }
