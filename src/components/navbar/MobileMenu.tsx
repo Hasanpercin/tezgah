@@ -1,3 +1,4 @@
+
 import { Link, NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,15 @@ const MobileMenu = ({ isMenuOpen, toggleMenu, isAuthenticated, user, logout }: M
           }
         >
           Menü
+        </NavLink>
+        <NavLink 
+          to="/reservation"
+          onClick={toggleMenu}
+          className={({ isActive }) => 
+            isActive ? mobileActiveLinkClasses : mobileLinkClasses
+          }
+        >
+          Rezervasyon
         </NavLink>
         <NavLink 
           to="/about"

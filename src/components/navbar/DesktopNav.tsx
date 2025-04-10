@@ -40,6 +40,14 @@ const DesktopNav = ({
         Menü
       </NavLink>
       <NavLink 
+        to="/reservation" 
+        className={({ isActive }) => 
+          isActive ? activeLinkClasses : linkClasses
+        }
+      >
+        Rezervasyon
+      </NavLink>
+      <NavLink 
         to="/about" 
         className={({ isActive }) => 
           isActive ? activeLinkClasses : linkClasses

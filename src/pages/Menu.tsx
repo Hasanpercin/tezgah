@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import Hero from '@/components/Hero';
 import MenuCategory from '@/components/MenuCategory';
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { fetchMenuItemsByCategory, seedMenuData } from "@/services/menuService";
+import { fetchMenuItemsByCategory } from "@/services/menuService";
 import { MenuCategoryType } from '@/components/MenuCategory';
 import { Loader2 } from 'lucide-react';
 
@@ -57,25 +57,6 @@ const Menu = () => {
     fetchMenu();
   }, []);
 
-  const handleSeedData = async () => {
-    try {
-      const result = await seedMenuData();
-      if (result && result.success) {
-        toast({
-          title: "Başarılı",
-          description: "Menü verileri başarıyla eklendi.",
-        });
-      }
-    } catch (error) {
-      console.error("Error seeding menu data:", error);
-      toast({
-        title: "Hata",
-        description: "Menü verileri eklenirken bir hata oluştu.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -109,15 +90,6 @@ const Menu = () => {
             </div>
           ) : (
             <MenuCategory categories={menuCategories} />
-          )}
-          
-          {/* Admin Seed Data Button - Conditionally rendered */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-8 text-center">
-              <Button onClick={handleSeedData}>
-                Menü Verilerini Ekle
-              </Button>
-            </div>
           )}
         </div>
       </section>
