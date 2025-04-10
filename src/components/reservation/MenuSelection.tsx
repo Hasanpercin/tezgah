@@ -271,9 +271,11 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                     Object.keys(menuByCategory).map((categoryId) => {
                       const firstItem = menuByCategory[categoryId][0];
                       const categoryName = firstItem && 
-                        'menu_categories' in firstItem && 
-                        firstItem.menu_categories ? 
-                        firstItem.menu_categories.name : 'Kategori';
+                        firstItem.menu_categories && 
+                        typeof firstItem.menu_categories === 'object' && 
+                        firstItem.menu_categories !== null && 
+                        'name' in firstItem.menu_categories ? 
+                        String(firstItem.menu_categories.name) : 'Kategori';
                       
                       return (
                         <div key={categoryId} className="space-y-4">
