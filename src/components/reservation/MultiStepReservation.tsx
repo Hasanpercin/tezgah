@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Utensils, CreditCard, CheckCircle } from "lucide-react";
 import { useReservationState } from './hooks/useReservationState';
 import ReservationForm from '@/components/ReservationForm'; // Fixed import path
 import TableSelection from './TableSelection';
@@ -148,7 +147,7 @@ const MultiStepReservation = () => {
               onSelectTable={setSelectedTable}
               date={state.formData.date || new Date()}
               time={state.formData.time}
-              guests={parseInt(state.formData.guests || '0')} // Fixed by providing a string type
+              guests={state.formData.guests} // Changed from parseInt(state.formData.guests) to state.formData.guests
             />
           )}
           
