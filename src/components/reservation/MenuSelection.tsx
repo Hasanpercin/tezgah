@@ -269,38 +269,43 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
               <div className="grid md:grid-cols-[1fr_300px] gap-6">
                 <div className="space-y-8">
                   {Object.keys(menuByCategory).length > 0 ? (
-                    Object.keys(menuByCategory).map((categoryId) => (
-                      <div key={categoryId} className="space-y-4">
-                        <h4 className="font-medium text-lg border-b pb-2">
-                          {menuByCategory[categoryId][0]?.menu_categories?.name || 'Kategori'}
-                        </h4>
-                        <div className="grid grid-cols-1 gap-4">
-                          {menuByCategory[categoryId].map((item) => (
-                            <div key={item.id} className="flex justify-between items-center p-3 hover:bg-accent rounded-md transition-colors">
-                              <div className="flex-1">
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                                <p className="mt-1 font-semibold">{item.price.toLocaleString('tr-TR')} ₺</p>
-                                <div className="flex gap-2 mt-1">
-                                  {item.is_vegetarian && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vejetaryen</Badge>}
-                                  {item.is_vegan && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vegan</Badge>}
-                                  {item.is_gluten_free && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-100">Glutensiz</Badge>}
-                                  {item.is_spicy && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100">Acılı</Badge>}
+                    Object.keys(menuByCategory).map((categoryId) => {
+                      // Check if at least one item has menu_categories
+                      const categoryName = menuByCategory[categoryId][0]?.menu_categories?.name || 'Kategori';
+                      
+                      return (
+                        <div key={categoryId} className="space-y-4">
+                          <h4 className="font-medium text-lg border-b pb-2">
+                            {categoryName}
+                          </h4>
+                          <div className="grid grid-cols-1 gap-4">
+                            {menuByCategory[categoryId].map((item) => (
+                              <div key={item.id} className="flex justify-between items-center p-3 hover:bg-accent rounded-md transition-colors">
+                                <div className="flex-1">
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                                  <p className="mt-1 font-semibold">{item.price.toLocaleString('tr-TR')} ₺</p>
+                                  <div className="flex gap-2 mt-1">
+                                    {item.is_vegetarian && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vejetaryen</Badge>}
+                                    {item.is_vegan && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vegan</Badge>}
+                                    {item.is_gluten_free && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-100">Glutensiz</Badge>}
+                                    {item.is_spicy && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100">Acılı</Badge>}
+                                  </div>
                                 </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => addToCart(item)}
+                                  className="ml-2 h-8 w-8 rounded-full"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => addToCart(item)}
-                                className="ml-2 h-8 w-8 rounded-full"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p>Menü öğeleri bulunamadı.</p>
                   )}
@@ -338,7 +343,7 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                                 <Button 
                                   variant="ghost" 
                                   size="icon"
-                                  onClick={() => addToCart(item)}
+                                  onClick={() => addToCart(item as any)}
                                   className="h-7 w-7"
                                 >
                                   <Plus className="h-3 w-3" />
