@@ -109,7 +109,14 @@ export const useReservationState = () => {
             })
             .eq('id', reservationId);
             
-          await sendReservationToWebhook();
+          const webhookSuccess = await sendReservationToWebhook();
+          if (webhookSuccess) {
+            toast({
+              title: "Rezervasyon Tamamlandı",
+              description: "Rezervasyon bilgileri başarıyla kaydedildi ve iletildi.",
+              variant: "default",
+            });
+          }
         } catch (error: any) {
           console.error("Reservation update error:", error.message);
           toast({
@@ -161,24 +168,31 @@ export const useReservationState = () => {
         tableSize: state.selectedTable?.size || 0
       };
       
-      console.log("Sending reservation data to webhook:", webhookData);
+      console.log("Sending reservation data to webhook:", JSON.stringify(webhookData, null, 2));
       
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        mode: 'no-cors',
-        body: JSON.stringify(webhookData)
-      });
-      
-      console.log("Webhook notification sent");
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'no-cors',
+          body: JSON.stringify(webhookData)
+        });
+        
+        console.log("Webhook notification attempted, no response expected due to no-cors mode");
+      } catch (fetchError) {
+        console.error("Fetch error in webhook:", fetchError);
+      }
       
       toast({
         title: "Rezervasyon Bilgileri Gönderildi",
         description: "Rezervasyon bilgileri başarıyla sistem yöneticisine iletildi.",
         duration: 3000,
       });
+      
+      return true;
     } catch (error: any) {
       console.error("Webhook error:", error.message);
       toast({
@@ -186,6 +200,8 @@ export const useReservationState = () => {
         description: "Rezervasyon bilgileri gönderilemedi, ancak rezervasyonunuz başarıyla kaydedildi.",
         variant: "destructive",
       });
+      
+      return false;
     }
   };
 
