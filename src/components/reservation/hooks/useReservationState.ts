@@ -198,10 +198,18 @@ export const useReservationState = () => {
       case 1: // Table selection
         return state.selectedTable !== null;
       case 2: // Menu selection
-        // Allow proceeding if either a fixed menu is selected OR at least one a la carte item is selected OR select at restaurant is true
-        return state.selectedFixMenu !== null || 
-               state.selectedALaCarteItems.length > 0 || 
-               state.selectAtRestaurant === true; // Burada === true kontrolünü ekledim
+        console.log("Menu selection check:", {
+          selectedFixMenu: !!state.selectedFixMenu,
+          selectedALaCarteItems: state.selectedALaCarteItems.length,
+          selectAtRestaurant: state.selectAtRestaurant
+        });
+        
+        // Fix: Allow proceeding if any of the three options are selected
+        return (
+          state.selectedFixMenu !== null || 
+          state.selectedALaCarteItems.length > 0 || 
+          state.selectAtRestaurant === true
+        );
       case 3: // Payment & summary
         return !state.isPrePayment || state.transactionId !== null; // If not pre-paying, can proceed without transaction
       default:
@@ -322,6 +330,15 @@ export const useReservationState = () => {
           selectAtRestaurant: state.selectAtRestaurant
         }
       });
+      
+      // Add debug notification about why can't proceed
+      if (currentStep === 2 && !canProceed()) {
+        toast({
+          title: "Seçim gerekli",
+          description: "Devam etmek için lütfen bir menü seçin veya 'Restoranda seçim yapacağım' seçeneğini işaretleyin.",
+          variant: "destructive",
+        });
+      }
     }
   };
   
