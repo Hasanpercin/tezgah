@@ -38,10 +38,11 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Restore original background colors and ensure text visibility
   const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled 
       ? 'bg-white shadow-md py-2' 
-      : 'bg-transparent py-4'
+      : 'bg-black/50 py-4'
   }`;
 
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${
@@ -96,6 +97,14 @@ const Navbar = () => {
               Hakkımızda
             </NavLink>
             <NavLink 
+              to="/gallery" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+            >
+              Galeri
+            </NavLink>
+            <NavLink 
               to="/contact" 
               className={({ isActive }) => 
                 isActive ? activeLinkClasses : linkClasses
@@ -138,7 +147,7 @@ const Navbar = () => {
                 className={`${isScrolled ? '' : 'text-white'}`} 
                 asChild
               >
-                <Link to="/login">Giriş Yap</Link>
+                <Link to="/login">Profil</Link>
               </Button>
             )}
           </nav>
@@ -196,6 +205,15 @@ const Navbar = () => {
             Hakkımızda
           </NavLink>
           <NavLink 
+            to="/gallery"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+          >
+            Galeri
+          </NavLink>
+          <NavLink 
             to="/contact"
             onClick={toggleMenu}
             className={({ isActive }) => 
@@ -241,7 +259,7 @@ const Navbar = () => {
               </div>
             ) : (
               <Button asChild>
-                <Link to="/login">Giriş Yap</Link>
+                <Link to="/login">Profil</Link>
               </Button>
             )}
           </div>
