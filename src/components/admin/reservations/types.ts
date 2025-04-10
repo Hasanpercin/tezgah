@@ -1,20 +1,38 @@
 
-// Define the status types for reservations
 export type ReservationStatus = "Onaylandı" | "Beklemede" | "İptal";
 
-// Define the main Reservation interface
+interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity?: number;
+}
+
+interface SelectedItems {
+  menuSelectionType: "fixed_menu" | "a_la_carte" | "at_restaurant";
+  fixedMenuId?: string | number;
+  items?: MenuItem[];
+}
+
 export interface Reservation {
   id: string;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string;
   date: Date;
   time: string;
-  guests: number;  // Ensuring this is number type to match database
+  guests: number;
   status: ReservationStatus;
-  occasion?: string | null;
-  notes?: string | null;
-  has_prepayment?: boolean | null;
-  total_amount?: number | null;
-  user_id: string;  // User ID is required
+  notes?: string;
+  occasion?: string;
+  selected_items?: SelectedItems;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReservationsFilter {
+  date?: Date;
+  status?: ReservationStatus;
+  search?: string;
 }

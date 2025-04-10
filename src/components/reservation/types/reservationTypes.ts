@@ -34,6 +34,7 @@ export interface MenuItem {
   price: number;
   category_id: string;
   image_path?: string;
+  quantity?: number; // For tracking selected quantity
 }
 
 export interface FixMenuOption {

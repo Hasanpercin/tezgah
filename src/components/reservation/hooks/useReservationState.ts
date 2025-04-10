@@ -108,7 +108,7 @@ export const useReservationState = () => {
               .insert({
                 reservation_id: reservationId,
                 table_id: state.selectedTable.id
-              } as any);
+              });
             
             // Save menu selection if it's a fixed menu
             if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
@@ -118,15 +118,35 @@ export const useReservationState = () => {
                   reservation_id: reservationId,
                   fixed_menu_id: state.menuSelection.selectedFixedMenu.id,
                   quantity: parseInt(state.formData.guests)
-                } as any);
+                });
+            }
+
+            // Save selected menu items if a_la_carte
+            if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems?.length) {
+              const menuItemEntries = state.menuSelection.selectedMenuItems.map(item => ({
+                reservation_id: reservationId,
+                menu_item_id: item.id,
+                quantity: item.quantity || 1
+              }));
+
+              if (menuItemEntries.length > 0) {
+                await supabase
+                  .from('reservation_menu_items')
+                  .insert(menuItemEntries);
+              }
             }
           }
           
-          // Update reservation status
+          // Update reservation status and menu selection type
           await supabase
             .from('reservations')
             .update({
-              status: 'confirmed'
+              status: 'Onaylandı',
+              selected_items: { 
+                menuSelectionType: state.menuSelection.type,
+                fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
+                items: state.menuSelection.selectedMenuItems
+              }
             })
             .eq('id', reservationId);
             
@@ -140,10 +160,10 @@ export const useReservationState = () => {
             });
           }
         } catch (error: any) {
-          console.error("Reservation update error:", error.message);
+          console.error("Reservation update error:", error);
           toast({
             title: "Hata",
-            description: "Rezervasyon bilgileri güncellenirken bir hata oluştu.",
+            description: "Rezervasyon bilgileri güncellenirken bir hata oluştu: " + error.message,
             variant: "destructive",
           });
         }
@@ -160,6 +180,12 @@ export const useReservationState = () => {
           selectedTable: !!state.selectedTable,
           menuSelection: state.menuSelection
         }
+      });
+      
+      toast({
+        title: "Lütfen Tüm Gerekli Bilgileri Doldurun",
+        description: "Devam etmek için gerekli tüm alanları doldurduğunuzdan emin olun.",
+        variant: "destructive",
       });
     }
   };
