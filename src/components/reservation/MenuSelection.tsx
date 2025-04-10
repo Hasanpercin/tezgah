@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,12 +37,10 @@ const MenuSelection = ({
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   
-  // Fetch fixed menus and a la carte items
   useEffect(() => {
     const fetchMenuData = async () => {
       setLoading(true);
       try {
-        // Fetch fixed menu packages
         const { data: fixedMenuData, error: fixedMenuError } = await supabase
           .from('fixed_menu_packages')
           .select('*')
@@ -51,7 +48,6 @@ const MenuSelection = ({
         
         if (fixedMenuError) throw fixedMenuError;
         
-        // Fetch a la carte menu items
         const { data: menuItemsData, error: menuItemsError } = await supabase
           .from('menu_items')
           .select('*')
@@ -63,7 +59,6 @@ const MenuSelection = ({
         console.log("Fixed menus loaded:", fixedMenuData);
         console.log("A La Carte items loaded:", menuItemsData);
         
-        // Add quantity 0 to each menu item for tracking
         const menuItemsWithQuantity = menuItemsData.map((item: MenuItem) => ({
           ...item,
           quantity: 0
@@ -86,10 +81,8 @@ const MenuSelection = ({
     fetchMenuData();
   }, [toast]);
   
-  // Handle selecting a fixed menu
   const handleSelectFixedMenu = (menu: FixMenuOption, quantity: number = 1) => {
     console.log("Fixed menu selected:", menu);
-    // Add default quantity based on guest count
     const guestsCount = parseInt(guests) || 1;
     const menuWithQuantity: FixMenuOption = {
       ...menu,
@@ -101,7 +94,6 @@ const MenuSelection = ({
     setActiveTab("fixed");
   };
   
-  // Handle changing fixed menu quantity
   const handleFixMenuQuantityChange = (value: string) => {
     if (!selectedFixMenu) return;
     
@@ -116,7 +108,6 @@ const MenuSelection = ({
     onFixMenuSelected(updatedMenu);
   };
 
-  // Handle incrementing/decrementing fixed menu quantity
   const handleFixMenuQuantityAdjust = (increment: boolean) => {
     if (!selectedFixMenu) return;
     
@@ -131,7 +122,6 @@ const MenuSelection = ({
     onFixMenuSelected(updatedMenu);
   };
   
-  // Handle selecting an a la carte item
   const handleAddALaCarteItem = (item: MenuItem) => {
     console.log("A La Carte item added:", item);
     const existingItemIndex = selectedALaCarteItems.findIndex(
@@ -141,14 +131,12 @@ const MenuSelection = ({
     let updatedItems;
     
     if (existingItemIndex >= 0) {
-      // Item already exists, increase quantity
       updatedItems = [...selectedALaCarteItems];
       updatedItems[existingItemIndex] = {
         item: updatedItems[existingItemIndex].item,
         quantity: updatedItems[existingItemIndex].quantity + 1
       };
     } else {
-      // Add new item with quantity 1
       updatedItems = [...selectedALaCarteItems, { item, quantity: 1 }];
     }
     
@@ -157,19 +145,16 @@ const MenuSelection = ({
     setActiveTab("alacarte");
   };
   
-  // Handle changing a la carte item quantity
   const handleALaCarteQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity < 0) return;
     
     let updatedItems;
     
     if (newQuantity === 0) {
-      // Remove item if quantity is 0
       updatedItems = selectedALaCarteItems.filter(
         selected => selected.item.id !== itemId
       );
     } else {
-      // Update item quantity
       updatedItems = selectedALaCarteItems.map(selected => 
         selected.item.id === itemId
           ? { ...selected, quantity: newQuantity }
@@ -180,7 +165,6 @@ const MenuSelection = ({
     onALaCarteItemsSelected(updatedItems);
   };
   
-  // Handle selecting "choose at restaurant"
   const handleSelectAtRestaurant = () => {
     console.log("Selected: Choose at restaurant");
     onSelectAtRestaurant(true);
@@ -189,14 +173,12 @@ const MenuSelection = ({
     setActiveTab("later");
   };
   
-  // Calculate total for fixed menu
   const calculateFixedMenuTotal = () => {
     if (!selectedFixMenu) return 0;
     const quantity = selectedFixMenu.quantity || 1;
     return selectedFixMenu.price * quantity;
   };
   
-  // Calculate total for a la carte items
   const calculateALaCarteTotal = () => {
     return selectedALaCarteItems.reduce(
       (total, { item, quantity }) => total + (item.price * quantity),
@@ -204,24 +186,20 @@ const MenuSelection = ({
     );
   };
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     console.log("Tab changing to:", value);
     setActiveTab(value);
   };
 
-  // Check if an item is selected
   const isItemInCart = (itemId: string): boolean => {
     return selectedALaCarteItems.some(item => item.item.id === itemId);
   };
 
-  // Get quantity of an item
   const getItemQuantity = (itemId: string): number => {
     const item = selectedALaCarteItems.find(item => item.item.id === itemId);
     return item ? item.quantity : 0;
   };
 
-  // Check if a fixed menu is selected
   const isFixMenuSelected = (menuId: string): boolean => {
     return selectedFixMenu?.id === menuId;
   };
@@ -256,7 +234,6 @@ const MenuSelection = ({
           </TabsTrigger>
         </TabsList>
         
-        {/* Fixed Menu Tab */}
         <TabsContent value="fixed" className="space-y-6">
           {loading ? (
             <div className="text-center py-12">
@@ -397,7 +374,6 @@ const MenuSelection = ({
           )}
         </TabsContent>
         
-        {/* A La Carte Tab */}
         <TabsContent value="alacarte" className="space-y-6">
           {loading ? (
             <div className="text-center py-12">
@@ -516,7 +492,6 @@ const MenuSelection = ({
           )}
         </TabsContent>
         
-        {/* Choose at Restaurant Tab */}
         <TabsContent value="later" className="space-y-6">
           <Card className={cn(
             "border shadow-md transition-all", 
@@ -557,7 +532,7 @@ const MenuSelection = ({
             {!selectAtRestaurant && (
               <CardFooter className="flex justify-end pt-4 border-t">
                 <Button
-                  variant="primary"
+                  variant="default"
                   onClick={handleSelectAtRestaurant}
                   className="rounded-full px-6"
                 >
