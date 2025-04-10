@@ -24,6 +24,7 @@ export interface MenuItem {
   image_path?: string;
   category_id?: string;
   is_in_stock?: boolean;
+  quantity?: number; // Added for UI tracking
 }
 
 export interface FixMenuOption {
