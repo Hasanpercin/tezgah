@@ -1,11 +1,22 @@
+
 import Hero from '@/components/Hero';
 import { Clock, Phone } from 'lucide-react';
 import MultiStepReservation from '@/components/reservation/MultiStepReservation';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 const Reservation = () => {
   const heroImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
-  return <div className="min-h-screen">
+  const isMobile = useIsMobile();
+  
+  return (
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <Hero backgroundImage={heroImage} title="Rezervasyon" subtitle="Özel anlarınız için masanızı şimdiden ayırtın" showButtons={false} />
+      <Hero 
+        backgroundImage={heroImage} 
+        title="Rezervasyon" 
+        subtitle="Özel anlarınız için masanızı şimdiden ayırtın" 
+        showButtons={false} 
+      />
       
       {/* Reservation Content */}
       <section className="section-padding bg-white">
@@ -17,9 +28,9 @@ const Reservation = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Info Section - Enhanced Design */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-1 space-y-6`}>
               <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 shadow-sm">
                 <h3 className="text-xl font-semibold mb-4 font-playfair text-primary">Çalışma Saatleri</h3>
                 
@@ -55,12 +66,14 @@ const Reservation = () => {
             </div>
             
             {/* Form Section */}
-            <div className="lg:col-span-4">
+            <div className={`${isMobile ? 'order-1' : 'order-2'} lg:col-span-4`}>
               <MultiStepReservation />
             </div>
           </div>
         </div>
       </section>
-    </div>;
+    </div>
+  );
 };
+
 export default Reservation;

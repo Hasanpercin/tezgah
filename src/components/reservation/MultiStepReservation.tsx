@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useReservationState } from './hooks/useReservationState';
-import ReservationForm from '@/components/ReservationForm'; // Fixed import path
+import ReservationForm from '@/components/ReservationForm';
 import TableSelection from './TableSelection';
 import StepIndicator from './components/StepIndicator';
 import NavigationButtons from './NavigationButtons';
@@ -14,6 +14,7 @@ import PaymentStep from './components/PaymentStep';
 import ReservationSummary from './ReservationSummary';
 import { STEPS } from './types/reservationTypes';
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -29,6 +30,8 @@ const queryClient = new QueryClient({
 const MultiStepReservation = () => {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  
   const {
     currentStep,
     containerRef,
@@ -110,11 +113,11 @@ const MultiStepReservation = () => {
   
   if (shouldRedirect) {
     return (
-      <Card className="p-8 text-center">
+      <Card className="p-6 md:p-8 text-center">
         <div className="flex flex-col items-center justify-center space-y-4">
           <h3 className="text-xl font-semibold">Lütfen Giriş Yapın</h3>
           <p>Rezervasyon yapabilmek için hesabınıza giriş yapmalısınız.</p>
-          <div className="flex space-x-4 mt-4">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
             <a href="/login" className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md">
               Giriş Yap
             </a>
@@ -129,53 +132,55 @@ const MultiStepReservation = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <div ref={containerRef} className="space-y-8" data-reservation-step>
+      <div ref={containerRef} className="space-y-6" data-reservation-step>
         <StepIndicator 
           currentStep={currentStep} 
           steps={STEPS}
           skipStep={state.menuSelection.type === 'at_restaurant' ? 3 : undefined}
         />
         
-        <Card className="p-6">
-          {currentStep === 0 && (
-            <ReservationForm />
-          )}
-          
-          {currentStep === 1 && (
-            <TableSelection 
-              selectedTable={state.selectedTable}
-              onSelectTable={setSelectedTable}
-              date={state.formData.date || new Date()}
-              time={state.formData.time}
-              guests={state.formData.guests} // Changed from parseInt(state.formData.guests) to state.formData.guests
-            />
-          )}
-          
-          {currentStep === 2 && (
-            <MenuSelection 
-              value={state.menuSelection}
-              onChange={setMenuSelection}
-              guestCount={state.formData.guests}
-            />
-          )}
-          
-          {currentStep === 3 && state.menuSelection.type !== 'at_restaurant' && (
-            <PaymentStep 
-              reservation={state}
-              onPaymentComplete={setPaymentComplete}
-            />
-          )}
-          
-          {currentStep === 4 && (
-            <ReservationSummary state={state} />
-          )}
+        <Card className={`${isMobile ? 'p-4' : 'p-6'} overflow-x-hidden`}>
+          <div className="overflow-x-auto">
+            {currentStep === 0 && (
+              <ReservationForm />
+            )}
+            
+            {currentStep === 1 && (
+              <TableSelection 
+                selectedTable={state.selectedTable}
+                onSelectTable={setSelectedTable}
+                date={state.formData.date || new Date()}
+                time={state.formData.time}
+                guests={state.formData.guests}
+              />
+            )}
+            
+            {currentStep === 2 && (
+              <MenuSelection 
+                value={state.menuSelection}
+                onChange={setMenuSelection}
+                guestCount={state.formData.guests}
+              />
+            )}
+            
+            {currentStep === 3 && state.menuSelection.type !== 'at_restaurant' && (
+              <PaymentStep 
+                reservation={state}
+                onPaymentComplete={setPaymentComplete}
+              />
+            )}
+            
+            {currentStep === 4 && (
+              <ReservationSummary state={state} />
+            )}
+          </div>
           
           {currentStep < STEPS.length - 1 && (
             <NavigationButtons
               currentStep={currentStep}
               onNext={currentStep === 2 && state.menuSelection.type === 'at_restaurant' ? skipPaymentStep : handleNextStep}
               onPrev={handlePrevStep}
-              canProceed={!!canProceed()} // Fixed by ensuring boolean type
+              canProceed={!!canProceed()}
               menuSelectionType={state.menuSelection.type}
             />
           )}

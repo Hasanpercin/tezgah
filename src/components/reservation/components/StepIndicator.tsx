@@ -2,6 +2,7 @@
 import React from 'react';
 import { Calendar, Users, Utensils, CreditCard, CheckCircle } from 'lucide-react';
 import { StepIndicatorProps } from '../types/reservationTypes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps, skipStep }) => {
   // Map of icon names to Lucide components
@@ -12,9 +13,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps, skipS
     CreditCard: CreditCard,
     CheckCircle: CheckCircle,
   };
+
+  const isMobile = useIsMobile();
   
   return (
-    <div className="py-6">
+    <div className="py-4 md:py-6">
       <div className="flex justify-between items-center">
         <div className="flex-1 relative">
           <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-gray-200">
@@ -47,24 +50,26 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps, skipS
                   className={`flex flex-col items-center`}
                 >
                   <div 
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center ${
                       isActive ? 'bg-primary text-white' : 
                       isCompleted ? 'bg-green-100 text-green-600 border border-green-600' : 
                       'bg-gray-100 text-gray-400'
                     } transition-colors`}
                   >
-                    <IconComponent className="h-5 w-5" />
+                    <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                   
-                  <p 
-                    className={`text-xs md:text-sm mt-1 text-center ${
-                      isActive ? 'text-primary font-medium' : 
-                      isCompleted ? 'text-green-600' : 
-                      'text-gray-500'
-                    }`}
-                  >
-                    {step.name}
-                  </p>
+                  {(!isMobile || index === currentStep) && (
+                    <p 
+                      className={`text-xs md:text-sm mt-1 text-center ${
+                        isActive ? 'text-primary font-medium' : 
+                        isCompleted ? 'text-green-600' : 
+                        'text-gray-500'
+                      }`}
+                    >
+                      {step.name}
+                    </p>
+                  )}
                 </div>
               );
             })}
