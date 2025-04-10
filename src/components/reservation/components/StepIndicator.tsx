@@ -1,92 +1,75 @@
 
 import React from 'react';
-import { CheckCircle, Circle, Calendar, Users, Utensils, CreditCard, CheckSquare } from 'lucide-react';
+import { Calendar, Users, Utensils, CreditCard, CheckCircle } from 'lucide-react';
 import { StepIndicatorProps } from '../types/reservationTypes';
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, steps, skipStep }) => {
-  const getIcon = (iconName: string, isActive: boolean, isCompleted: boolean) => {
-    const commonProps = { 
-      className: `h-5 w-5 ${isActive ? 'text-primary' : isCompleted ? 'text-muted-foreground' : 'text-muted'}`,
-    };
-    
-    if (isCompleted) {
-      return <CheckCircle {...commonProps} />;
-    }
-    
-    switch (iconName) {
-      case 'Calendar': return <Calendar {...commonProps} />;
-      case 'Users': return <Users {...commonProps} />;
-      case 'Utensils': return <Utensils {...commonProps} />;
-      case 'CreditCard': return <CreditCard {...commonProps} />;
-      case 'CheckCircle': return <CheckSquare {...commonProps} />;
-      default: return <Circle {...commonProps} />;
-    }
+  // Map of icon names to Lucide components
+  const iconComponents = {
+    Calendar: Calendar,
+    Users: Users,
+    Utensils: Utensils,
+    CreditCard: CreditCard,
+    CheckCircle: CheckCircle,
   };
   
   return (
-    <div className="mb-8">
-      <div className="flex justify-between">
-        {steps.map((step, index) => {
-          // Skip displaying a step if skipStep is set to this index
-          if (skipStep === index) {
-            return null;
-          }
-          
-          const isActive = index === currentStep;
-          const isCompleted = index < currentStep;
-          
-          // Adjust step count based on skipped steps
-          let displayNumber = index + 1;
-          if (skipStep !== undefined && index > skipStep) {
-            displayNumber--;
-          }
-          
-          return (
+    <div className="py-6">
+      <div className="flex justify-between items-center">
+        <div className="flex-1 relative">
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-gray-200">
             <div 
-              key={step.id}
-              className={`flex flex-col items-center ${
-                index < steps.length - 1 ? 'flex-1' : ''
-              }`}
-            >
-              <div className="relative flex items-center justify-center">
-                <div
-                  className={`
-                    w-8 h-8 rounded-full flex items-center justify-center
-                    ${isActive ? 'bg-primary text-primary-foreground' : 
-                       isCompleted ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}
-                  `}
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    displayNumber
-                  )}
-                </div>
-                
-                {index < steps.length - 1 && skipStep !== index + 1 && (
-                  <div 
-                    className={`absolute top-4 w-full h-0.5 left-1/2 
-                      ${index < currentStep ? 'bg-primary' : 'bg-muted'}`
-                    }
-                  />
-                )}
-              </div>
+              className="absolute top-0 left-0 h-full bg-primary transition-all"
+              style={{ 
+                width: `${Math.min(100, (currentStep / (steps.length - 1)) * 100)}%` 
+              }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between relative z-10">
+            {steps.map((step, index) => {
+              // Don't render the payment step if it should be skipped
+              if (skipStep !== undefined && index === skipStep) {
+                return null;
+              }
               
-              <div className="mt-2 text-center">
-                <div className="flex items-center justify-center">
-                  {getIcon(step.icon, isActive, isCompleted)}
-                  <span 
-                    className={`ml-1 text-sm font-medium
-                      ${isActive ? 'text-primary' : isCompleted ? 'text-muted-foreground' : 'text-muted'}
-                    `}
+              // Get the icon component for this step
+              const IconComponent = iconComponents[step.icon as keyof typeof iconComponents] || CheckCircle;
+              
+              // Determine if this step is active, completed, or upcoming
+              const isActive = index === currentStep;
+              const isCompleted = index < currentStep || (skipStep !== undefined && index > skipStep && index <= currentStep);
+              const isUpcoming = !isActive && !isCompleted;
+              
+              return (
+                <div 
+                  key={step.id}
+                  className={`flex flex-col items-center`}
+                >
+                  <div 
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isActive ? 'bg-primary text-white' : 
+                      isCompleted ? 'bg-green-100 text-green-600 border border-green-600' : 
+                      'bg-gray-100 text-gray-400'
+                    } transition-colors`}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  
+                  <p 
+                    className={`text-xs md:text-sm mt-1 text-center ${
+                      isActive ? 'text-primary font-medium' : 
+                      isCompleted ? 'text-green-600' : 
+                      'text-gray-500'
+                    }`}
                   >
                     {step.name}
-                  </span>
+                  </p>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
