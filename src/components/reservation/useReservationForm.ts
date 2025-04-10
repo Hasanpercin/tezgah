@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
@@ -110,17 +109,28 @@ export const useReservationForm = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Starting reservation submission process...");
+      
       // First create or get a profile
       let userId;
       
       if (user) {
         // If user is authenticated, use their ID
         userId = user.id;
+        console.log("Using authenticated user ID:", userId);
       } else {
         // For anonymous users, we need to create a temporary profile
         const tempId = uuidv4();
+        console.log("Generated temporary ID for anonymous user:", tempId);
         
         // Create a temporary profile
+        console.log("Creating temporary profile with data:", {
+          id: tempId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        });
+        
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -135,10 +145,13 @@ export const useReservationForm = () => {
           throw profileError;
         }
         
+        console.log("Temporary profile created successfully");
         userId = tempId;
       }
       
       // Now create the reservation with proper data type handling
+      console.log("Creating reservation with user ID:", userId);
+      
       const { data, error } = await supabase
         .from('reservations')
         .insert({
@@ -156,7 +169,12 @@ export const useReservationForm = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Reservation creation error:", error.message);
+        throw error;
+      }
+      
+      console.log("Reservation created successfully:", data);
       
       toast({
         title: "Rezervasyon Alındı",
