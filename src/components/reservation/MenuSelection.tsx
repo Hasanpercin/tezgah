@@ -269,9 +269,11 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                 <div className="space-y-8">
                   {Object.keys(menuByCategory).length > 0 ? (
                     Object.keys(menuByCategory).map((categoryId) => {
-                      // Fix: Safely access menu_categories using the service type
-                      const serviceItem = menuByCategory[categoryId][0] as ServiceMenuItem;
-                      const categoryName = serviceItem?.menu_categories?.name || 'Kategori';
+                      const firstItem = menuByCategory[categoryId][0];
+                      const categoryName = firstItem && 
+                        'menu_categories' in firstItem && 
+                        firstItem.menu_categories ? 
+                        firstItem.menu_categories.name : 'Kategori';
                       
                       return (
                         <div key={categoryId} className="space-y-4">
