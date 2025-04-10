@@ -323,7 +323,7 @@ export const useReservationState = () => {
   
   const sendReservationToWebhook = async () => {
     try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
       
       // Enhanced webhook data with menu selection details
       const menuSelectionDetails = state.menuSelection.type === 'at_restaurant' 
