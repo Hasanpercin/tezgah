@@ -36,7 +36,7 @@ export interface MenuItem {
   category_id: string;
   image_path?: string;
   quantity?: number;
-  is_in_stock?: boolean;
+  is_in_stock: boolean; // Changed from optional to required to match menuService.ts
   display_order?: number;
   ingredients?: string;
   allergens?: string;
@@ -45,6 +45,9 @@ export interface MenuItem {
   is_gluten_free?: boolean;
   is_spicy?: boolean;
   is_featured?: boolean;
+  menu_categories?: {
+    name: string;
+  };
 }
 
 export interface FixMenuOption {
@@ -89,4 +92,14 @@ export const STEPS = [
 
 export interface ReservationSummaryProps {
   state: ReservationState;
+}
+
+// Add StepIndicatorProps interface for the StepIndicator component
+export interface StepIndicatorProps {
+  currentStep: number;
+  steps: Array<{
+    id: number;
+    name: string;
+    icon: string;
+  }>;
 }

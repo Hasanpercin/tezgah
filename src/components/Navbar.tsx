@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, User, Menu as MenuIcon, X, Calendar, Crown } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,17 +15,15 @@ interface LoyaltyInfo {
 const Navbar = () => {
   const location = useLocation();
   const { user, isLoading, logout } = useAuth();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [loyaltyInfo, setLoyaltyInfo] = useState<LoyaltyInfo | null>(null);
   const [isLoadingLoyalty, setIsLoadingLoyalty] = useState(false);
   
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
   
-  // Fetch user's loyalty points if authenticated
   useEffect(() => {
     const fetchLoyaltyPoints = async () => {
       if (!user) return;
@@ -92,7 +89,6 @@ const Navbar = () => {
               </Link>
             </div>
             
-            {/* Desktop menu */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
               {menuItems.map((item) => (
                 <Link
@@ -108,7 +104,6 @@ const Navbar = () => {
                 </Link>
               ))}
               
-              {/* Auth section */}
               <div className="ml-4 flex items-center">
                 {isLoading ? (
                   <Skeleton className="h-9 w-20" />
@@ -169,7 +164,6 @@ const Navbar = () => {
               </div>
             </div>
             
-            {/* Mobile menu button */}
             <div className="flex items-center sm:hidden">
               <button
                 type="button"
@@ -189,7 +183,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
