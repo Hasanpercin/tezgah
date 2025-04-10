@@ -1,152 +1,124 @@
-
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Hero from '@/components/Hero';
-import MenuCategory, { MenuCategoryType } from '@/components/MenuCategory';
-import { fetchMenuItemsByCategory, seedMenuData, updateFeaturedMenuItem } from '@/services/menuService';
-import { Loader2, RefreshCcw, Star } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { useWebsiteContent } from '@/hooks/useWebsiteContent';
+import MenuCategory from '@/components/MenuCategory';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { fetchMenuItemsByCategory, seedMenuData } from "@/services/menuService";
+import { MenuCategoryType } from '@/components/MenuCategory';
+import { Loader2 } from 'lucide-react';
 
 const Menu = () => {
-  const { toast } = useToast();
-  const { content: headerContent, isLoading: isHeaderLoading } = useWebsiteContent('gallery_header');
-  
-  const heroImage = headerContent?.image_path || "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
   const [menuCategories, setMenuCategories] = useState<MenuCategoryType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSeedingData, setIsSeedingData] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  
   useEffect(() => {
-    const loadMenuData = async () => {
+    const fetchMenu = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const data = await fetchMenuItemsByCategory();
-        setMenuCategories(data);
-      } catch (error: any) {
-        console.error('Error loading menu data:', error);
-        toast({
-          title: "Hata",
-          description: "Menü bilgileri yüklenirken bir hata oluştu.",
-          variant: "destructive"
+        const menuItemsData = await fetchMenuItemsByCategory();
+        
+        // Process the data to match the expected MenuCategoryType structure
+        const categories: { [key: string]: MenuCategoryType } = {};
+        
+        menuItemsData.forEach(item => {
+          const categoryId = item.menu_categories?.id || 'uncategorized';
+          const categoryName = item.menu_categories?.name || 'Uncategorized';
+          
+          if (!categories[categoryId]) {
+            categories[categoryId] = {
+              id: categoryId,
+              name: categoryName,
+              items: []
+            };
+          }
+          
+          categories[categoryId].items.push({
+            id: item.id,
+            name: item.name,
+            description: item.description || '',
+            price: `${item.price} ₺`,
+            image: item.image_path,
+            isInStock: item.is_in_stock
+          });
         });
+        
+        const categoriesArray = Object.values(categories);
+        setMenuCategories(categoriesArray);
+      } catch (error) {
+        console.error("Error loading menu:", error);
+        setError("Menü yüklenirken bir hata oluştu.");
       } finally {
         setIsLoading(false);
       }
     };
-    loadMenuData();
-  }, [toast]);
+    
+    fetchMenu();
+  }, []);
 
-  const handleSeedMenu = async () => {
+  const handleSeedData = async () => {
     try {
-      setIsSeedingData(true);
       const result = await seedMenuData();
-      if (result.success) {
+      if (result && result.success) {
         toast({
           title: "Başarılı",
-          description: "Menü başarıyla güncellendi."
-        });
-
-        // Reload menu data
-        const data = await fetchMenuItemsByCategory();
-        setMenuCategories(data);
-      } else {
-        toast({
-          title: "Hata",
-          description: result.error || "Menü güncellenirken bir hata oluştu.",
-          variant: "destructive"
+          description: "Menü verileri başarıyla eklendi.",
         });
       }
-    } catch (error: any) {
-      console.error('Error seeding menu data:', error);
+    } catch (error) {
+      console.error("Error seeding menu data:", error);
       toast({
         title: "Hata",
-        description: "Menü güncellenirken bir hata oluştu.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSeedingData(false);
-    }
-  };
-
-  const handleToggleFeatured = async (itemId: string, isFeatured: boolean) => {
-    try {
-      await updateFeaturedMenuItem(itemId, !isFeatured);
-      
-      toast({
-        title: "Başarılı",
-        description: `Ürün ${!isFeatured ? 'öne çıkanlar listesine eklendi' : 'öne çıkanlar listesinden çıkarıldı'}.`,
-      });
-      
-      // Reload menu data
-      const data = await fetchMenuItemsByCategory();
-      setMenuCategories(data);
-    } catch (error: any) {
-      console.error('Error toggling featured status:', error);
-      toast({
-        title: "Hata",
-        description: "Öne çıkan ürün güncellenirken bir hata oluştu.",
-        variant: "destructive"
+        description: "Menü verileri eklenirken bir hata oluştu.",
+        variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <Hero 
-        backgroundImage={heroImage} 
-        title="Menümüz" 
-        subtitle="Taze ve seçkin malzemelerle hazırlanan özel lezzetlerimiz" 
-        showButtons={false} 
+      <Hero
+        backgroundImage="https://images.unsplash.com/photo-1555224177-391776d8221d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000"
+        title="Menümüz"
+        subtitle="En lezzetli yemeklerimizi keşfedin"
+        showButtons={false}
       />
       
       {/* Menu Content */}
-      <section className="section-padding bg-white">
-        <div className="container-custom">
+      <section className="section-padding">
+        <div className="container-custom max-w-5xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4">Lezzetlerimiz</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+              Günün Menüsü
+            </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Şeflerimizin özenle hazırladığı menümüzde, modern ve geleneksel lezzetleri bir araya getirdik
+              Özenle seçilmiş malzemelerle hazırlanan, damak zevkinize hitap edecek
+              çeşitlerimizle karşınızdayız.
             </p>
-            
-            {/* Admin only: Menu Update Button */}
-            {import.meta.env.DEV && (
-              <div className="mt-4">
-                <Button 
-                  variant="outline"
-                  onClick={handleSeedMenu}
-                  disabled={isSeedingData}
-                  className="flex items-center gap-2"
-                >
-                  {isSeedingData ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCcw className="h-4 w-4" />
-                  )}
-                  Menüyü Güncelle
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1">
-                  (Yönetici kullanımı içindir)
-                </p>
-              </div>
-            )}
           </div>
           
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500">
+              {error}
             </div>
           ) : (
             <MenuCategory categories={menuCategories} />
           )}
           
-          <div className="text-center mt-16">
-            <p className="text-lg font-medium mb-2">Özel diyet ihtiyaçlarınız mı var?</p>
-            <p className="text-muted-foreground mb-6">
-              Vejetaryen, vegan, glutensiz veya diğer diyet tercihleriniz için lütfen servis personelimize danışınız.
-            </p>
-          </div>
+          {/* Admin Seed Data Button - Conditionally rendered */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-8 text-center">
+              <Button onClick={handleSeedData}>
+                Menü Verilerini Ekle
+              </Button>
+            </div>
+          )}
         </div>
       </section>
     </div>

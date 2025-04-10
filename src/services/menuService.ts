@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -11,6 +10,13 @@ export interface MenuItem {
   quantity?: number; // For tracking selected quantity
   is_in_stock: boolean;
   display_order: number;
+  ingredients?: string;
+  allergens?: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  is_spicy?: boolean;
+  is_featured?: boolean;
 }
 
 export interface MenuCategory {
@@ -73,7 +79,6 @@ export const saveReservationMenuItems = async (
   return data;
 };
 
-// Adding the missing functions that are imported elsewhere
 export const fetchMenuItemsByCategory = async () => {
   const { data, error } = await supabase
     .from('menu_items')

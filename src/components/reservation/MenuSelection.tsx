@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +5,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Utensils, UtensilsCrossed, ChefHat, Store, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { MenuSelection as MenuSelectionType, FixMenuOption } from './types/reservationTypes';
-import { MenuItem } from '@/services/menuService';
+import { type MenuSelection as MenuSelectionType, type FixMenuOption } from './types/reservationTypes';
+import { MenuItem as MenuServiceItem } from '@/services/menuService';
 import { useToast } from "@/hooks/use-toast";
 import { fetchFixedMenus } from "@/services/fixedMenuService";
 import { fetchMenuItems } from "@/services/menuService";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { MenuItem as ReservationMenuItem } from './types/reservationTypes';
 
 interface MenuSelectionProps {
   value: MenuSelectionType;
@@ -23,9 +23,9 @@ interface MenuSelectionProps {
 const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
   const [activeTab, setActiveTab] = useState<string>(value.type || "fixed_menu");
   const [fixedMenus, setFixedMenus] = useState<FixMenuOption[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<ReservationMenuItem[]>([]);
   const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixMenuOption | null>(value.selectedFixedMenu || null);
-  const [selectedMenuItems, setSelectedMenuItems] = useState<MenuItem[]>(value.selectedMenuItems || []);
+  const [selectedMenuItems, setSelectedMenuItems] = useState<ReservationMenuItem[]>(value.selectedMenuItems || []);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
@@ -37,7 +37,16 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
         setFixedMenus(menus);
         
         const items = await fetchMenuItems();
-        setMenuItems(items);
+        setMenuItems(items.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category_id: item.category_id,
+          image_path: item.image_path,
+          is_in_stock: item.is_in_stock,
+          display_order: item.display_order
+        })));
       } catch (error) {
         console.error("Error fetching menus:", error);
         toast({
@@ -70,7 +79,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     onChange({ type: "fixed_menu", selectedFixedMenu: menu, selectedMenuItems: [] });
   };
   
-  const handleMenuItemSelect = (item: MenuItem) => {
+  const handleMenuItemSelect = (item: ReservationMenuItem) => {
     const existingItemIndex = selectedMenuItems.findIndex(
       selectedItem => selectedItem.id === item.id
     );

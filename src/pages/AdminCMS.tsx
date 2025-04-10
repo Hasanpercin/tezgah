@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +11,7 @@ import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
 import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentSettingsPanel } from "@/components/admin/PaymentSettingsPanel";
+import { Json } from "@/integrations/supabase/types";
 
 const AdminCMS = () => {
   const { toast } = useToast();
@@ -326,15 +326,25 @@ const DashboardRecentReservations = () => {
         if (error) throw error;
         
         if (data) {
-          const formattedReservations = data.map(res => ({
-            ...res,
-            date: new Date(res.date),
-            // Convert guests to number to match Reservation type
-            guests: Number(res.guests),
-            name: res.name || "İsimsiz",
-            email: res.email || "",
-            phone: res.phone || ""
-          })) as Reservation[];
+          // Convert the data to match Reservation type
+          const formattedReservations = data.map(res => {
+            // Handle selected_items
+            const selectedItems = res.selected_items ? {
+              menuSelectionType: res.selected_items.menuSelectionType || "at_restaurant",
+              fixedMenuId: res.selected_items.fixedMenuId,
+              items: res.selected_items.items || []
+            } : undefined;
+            
+            return {
+              ...res,
+              date: new Date(res.date),
+              guests: Number(res.guests),
+              name: res.name || "İsimsiz",
+              email: res.email || "",
+              phone: res.phone || "",
+              selected_items: selectedItems
+            };
+          }) as Reservation[];
           
           setReservations(formattedReservations);
         }

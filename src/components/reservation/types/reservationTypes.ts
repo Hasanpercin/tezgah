@@ -27,6 +27,7 @@ export interface ReservationFormData {
   occasion?: string;
 }
 
+// Update MenuItem to match the service interface
 export interface MenuItem {
   id: string;
   name: string;
@@ -34,7 +35,9 @@ export interface MenuItem {
   price: number;
   category_id: string;
   image_path?: string;
-  quantity?: number; // For tracking selected quantity
+  quantity?: number;
+  is_in_stock?: boolean;
+  display_order?: number;
 }
 
 export interface FixMenuOption {

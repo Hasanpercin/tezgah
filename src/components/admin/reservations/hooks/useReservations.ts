@@ -7,11 +7,12 @@ import { Reservation, ReservationStatus, SelectedItems } from "../types";
 // Convert raw Supabase data to strong typed Reservation objects
 const mapToReservations = (data: any[]): Reservation[] => {
   return data.map(item => {
-    const selectedItems = item.selected_items ? {
+    // Properly convert the selected_items JSON data to the expected SelectedItems type
+    const selectedItems: SelectedItems | undefined = item.selected_items ? {
       menuSelectionType: item.selected_items.menuSelectionType || "at_restaurant",
       fixedMenuId: item.selected_items.fixedMenuId,
       items: item.selected_items.items || []
-    } as SelectedItems : undefined;
+    } : undefined;
     
     return {
       id: item.id,
