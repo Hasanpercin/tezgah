@@ -1,40 +1,99 @@
+
 import Hero from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { useWebsiteContent } from '@/hooks/useWebsiteContent';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { fetchFeaturedMenuItems } from '@/services/menuService';
 
 const Index = () => {
   const { content, isLoading } = useWebsiteContent('homepage');
+  const [featuredItems, setFeaturedItems] = useState([]);
+  const [isLoadingMenuItems, setIsLoadingMenuItems] = useState(true);
+  
+  // Load featured menu items from the database
+  useEffect(() => {
+    const loadFeaturedItems = async () => {
+      try {
+        const items = await fetchFeaturedMenuItems(3);
+        if (items && items.length > 0) {
+          const formattedItems = items.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || '',
+            image: item.image_path || `https://images.unsplash.com/photo-${item.id.substring(0, 8)}?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400`,
+            price: new Intl.NumberFormat('tr-TR', {
+              style: 'currency',
+              currency: 'TRY',
+              minimumFractionDigits: 0
+            }).format(item.price)
+          }));
+          setFeaturedItems(formattedItems);
+        } else {
+          // Fallback to default items if no featured items are found
+          setFeaturedItems([
+            {
+              id: 1,
+              name: "Mevsim Salata",
+              description: "Taze mevsim sebzeleri ile hazırlanan özel salata",
+              image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+              price: "₺75"
+            },
+            {
+              id: 2,
+              name: "Özel Lezzet Burger",
+              description: "Ev yapımı özel sos ve taze malzemelerle hazırlanan gurme burger",
+              image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+              price: "₺145"
+            },
+            {
+              id: 3,
+              name: "Çikolatalı Sufle",
+              description: "Sıcak servis edilen akışkan çikolata dolgulu sufle",
+              image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+              price: "₺85"
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error loading featured menu items:", error);
+        // Set fallback items on error
+        setFeaturedItems([
+          {
+            id: 1,
+            name: "Mevsim Salata",
+            description: "Taze mevsim sebzeleri ile hazırlanan özel salata",
+            image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+            price: "₺75"
+          },
+          {
+            id: 2,
+            name: "Özel Lezzet Burger",
+            description: "Ev yapımı özel sos ve taze malzemelerle hazırlanan gurme burger",
+            image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+            price: "₺145"
+          },
+          {
+            id: 3,
+            name: "Çikolatalı Sufle",
+            description: "Sıcak servis edilen akışkan çikolata dolgulu sufle",
+            image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
+            price: "₺85"
+          }
+        ]);
+      } finally {
+        setIsLoadingMenuItems(false);
+      }
+    };
+
+    loadFeaturedItems();
+  }, []);
   
   // Default values to use as fallbacks if content isn't loaded yet
   const heroImage = content.hero_image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
 
-  const featuredItems = [
-    {
-      id: 1,
-      name: "Mevsim Salata",
-      description: "Taze mevsim sebzeleri ile hazırlanan özel salata",
-      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
-      price: "₺75"
-    },
-    {
-      id: 2,
-      name: "Özel Lezzet Burger",
-      description: "Ev yapımı özel sos ve taze malzemelerle hazırlanan gurme burger",
-      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
-      price: "₺145"
-    },
-    {
-      id: 3,
-      name: "Çikolatalı Sufle",
-      description: "Sıcak servis edilen akışkan çikolata dolgulu sufle",
-      image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=400",
-      price: "₺85"
-    }
-  ];
-
-  if (isLoading) {
+  if (isLoading || isLoadingMenuItems) {
     return (
       <div className="min-h-screen">
         <Skeleton className="w-full h-[40vh]" />
@@ -141,7 +200,7 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Atmosphere Images */}
+      {/* Atmosphere Images - Now linked to Gallery */}
       <section className="section-padding bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">

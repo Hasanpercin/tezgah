@@ -8,6 +8,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useWebsiteContent } from '@/hooks/useWebsiteContent';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Puan geçmişi tipi
 type PointHistory = {
@@ -29,6 +31,7 @@ type Reward = {
 const Loyalty = () => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { content: headerContent, isLoading: isHeaderLoading } = useWebsiteContent('loyalty_header');
   
   const [loyaltyData, setLoyaltyData] = useState({
     points: 0,
@@ -175,8 +178,8 @@ const Loyalty = () => {
     return rewards;
   };
   
-  // Updated heroImage with the uploaded image
-  const heroImage = "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
+  // Get the hero image from the header content in CMS
+  const heroImage = headerContent.image_path || "/lovable-uploads/3c8b4a11-1461-48d3-97c1-2083985f8652.png";
 
   if (isLoading || isLoadingData) {
     return (

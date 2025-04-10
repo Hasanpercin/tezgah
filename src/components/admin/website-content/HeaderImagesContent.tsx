@@ -13,7 +13,6 @@ interface HeaderImageData {
   section: string;
   value: string;
   image_path?: string | null;
-  // Add the missing updated_at property to fix the error
   updated_at?: string;
 }
 
@@ -37,7 +36,7 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
       const { data, error } = await supabase
         .from("website_content")
         .select("*")
-        .in('section', ['profile_header', 'loyalty_header']);
+        .in('section', ['profile_header', 'loyalty_header', 'gallery_header']);
 
       if (error) throw error;
 
@@ -55,6 +54,12 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
             key: "loyalty_header_image",
             value: "Sadakat Sayfası Header Görseli",
             image_path: null
+          },
+          {
+            section: "gallery_header",
+            key: "gallery_header_image",
+            value: "Galeri Sayfası Header Görseli",
+            image_path: null
           }
         ];
 
@@ -66,7 +71,33 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
         if (insertError) throw insertError;
         setHeaderImages(newData || []);
       } else {
-        setHeaderImages(data);
+        // Check if all required headers exist
+        const sections = ['profile_header', 'loyalty_header', 'gallery_header'];
+        const missingHeaders: HeaderImageData[] = [];
+        
+        sections.forEach(section => {
+          if (!data.some(item => item.section === section)) {
+            missingHeaders.push({
+              section: section,
+              key: `${section}_image`,
+              value: `${section.charAt(0).toUpperCase() + section.slice(1).replace('_', ' ')} Görseli`,
+              image_path: null
+            });
+          }
+        });
+        
+        if (missingHeaders.length > 0) {
+          const { data: newHeaders, error: insertError } = await supabase
+            .from("website_content")
+            .insert(missingHeaders)
+            .select();
+            
+          if (insertError) throw insertError;
+          
+          setHeaderImages([...data, ...(newHeaders || [])]);
+        } else {
+          setHeaderImages(data);
+        }
       }
     } catch (error: any) {
       console.error("Error loading header images:", error.message);
@@ -88,6 +119,8 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
       const headerToUpdate = headerImages.find(h => h.key === headerKey);
       
       if (headerToUpdate?.id) {
+        console.log("Updating header image:", headerToUpdate.id, imageUrl);
+
         // Update the database record
         const { error: updateError } = await supabase
           .from("website_content")
@@ -134,13 +167,19 @@ export const HeaderImagesContent = ({ onSave }: HeaderImagesContentProps) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {headerImages.map((header) => {
-          const sectionTitle = header.section === "profile_header"
-            ? "Profil Sayfası Header Görseli"
-            : "Sadakat Sayfası Header Görseli";
+          let sectionTitle = "Header Görseli";
+          let sectionDescription = "Sayfada gösterilecek olan banner görseli";
           
-          const sectionDescription = header.section === "profile_header"
-            ? "Profil sayfasında gösterilecek olan banner görseli"
-            : "Sadakat sayfasında gösterilecek olan banner görseli";
+          if (header.section === "profile_header") {
+            sectionTitle = "Profil Sayfası Header Görseli";
+            sectionDescription = "Profil sayfasında gösterilecek olan banner görseli";
+          } else if (header.section === "loyalty_header") {
+            sectionTitle = "Sadakat Sayfası Header Görseli";
+            sectionDescription = "Sadakat sayfasında gösterilecek olan banner görseli";
+          } else if (header.section === "gallery_header") {
+            sectionTitle = "Galeri Sayfası Header Görseli";
+            sectionDescription = "Galeri sayfasında gösterilecek olan banner görseli";
+          }
 
           return (
             <Card key={header.key} className="overflow-hidden">

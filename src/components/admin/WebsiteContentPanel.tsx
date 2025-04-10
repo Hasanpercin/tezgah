@@ -38,7 +38,7 @@ export const WebsiteContentPanel = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-5 mb-6">
+            <TabsList className="grid grid-cols-6 mb-6">
               <TabsTrigger value="homepage">
                 <Home size={16} className="mr-2" /> Anasayfa
               </TabsTrigger>
@@ -53,6 +53,9 @@ export const WebsiteContentPanel = () => {
               </TabsTrigger>
               <TabsTrigger value="headers">
                 <UserCircle size={16} className="mr-2" /> Header Görselleri
+              </TabsTrigger>
+              <TabsTrigger value="loyalty">
+                <Award size={16} className="mr-2" /> Sadakat
               </TabsTrigger>
             </TabsList>
 
@@ -79,6 +82,24 @@ export const WebsiteContentPanel = () => {
             {/* Header Images Content */}
             <TabsContent value="headers" className="space-y-6">
               <HeaderImagesContent onSave={handleSaveChanges} />
+            </TabsContent>
+
+            {/* Loyalty Content */}
+            <TabsContent value="loyalty" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sadakat Programı İçeriği</CardTitle>
+                  <CardDescription>
+                    Sadakat programınız ile ilgili ayarları buradan yönetebilirsiniz
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Sadakat programı ayarları Supabase veritabanından otomatik olarak çekiliyor. 
+                    Ödül seviyelerini ve puan değerlerini değiştirmek için yönetici ile iletişime geçiniz.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </CardContent>

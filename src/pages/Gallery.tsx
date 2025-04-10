@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const Gallery = () => {
   const { content, isLoading } = useWebsiteContent('gallery');
+  const { content: headerContent, isLoading: isHeaderLoading } = useWebsiteContent('gallery_header');
   
   let galleryImages = [];
   
@@ -13,7 +14,7 @@ const Gallery = () => {
   if (content && content.gallery_images) {
     try {
       const parsedImages = JSON.parse(content.gallery_images);
-      if (Array.isArray(parsedImages)) {
+      if (Array.isArray(parsedImages) && parsedImages.length > 0) {
         galleryImages = parsedImages;
       }
     } catch (error) {
@@ -57,9 +58,10 @@ const Gallery = () => {
     ];
   }
 
-  const heroImage = content.hero_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
+  // Get hero image from the gallery_header
+  const heroImage = headerContent?.image_path || content.hero_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
   
-  if (isLoading) {
+  if (isLoading || isHeaderLoading) {
     return (
       <div className="min-h-screen">
         <Skeleton className="w-full h-[40vh]" />
@@ -77,6 +79,9 @@ const Gallery = () => {
       </div>
     );
   }
+
+  console.log("Gallery Header Content:", headerContent);
+  console.log("Hero Image:", heroImage);
 
   return (
     <div className="min-h-screen">

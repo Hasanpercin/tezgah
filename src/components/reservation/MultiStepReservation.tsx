@@ -12,6 +12,8 @@ import PaymentStep from './components/PaymentStep';
 import ConfirmationStep from './components/ConfirmationStep';
 import { useReservationState } from './hooks/useReservationState';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const MultiStepReservation = () => {
   const {
@@ -32,6 +34,7 @@ const MultiStepReservation = () => {
   } = useReservationState();
   
   const { toast } = useToast();
+  const { isAuthenticated, user } = useAuth();
   
   // Devam et butonunun neden aktif olmadığını konsola yazdırmak için kontrol ediyoruz
   useEffect(() => {
@@ -44,6 +47,75 @@ const MultiStepReservation = () => {
       });
     }
   }, [currentStep, state.selectedFixMenu, state.selectedALaCarteItems, state.selectAtRestaurant, canProceed]);
+
+  // When reaching the confirmation step, add loyalty points if user is logged in
+  useEffect(() => {
+    const addLoyaltyPointsOnCompletion = async () => {
+      if (currentStep === 4 && isAuthenticated && user) {
+        try {
+          const total = calculateTotal();
+          // 100₺ harcama başına 10 puan + rezervasyon için 50 puan
+          const reservationBonus = 50;
+          const spendingPoints = Math.floor(total / 10);
+          const totalPoints = reservationBonus + spendingPoints;
+          
+          // Get current loyalty points
+          const { data: loyaltyData, error: loyaltyError } = await supabase
+            .from('loyalty_points')
+            .select('points, level')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (loyaltyError) throw loyaltyError;
+          
+          if (loyaltyData) {
+            // Update loyalty points
+            const newTotalPoints = loyaltyData.points + totalPoints;
+            
+            // Determine new level based on points
+            let newLevel = loyaltyData.level;
+            if (newTotalPoints >= 2000) newLevel = 'Platin';
+            else if (newTotalPoints >= 1000) newLevel = 'Altın';
+            else if (newTotalPoints >= 500) newLevel = 'Gümüş';
+            else if (newTotalPoints >= 250) newLevel = 'Bronz';
+            
+            // Update loyalty points
+            const { error: updateError } = await supabase
+              .from('loyalty_points')
+              .update({ 
+                points: newTotalPoints,
+                level: newLevel
+              })
+              .eq('user_id', user.id);
+              
+            if (updateError) throw updateError;
+            
+            // Add point history entry
+            const { error: historyError } = await supabase
+              .from('point_history')
+              .insert({
+                user_id: user.id,
+                points: totalPoints,
+                description: `Rezervasyon: ${state.formData.date} - ${state.formData.time}`
+              });
+              
+            if (historyError) throw historyError;
+            
+            // Notify user
+            toast({
+              title: "Sadakat Puanı Kazandınız!",
+              description: `${totalPoints} puan hesabınıza eklendi. Yeni toplam puanınız: ${newTotalPoints}`,
+              duration: 5000,
+            });
+          }
+        } catch (error) {
+          console.error("Error updating loyalty points:", error);
+        }
+      }
+    };
+    
+    addLoyaltyPointsOnCompletion();
+  }, [currentStep, isAuthenticated, user, calculateTotal, state.formData, toast]);
   
   return (
     <div className="container-custom max-w-5xl" ref={containerRef} data-reservation-step>
@@ -144,6 +216,16 @@ const MultiStepReservation = () => {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
+        </div>
+      )}
+      
+      {/* User Loyalty Information */}
+      {isAuthenticated && user && (
+        <div className="mt-4 p-4 bg-primary/10 rounded-md text-sm text-center">
+          <p className="font-medium">Sadakat Programı:</p>
+          <p className="text-muted-foreground">
+            Rezervasyon yaptığınızda 50 bonus puan + her 10₺ harcama için 1 puan kazanırsınız.
+          </p>
         </div>
       )}
     </div>
