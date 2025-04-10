@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -24,7 +24,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ state, onPaymentComplete }) =
   // Calculate the total based on selection type
   const calculateSubtotal = () => {
     if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-      return state.menuSelection.selectedFixedMenu.price * parseInt(state.formData.guests);
+      const quantity = state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests);
+      return state.menuSelection.selectedFixedMenu.price * quantity;
     } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
       return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
         return sum + (item.price * (item.quantity || 1));
