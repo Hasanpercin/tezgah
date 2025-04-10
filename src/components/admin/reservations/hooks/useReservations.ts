@@ -3,16 +3,35 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Reservation, ReservationStatus, SelectedItems } from "../types";
+import { Json } from "@/integrations/supabase/types";
+
+// Helper function to safely convert JSON data to SelectedItems type
+const parseSelectedItems = (jsonData: Json | null): SelectedItems | undefined => {
+  if (!jsonData) return undefined;
+  
+  try {
+    // Handle object case
+    if (typeof jsonData === 'object' && jsonData !== null && !Array.isArray(jsonData)) {
+      return {
+        menuSelectionType: (jsonData as any).menuSelectionType || "at_restaurant",
+        fixedMenuId: (jsonData as any).fixedMenuId,
+        items: (jsonData as any).items || []
+      };
+    }
+    
+    // Default
+    return undefined;
+  } catch (error) {
+    console.error("Error parsing selected_items:", error);
+    return undefined;
+  }
+}
 
 // Convert raw Supabase data to strong typed Reservation objects
 const mapToReservations = (data: any[]): Reservation[] => {
   return data.map(item => {
     // Properly convert the selected_items JSON data to the expected SelectedItems type
-    const selectedItems: SelectedItems | undefined = item.selected_items ? {
-      menuSelectionType: item.selected_items.menuSelectionType || "at_restaurant",
-      fixedMenuId: item.selected_items.fixedMenuId,
-      items: item.selected_items.items || []
-    } : undefined;
+    const selectedItems = parseSelectedItems(item.selected_items);
     
     return {
       id: item.id,

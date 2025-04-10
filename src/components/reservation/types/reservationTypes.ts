@@ -38,6 +38,13 @@ export interface MenuItem {
   quantity?: number;
   is_in_stock?: boolean;
   display_order?: number;
+  ingredients?: string;
+  allergens?: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  is_spicy?: boolean;
+  is_featured?: boolean;
 }
 
 export interface FixMenuOption {

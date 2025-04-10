@@ -309,6 +309,7 @@ const DashboardSummaryCard = () => {
   );
 };
 
+// Only modifying the DashboardRecentReservations component to handle JSON data correctly
 const DashboardRecentReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -328,12 +329,18 @@ const DashboardRecentReservations = () => {
         if (data) {
           // Convert the data to match Reservation type
           const formattedReservations = data.map(res => {
-            // Handle selected_items
-            const selectedItems = res.selected_items ? {
-              menuSelectionType: res.selected_items.menuSelectionType || "at_restaurant",
-              fixedMenuId: res.selected_items.fixedMenuId,
-              items: res.selected_items.items || []
-            } : undefined;
+            // Handle selected_items safely
+            let selectedItems: any | undefined = undefined;
+            
+            if (res.selected_items) {
+              // Safely parse the JSON data
+              const si = res.selected_items as any;
+              selectedItems = {
+                menuSelectionType: si.menuSelectionType || "at_restaurant",
+                fixedMenuId: si.fixedMenuId,
+                items: Array.isArray(si.items) ? si.items : []
+              };
+            }
             
             return {
               ...res,
