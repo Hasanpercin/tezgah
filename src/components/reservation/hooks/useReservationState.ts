@@ -11,22 +11,11 @@ import {
 } from '../types/reservationTypes';
 import { MenuItem } from '@/services/menuService';
 
-interface DiscountSettings {
-  standard_discount_percentage: number;
-  high_amount_discount_percentage: number;
-  high_amount_threshold: number;
-}
-
 export const useReservationState = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [reservationId, setReservationId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [discountSettings, setDiscountSettings] = useState<DiscountSettings>({
-    standard_discount_percentage: 10,
-    high_amount_discount_percentage: 15,
-    high_amount_threshold: 3000,
-  });
   
   const [state, setState] = useState<ReservationState>({
     selectedTable: null,
@@ -44,38 +33,6 @@ export const useReservationState = () => {
       type: 'at_restaurant'
     }
   });
-  
-  // Fetch discount settings from database
-  useEffect(() => {
-    const fetchDiscountSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('website_content')
-          .select('value')
-          .eq('section', 'payment')
-          .eq('key', 'discount_settings')
-          .single();
-          
-        if (error) {
-          console.error("Error fetching discount settings:", error);
-          return;
-        }
-        
-        if (data && data.value) {
-          try {
-            const settings = JSON.parse(data.value);
-            setDiscountSettings(settings);
-          } catch (parseError) {
-            console.error("Error parsing discount settings:", parseError);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching discount settings:", error);
-      }
-    };
-    
-    fetchDiscountSettings();
-  }, []);
   
   const handleFormDataChange = (data: Partial<ReservationFormData>) => {
     setState({
@@ -134,19 +91,19 @@ export const useReservationState = () => {
     return 0;
   };
   
-  // Calculate discount using settings from the database
+  // Calculate discount
   const calculateDiscount = (subtotal: number) => {
-    if (subtotal >= discountSettings.high_amount_threshold) {
-      // High amount discount
+    if (subtotal >= 3000) {
+      // 15% discount for subtotals >= 3000 TL
       return {
-        percentage: discountSettings.high_amount_discount_percentage,
-        amount: subtotal * (discountSettings.high_amount_discount_percentage / 100)
+        percentage: 15,
+        amount: subtotal * 0.15
       };
     } else if (subtotal > 0) {
-      // Standard discount
+      // 10% discount for subtotals < 3000 TL
       return {
-        percentage: discountSettings.standard_discount_percentage,
-        amount: subtotal * (discountSettings.standard_discount_percentage / 100)
+        percentage: 10,
+        amount: subtotal * 0.10
       };
     }
     return {
@@ -181,7 +138,7 @@ export const useReservationState = () => {
     }
   };
 
-  // Function to skip the payment step for at_restaurant selection
+  // New function to skip the payment step
   const skipPaymentStep = async () => {
     if (state.menuSelection.type === 'at_restaurant' && currentStep === 2 && canProceed()) {
       try {
@@ -232,13 +189,6 @@ export const useReservationState = () => {
   
   const handleNextStep = async () => {
     if (currentStep < 4 && canProceed()) {
-      // If it's the menu selection step and the user has selected "at_restaurant"
-      // Skip the payment step and go directly to the confirmation step
-      if (currentStep === 2 && state.menuSelection.type === 'at_restaurant') {
-        await skipPaymentStep();
-        return; // Exit early since skipPaymentStep takes care of the navigation
-      }
-      
       if (currentStep === 2) {
         // Moving from menu selection to payment step - no saving yet
         setCurrentStep(currentStep + 1);
@@ -373,7 +323,7 @@ export const useReservationState = () => {
   
   const sendReservationToWebhook = async () => {
     try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
       
       // Enhanced webhook data with menu selection details
       const menuSelectionDetails = state.menuSelection.type === 'at_restaurant' 

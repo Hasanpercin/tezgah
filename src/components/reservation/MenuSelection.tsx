@@ -47,9 +47,7 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
   );
   
   // Fixed menu quantity
-  const [fixedMenuQuantity, setFixedMenuQuantity] = useState<number>(
-    value.selectedFixedMenu?.quantity || parseInt(guestCount) || 1
-  );
+  const [fixedMenuQuantity, setFixedMenuQuantity] = useState<number>(parseInt(guestCount) || 1);
   
   // Selection type
   const [selectionType, setSelectionType] = useState<'fixed_menu' | 'a_la_carte' | 'at_restaurant'>(value.type);
@@ -74,7 +72,6 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
           categoryId = item.category_id;
           
           // Try to get category name from menu_categories if available
-          // Using type assertion since we know this property exists but TypeScript doesn't
           const itemAny = item as any;
           if (itemAny.menu_categories && typeof itemAny.menu_categories === 'object' && itemAny.menu_categories?.name) {
             categoryName = String(itemAny.menu_categories.name);
@@ -118,18 +115,25 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
     }
     return 0;
   };
-
-  // Update parent component with changes when selection changes
+  
+  // Update parent component with changes
   useEffect(() => {
     onChange({
       type: selectionType,
-      selectedFixedMenu: selectionType === 'fixed_menu' && selectedFixedMenu ? {
-        ...selectedFixedMenu,
+      selectedFixedMenu: selectionType === 'fixed_menu' ? {
+        ...selectedFixedMenu!,
         quantity: fixedMenuQuantity
       } : null,
       selectedMenuItems: selectionType === 'a_la_carte' ? selectedMenuItems : undefined
     });
-  }, [selectionType, selectedFixedMenu, selectedMenuItems, fixedMenuQuantity]);
+  }, [selectionType, selectedFixedMenu, selectedMenuItems, fixedMenuQuantity, onChange]);
+
+  // Set selection type to 'at_restaurant' if all cart items are removed
+  useEffect(() => {
+    if (selectionType === 'a_la_carte' && selectedMenuItems.length === 0) {
+      setSelectionType('at_restaurant');
+    }
+  }, [selectedMenuItems, selectionType]);
   
   // Handle changing selection type
   const handleSelectionTypeChange = (type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant') => {
@@ -362,25 +366,24 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                             {categoryItems.map((item) => (
                               <div key={item.id} className="flex justify-between items-center p-3 hover:bg-accent rounded-md transition-colors">
                                 <div className="flex-1">
-                                  <div className="font-medium">{item.name}</div>
-                                  {item.description && (
-                                    <div className="text-sm text-muted-foreground">{item.description}</div>
-                                  )}
-                                </div>
-                                <div className="flex items-center">
-                                  <div className="mr-4 font-semibold">
-                                    {item.price.toLocaleString('tr-TR')} ₺
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                                  <p className="mt-1 font-semibold">{item.price.toLocaleString('tr-TR')} ₺</p>
+                                  <div className="flex gap-2 mt-1">
+                                    {item.is_vegetarian && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vejetaryen</Badge>}
+                                    {item.is_vegan && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vegan</Badge>}
+                                    {item.is_gluten_free && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-100">Glutensiz</Badge>}
+                                    {item.is_spicy && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100">Acılı</Badge>}
                                   </div>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => addToCart(item)}
-                                    disabled={!item.is_in_stock}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Ekle
-                                  </Button>
                                 </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => addToCart(item)}
+                                  className="ml-2 h-8 w-8 rounded-full"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
                               </div>
                             ))}
                           </div>
@@ -388,84 +391,101 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                       );
                     })
                   ) : (
-                    <p>Menü kategorileri yüklenemedi.</p>
+                    <p>Menü öğeleri bulunamadı.</p>
                   )}
                 </div>
                 
-                <div>
-                  <div className="bg-muted p-4 rounded-lg sticky top-4">
-                    <h4 className="font-medium text-lg mb-4">Siparişiniz</h4>
-                    
-                    {selectedMenuItems.length === 0 ? (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                        <p>Henüz bir ürün seçmediniz</p>
-                      </div>
-                    ) : (
-                      <>
-                        <ScrollArea className="h-[300px] pr-4">
-                          <div className="space-y-3">
-                            {selectedMenuItems.map((item) => (
-                              <div key={item.id} className="flex justify-between items-center bg-background p-2 rounded-md">
-                                <div className="flex-1">
-                                  <div className="font-medium">{item.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {item.price.toLocaleString('tr-TR')} ₺
-                                  </div>
-                                </div>
-                                
-                                <div className="flex items-center">
-                                  <div className="flex items-center mr-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="icon"
-                                      className="h-6 w-6 rounded-full"
-                                      onClick={() => decrementOrRemove(item.id)}
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <span className="w-8 text-center">{item.quantity || 1}</span>
-                                    <Button 
-                                      variant="outline" 
-                                      size="icon"
-                                      className="h-6 w-6 rounded-full"
-                                      onClick={() => addToCart(item)}
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                  
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-destructive"
-                                    onClick={() => removeFromCart(item.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                <div className="bg-card border rounded-lg p-4 h-fit sticky top-4">
+                  <h4 className="font-medium border-b pb-2 mb-4 flex items-center">
+                    <ShoppingCart className="h-4 w-4 mr-2" /> Sipariş Özeti
+                  </h4>
+                  
+                  {selectedMenuItems.length > 0 ? (
+                    <div className="space-y-4">
+                      <ScrollArea className="max-h-80">
+                        <div className="space-y-3">
+                          {selectedMenuItems.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center border-b pb-2">
+                              <div className="flex-1">
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.quantity || 1} × {item.price.toLocaleString('tr-TR')} ₺
+                                </p>
                               </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                        
-                        <Separator className="my-4" />
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span>Toplam</span>
-                            <span className="font-bold">{subtotal.toLocaleString('tr-TR')} ₺</span>
-                          </div>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => decrementOrRemove(item.id)}
+                                  className="h-7 w-7"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                
+                                <span className="w-6 text-center">{item.quantity || 1}</span>
+                                
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => addToCart(item as any)}
+                                  className="h-7 w-7"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => removeFromCart(item.id)}
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </>
-                    )}
-                  </div>
+                      </ScrollArea>
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between font-medium">
+                        <span>Toplam:</span>
+                        <span>{subtotal.toLocaleString('tr-TR')} ₺</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p>Sepetiniz boş</p>
+                      <p className="text-sm mt-2">Sipariş vermek için menüden ürün ekleyebilirsiniz.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
         </div>
       </RadioGroup>
+      
+      <div className="mt-8 p-4 border rounded-lg bg-muted">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-sm text-muted-foreground">Toplam Tutar</p>
+            <p className="text-xl font-semibold">{calculateTotal().toLocaleString('tr-TR')} ₺</p>
+          </div>
+          
+          {selectionType !== 'at_restaurant' && (
+            <div>
+              {selectionType === 'fixed_menu' && selectedFixedMenu && (
+                <p className="text-sm text-muted-foreground">
+                  {guestCount} kişi × {selectedFixedMenu.price.toLocaleString('tr-TR')} ₺
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
