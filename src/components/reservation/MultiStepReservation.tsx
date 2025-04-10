@@ -9,10 +9,20 @@ import TableSelection from "@/components/reservation/TableSelection";
 import MenuSelection from "@/components/reservation/MenuSelection";
 import StepIndicator from './components/StepIndicator';
 import ConfirmationStep from './components/ConfirmationStep';
+import PaymentStep from './components/PaymentStep';
 import { useReservationState } from './hooks/useReservationState';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+
+// Updated steps with payment
+export const STEPS = [
+  { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
+  { id: 1, name: "Masa Seçimi", icon: "Users" },
+  { id: 2, name: "Menü Seçimi", icon: "Utensils" },
+  { id: 3, name: "Ödeme", icon: "CreditCard" },
+  { id: 4, name: "Onay", icon: "CheckCircle" }
+];
 
 const MultiStepReservation = () => {
   const {
@@ -23,7 +33,9 @@ const MultiStepReservation = () => {
     handleNextStep,
     handlePrevStep,
     setSelectedTable,
-    setMenuSelection
+    setMenuSelection,
+    setPaymentComplete,
+    reservationId
   } = useReservationState();
   
   const { toast } = useToast();
@@ -32,7 +44,7 @@ const MultiStepReservation = () => {
   // When reaching the confirmation step, add loyalty points if user is logged in
   React.useEffect(() => {
     const addLoyaltyPointsOnCompletion = async () => {
-      if (currentStep === 3 && isAuthenticated && user) {
+      if (currentStep === 4 && isAuthenticated && user) {
         try {
           // Reservation bonus
           const reservationBonus = 50;
@@ -95,10 +107,15 @@ const MultiStepReservation = () => {
     addLoyaltyPointsOnCompletion();
   }, [currentStep, isAuthenticated, user, state.formData, toast]);
   
+  // Handle payment completion
+  const handlePaymentComplete = (transactionId: string) => {
+    setPaymentComplete(transactionId);
+  };
+  
   return (
     <div className="container-custom max-w-5xl" ref={containerRef} data-reservation-step>
       {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} />
+      <StepIndicator currentStep={currentStep} steps={STEPS} />
       
       {/* Step Content */}
       <div>
@@ -134,8 +151,18 @@ const MultiStepReservation = () => {
           </div>
         )}
         
-        {/* Step 4: Confirmation */}
+        {/* Step 4: Payment */}
         {currentStep === 3 && (
+          <div className="bg-card border rounded-lg p-6 mb-6">
+            <PaymentStep 
+              state={state}
+              onPaymentComplete={handlePaymentComplete}
+            />
+          </div>
+        )}
+        
+        {/* Step 5: Confirmation */}
+        {currentStep === 4 && (
           <ConfirmationStep 
             state={state}
           />
@@ -143,7 +170,7 @@ const MultiStepReservation = () => {
       </div>
       
       {/* Navigation Buttons */}
-      {currentStep < 3 && (
+      {currentStep < 4 && (
         <div className="flex justify-between mt-10">
           {currentStep > 0 ? (
             <Button 
@@ -158,14 +185,16 @@ const MultiStepReservation = () => {
             <div></div> // Empty placeholder for flex alignment
           )}
           
-          <Button 
-            onClick={handleNextStep}
-            disabled={!canProceed()}
-            className="flex items-center"
-          >
-            {currentStep === 2 ? "Tamamla" : "Devam Et"}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          {currentStep !== 3 && ( // Hide next button on payment step
+            <Button 
+              onClick={handleNextStep}
+              disabled={!canProceed()}
+              className="flex items-center"
+            >
+              {currentStep === 2 ? "Ödemeye Geç" : "Devam Et"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
       

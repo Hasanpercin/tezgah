@@ -1,56 +1,49 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Menu from "./pages/Menu";
-import Reservation from "./pages/Reservation";
-import AboutUs from "./pages/AboutUs";
-import Gallery from "./pages/Gallery";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import Profile from "./pages/Profile";
-import Loyalty from "./pages/Loyalty";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Login from "./pages/Login";
-import AdminCMS from "./pages/AdminCMS";
-import { AuthProvider } from "./context/AuthContext";
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Index from './pages/Index';
+import AboutUs from './pages/AboutUs';
+import Menu from './pages/Menu';
+import Contact from './pages/Contact';
+import Gallery from './pages/Gallery';
+import Reservation from './pages/Reservation';
+import Login from './pages/Login';
+import Profile from './pages/Profile';
+import AdminCMS from './pages/AdminCMS';
+import MyReservations from './pages/MyReservations';
+import NotFound from './pages/NotFound';
+import Loyalty from './pages/Loyalty';
+import { Toaster } from './components/ui/sonner';
+import './App.css';
 
-// Create a client
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <BrowserRouter>
-        <Toaster />
-        <Sonner />
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/reservation" element={<Reservation />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/loyalty" element={<Loyalty />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<AdminCMS />} /> {/* Admin CMS sayfasını ekledik */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          
-          <Footer />
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/reservation" element={<Reservation />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-reservations" element={<MyReservations />} />
+            <Route path="/admin" element={<AdminCMS />} />
+            <Route path="/loyalty" element={<Loyalty />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </div>
-      </BrowserRouter>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+        <Footer />
+        <Toaster position="bottom-right" />
+      </div>
+    </Router>
+  );
+}
 
 export default App;

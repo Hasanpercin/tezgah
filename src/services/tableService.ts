@@ -23,7 +23,7 @@ export const fetchTables = async () => {
   return data as Table[];
 };
 
-// Check if the table is available, accounting for the 90-minute buffer after existing reservations
+// Check if the table is available based on new time-based reservation rules
 export const checkTableAvailability = async (
   tableId: string, 
   date: Date, 
@@ -57,24 +57,48 @@ export const checkTableAvailability = async (
       return true;
     }
     
-    // Check if any existing reservation conflicts with the requested time
-    // (within 90 minutes before or after)
-    const bufferMinutes = 90;
+    // Apply new time-based reservation rules
     
-    for (const reservation of data) {
-      if (reservation.reservations) {
-        const reservedTime = reservation.reservations.time;
-        const [resHour, resMinute] = reservedTime.split(':').map(Number);
-        const reservedTimeInMinutes = resHour * 60 + resMinute;
-        
-        // Check if the requested time is within 90 minutes of an existing reservation
-        if (Math.abs(requestTimeInMinutes - reservedTimeInMinutes) < bufferMinutes) {
-          return false; // Conflict found
+    // Rule 1: After 19:00, table is reserved for the whole night
+    if (requestHour >= 19) {
+      // Check if there's any other reservation on the same date
+      const hasEveningReservation = data.some(res => {
+        if (res.reservations) {
+          const [resHour] = res.reservations.time.split(':').map(Number);
+          return resHour >= 19;
         }
+        return false;
+      });
+      
+      // If there's already an evening reservation, table is not available
+      if (hasEveningReservation) {
+        return false;
       }
     }
     
-    return true; // No conflicts
+    // Rule 2: Before 16:00, table is reserved for 4 hours
+    // Rule 3: After a reservation, table becomes available again after 4 hours
+    return !data.some(res => {
+      if (res.reservations) {
+        const [resHour, resMinute] = res.reservations.time.split(':').map(Number);
+        const resTimeInMinutes = resHour * 60 + resMinute;
+        
+        // Calculate the time difference in minutes
+        const timeDiffInMinutes = Math.abs(requestTimeInMinutes - resTimeInMinutes);
+        
+        // Check if the reservation time is within 4 hours (240 minutes) of an existing reservation
+        if (timeDiffInMinutes < 240) {
+          return true; // Conflict found
+        }
+        
+        // Special handling for early reservations (before 16:00)
+        if (resHour < 16) {
+          // If the existing reservation is before 16:00 and the requested time is within 4 hours
+          return requestTimeInMinutes < resTimeInMinutes + 240;
+        }
+      }
+      return false;
+    });
   } catch (err) {
     console.error("Error checking table availability:", err);
     return false; // Error case - assume unavailable to be safe
@@ -112,7 +136,7 @@ export const fetchTablesByAvailability = async (
       return [];
     }
     
-    // Check availability for each table, now with the 90-minute buffer rule
+    // Check availability for each table with the new time-based rules
     const availableTables = await Promise.all(
       tables.map(async (table) => {
         const isAvailable = await checkTableAvailability(table.id, date, time);

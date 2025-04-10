@@ -1,17 +1,17 @@
 
-export type ReservationStatus = "Onaylandı" | "Beklemede" | "İptal";
+import { Json } from "@/integrations/supabase/types";
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity?: number;
-}
+export type ReservationStatus = 'Beklemede' | 'Onaylandı' | 'İptal';
 
 export interface SelectedItems {
-  menuSelectionType: "fixed_menu" | "a_la_carte" | "at_restaurant";
+  menuSelectionType: 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
   fixedMenuId?: string | number;
-  items?: MenuItem[];
+  items?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
 }
 
 export interface Reservation {
@@ -27,12 +27,8 @@ export interface Reservation {
   notes?: string;
   occasion?: string;
   selected_items?: SelectedItems;
+  has_prepayment?: boolean;
+  total_amount?: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface ReservationsFilter {
-  date?: Date;
-  status?: ReservationStatus;
-  search?: string;
 }

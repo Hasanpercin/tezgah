@@ -62,11 +62,20 @@ export interface MenuSelection {
   selectedMenuItems?: MenuItem[];
 }
 
+export interface PaymentInfo {
+  transactionId?: string;
+  isPaid: boolean;
+  amount?: number;
+  discountPercentage?: number;
+  discountAmount?: number;
+}
+
 export interface ReservationState {
   selectedTable: Table | null;
   basicFormCompleted: boolean;
   formData: ReservationFormData;
   menuSelection: MenuSelection;
+  payment?: PaymentInfo;
 }
 
 // Define the steps for the reservation process - add menu selection step
@@ -74,7 +83,8 @@ export const STEPS = [
   { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
   { id: 1, name: "Masa Seçimi", icon: "Users" },
   { id: 2, name: "Menü Seçimi", icon: "Utensils" },
-  { id: 3, name: "Onay", icon: "CheckCircle" }
+  { id: 3, name: "Ödeme", icon: "CreditCard" },
+  { id: 4, name: "Onay", icon: "CheckCircle" }
 ];
 
 export interface ReservationSummaryProps {

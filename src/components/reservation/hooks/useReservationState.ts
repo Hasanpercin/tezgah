@@ -6,7 +6,8 @@ import {
   Table, 
   ReservationFormData, 
   ReservationState,
-  MenuSelection 
+  MenuSelection,
+  PaymentInfo
 } from '../types/reservationTypes';
 import { MenuItem } from '@/services/menuService';
 
@@ -77,6 +78,39 @@ export const useReservationState = () => {
     }
   }, [currentStep]);
 
+  // Calculate the total based on selection type for payment
+  const calculateSubtotal = () => {
+    if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
+      return state.menuSelection.selectedFixedMenu.price * parseInt(state.formData.guests);
+    } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
+      return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
+        return sum + (item.price * (item.quantity || 1));
+      }, 0);
+    }
+    return 0;
+  };
+  
+  // Calculate discount
+  const calculateDiscount = (subtotal: number) => {
+    if (subtotal >= 3000) {
+      // 15% discount for subtotals >= 3000 TL
+      return {
+        percentage: 15,
+        amount: subtotal * 0.15
+      };
+    } else if (subtotal > 0) {
+      // 10% discount for subtotals < 3000 TL
+      return {
+        percentage: 10,
+        amount: subtotal * 0.10
+      };
+    }
+    return {
+      percentage: 0,
+      amount: 0
+    };
+  };
+
   const canProceed = () => {
     switch (currentStep) {
       case 0: // Basic details
@@ -95,14 +129,21 @@ export const useReservationState = () => {
         return state.menuSelection && 
                state.menuSelection.type !== undefined && 
                state.menuSelection.type.length > 0;  
+      case 3: // Payment
+        // Can only proceed if payment is completed
+        return state.payment?.isPaid === true;
       default:
         return true;
     }
   };
   
   const handleNextStep = async () => {
-    if (currentStep < 3 && canProceed()) {
+    if (currentStep < 4 && canProceed()) {
       if (currentStep === 2) {
+        // Moving from menu selection to payment step - no saving yet
+        setCurrentStep(currentStep + 1);
+      }
+      else if (currentStep === 3) {
         try {
           if (reservationId && state.selectedTable) {
             // Save the table selection
@@ -140,6 +181,24 @@ export const useReservationState = () => {
             }
           }
           
+          // Calculate payment amounts
+          const subtotal = calculateSubtotal();
+          const discount = calculateDiscount(subtotal);
+          const total = subtotal - discount.amount;
+          
+          // Add payment record
+          if (reservationId && state.payment?.transactionId) {
+            await supabase
+              .from('reservation_payments')
+              .insert({
+                reservation_id: reservationId,
+                amount: total,
+                is_prepayment: true,
+                payment_status: 'completed',
+                transaction_id: state.payment.transactionId
+              });
+          }
+          
           // Convert menu items to a simpler structure for JSON storage
           const simplifiedMenuItems = state.menuSelection.selectedMenuItems?.map(item => ({
             id: item.id,
@@ -153,6 +212,8 @@ export const useReservationState = () => {
             .from('reservations')
             .update({
               status: 'Onaylandı',
+              total_amount: total,
+              has_prepayment: true,
               selected_items: { 
                 menuSelectionType: state.menuSelection.type,
                 fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
@@ -213,6 +274,13 @@ export const useReservationState = () => {
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
       
+      // Enhanced webhook data with menu selection details
+      const menuSelectionDetails = state.menuSelection.type === 'at_restaurant' 
+        ? 'Restoranda seçim yapılacak' 
+        : state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu 
+          ? `Sabit Menü: ${state.menuSelection.selectedFixedMenu.name}`
+          : `A La Carte: ${state.menuSelection.selectedMenuItems?.map(item => `${item.name} (${item.quantity || 1})`).join(', ')}`;
+      
       const webhookData = {
         name: state.formData.name,
         email: state.formData.email,
@@ -227,7 +295,10 @@ export const useReservationState = () => {
         tableType: state.selectedTable?.type || '',
         tableSize: state.selectedTable?.size || 0,
         menuSelectionType: state.menuSelection?.type || 'at_restaurant',
-        selectedFixedMenu: state.menuSelection?.selectedFixedMenu?.name || ''
+        menuDetails: menuSelectionDetails,
+        selectedFixedMenu: state.menuSelection?.selectedFixedMenu?.name || '',
+        paymentAmount: state.payment?.amount || 0,
+        paymentTransactionId: state.payment?.transactionId || ''
       };
       
       console.log("Sending reservation data to webhook:", JSON.stringify(webhookData, null, 2));
@@ -280,6 +351,24 @@ export const useReservationState = () => {
       menuSelection
     });
   };
+  
+  const setPaymentComplete = (transactionId: string) => {
+    // Calculate payment amounts
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount(subtotal);
+    const total = subtotal - discount.amount;
+    
+    setState({
+      ...state,
+      payment: {
+        transactionId,
+        isPaid: true,
+        amount: total,
+        discountPercentage: discount.percentage,
+        discountAmount: discount.amount
+      }
+    });
+  };
 
   return {
     currentStep,
@@ -290,6 +379,7 @@ export const useReservationState = () => {
     handleNextStep,
     handlePrevStep,
     setSelectedTable,
-    setMenuSelection
+    setMenuSelection,
+    setPaymentComplete
   };
 };

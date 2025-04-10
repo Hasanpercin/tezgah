@@ -1,401 +1,394 @@
+
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Utensils, UtensilsCrossed, ChefHat, Store, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { type MenuSelection as MenuSelectionType, type FixMenuOption } from './types/reservationTypes';
-import { MenuItem as MenuServiceItem } from '@/services/menuService';
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { Trash2, Plus, Minus, UtensilsCrossed, Menu, ShoppingCart } from "lucide-react";
 import { fetchFixedMenus } from "@/services/fixedMenuService";
 import { fetchMenuItems } from "@/services/menuService";
+import { MenuSelection } from './types/reservationTypes';
+import { FixedMenuPackage } from '@/services/fixedMenuService';
+import { MenuItem } from '@/services/menuService';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { MenuItem as ReservationMenuItem } from './types/reservationTypes';
+import { toast } from "@/hooks/use-toast";
 
 interface MenuSelectionProps {
-  value: MenuSelectionType;
-  onChange: (selection: MenuSelectionType) => void;
+  value: MenuSelection;
+  onChange: (value: MenuSelection) => void;
   guestCount: string;
 }
 
-const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
-  const [activeTab, setActiveTab] = useState<string>(value.type || "fixed_menu");
-  const [fixedMenus, setFixedMenus] = useState<FixMenuOption[]>([]);
-  const [menuItems, setMenuItems] = useState<ReservationMenuItem[]>([]);
-  const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixMenuOption | null>(value.selectedFixedMenu || null);
-  const [selectedMenuItems, setSelectedMenuItems] = useState<ReservationMenuItem[]>(value.selectedMenuItems || []);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
+  // Fetch fixed menus
+  const { data: fixedMenus = [], isLoading: isLoadingFixedMenus } = useQuery({
+    queryKey: ['fixedMenus'],
+    queryFn: fetchFixedMenus
+  });
   
+  // Fetch menu items
+  const { data: menuItems = [], isLoading: isLoadingMenuItems } = useQuery({
+    queryKey: ['menuItems'],
+    queryFn: fetchMenuItems
+  });
+  
+  // Local state for selected menu items
+  const [selectedMenuItems, setSelectedMenuItems] = useState<MenuItem[]>(value.selectedMenuItems || []);
+  // Selected fixed menu
+  const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixedMenuPackage | null>(
+    value.selectedFixedMenu ? fixedMenus.find(menu => menu.id === value.selectedFixedMenu?.id) || null : null
+  );
+  // Selection type
+  const [selectionType, setSelectionType] = useState<'fixed_menu' | 'a_la_carte' | 'at_restaurant'>(value.type);
+  
+  // Filter menu items by category
+  const menuByCategory = menuItems.reduce((acc, item) => {
+    if (!acc[item.category_id]) {
+      acc[item.category_id] = [];
+    }
+    acc[item.category_id].push(item);
+    return acc;
+  }, {} as Record<string, MenuItem[]>);
+  
+  // Calculate subtotal
+  const subtotal = selectedMenuItems.reduce((sum, item) => {
+    return sum + (item.price * (item.quantity || 1));
+  }, 0);
+  
+  // Fixed menu subtotal
+  const fixedMenuSubtotal = selectedFixedMenu ? (selectedFixedMenu.price * parseInt(guestCount || "1")) : 0;
+  
+  // Calculate total based on selection type
+  const calculateTotal = () => {
+    if (selectionType === 'fixed_menu' && selectedFixedMenu) {
+      return fixedMenuSubtotal;
+    } else if (selectionType === 'a_la_carte') {
+      return subtotal;
+    }
+    return 0;
+  };
+  
+  // Update parent component with changes
   useEffect(() => {
-    const loadFixedMenus = async () => {
-      setLoading(true);
-      try {
-        const menus = await fetchFixedMenus();
-        setFixedMenus(menus);
-        
-        const items = await fetchMenuItems();
-        setMenuItems(items.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          category_id: item.category_id,
-          image_path: item.image_path,
-          is_in_stock: item.is_in_stock,
-          display_order: item.display_order
-        })));
-      } catch (error) {
-        console.error("Error fetching menus:", error);
-        toast({
-          title: "Menü Yükleme Hatası",
-          description: "Menüler yüklenirken bir hata oluştu.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadFixedMenus();
-  }, [toast]);
-  
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    
-    if (value === "fixed_menu") {
-      onChange({ type: "fixed_menu", selectedFixedMenu, selectedMenuItems: [] });
-    } else if (value === "a_la_carte") {
-      onChange({ type: "a_la_carte", selectedMenuItems, selectedFixedMenu: null });
-    } else {
-      onChange({ type: "at_restaurant", selectedMenuItems: [], selectedFixedMenu: null });
+    onChange({
+      type: selectionType,
+      selectedFixedMenu: selectionType === 'fixed_menu' ? selectedFixedMenu : null,
+      selectedMenuItems: selectionType === 'a_la_carte' ? selectedMenuItems : undefined
+    });
+  }, [selectionType, selectedFixedMenu, selectedMenuItems, onChange]);
+
+  // Set selection type to 'at_restaurant' if all cart items are removed
+  useEffect(() => {
+    if (selectionType === 'a_la_carte' && selectedMenuItems.length === 0) {
+      setSelectionType('at_restaurant');
     }
+  }, [selectedMenuItems, selectionType]);
+  
+  // Handle changing selection type
+  const handleSelectionTypeChange = (type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant') => {
+    setSelectionType(type);
   };
   
-  const handleFixedMenuSelect = (menu: FixMenuOption) => {
+  // Handle selecting fixed menu
+  const handleFixedMenuSelect = (menu: FixedMenuPackage) => {
     setSelectedFixedMenu(menu);
-    onChange({ type: "fixed_menu", selectedFixedMenu: menu, selectedMenuItems: [] });
+    setSelectionType('fixed_menu');
   };
   
-  const handleMenuItemSelect = (item: ReservationMenuItem) => {
-    const existingItemIndex = selectedMenuItems.findIndex(
-      selectedItem => selectedItem.id === item.id
-    );
+  // Handle canceling fixed menu selection
+  const handleCancelFixedMenu = () => {
+    setSelectedFixedMenu(null);
+    setSelectionType('at_restaurant');
     
-    let updatedItems;
+    toast({
+      title: "Sabit Menü İptal Edildi",
+      description: "Sabit menü seçiminiz iptal edildi.",
+    });
+  };
+  
+  // Add item to cart
+  const addToCart = (item: MenuItem) => {
+    const existingItem = selectedMenuItems.find(i => i.id === item.id);
     
-    if (existingItemIndex >= 0) {
-      updatedItems = [...selectedMenuItems];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: (updatedItems[existingItemIndex].quantity || 1) + 1
-      };
+    if (existingItem) {
+      // Increment quantity
+      const updatedItems = selectedMenuItems.map(i => 
+        i.id === item.id ? { ...i, quantity: (i.quantity || 1) + 1 } : i
+      );
+      setSelectedMenuItems(updatedItems);
     } else {
-      updatedItems = [...selectedMenuItems, { ...item, quantity: 1 }];
+      // Add new item
+      setSelectedMenuItems([...selectedMenuItems, { ...item, quantity: 1 }]);
     }
     
-    setSelectedMenuItems(updatedItems);
-    onChange({ type: "a_la_carte", selectedMenuItems: updatedItems, selectedFixedMenu: null });
-  };
-  
-  const handleRemoveMenuItem = (itemId: string) => {
-    const updatedItems = selectedMenuItems.filter(item => item.id !== itemId);
-    setSelectedMenuItems(updatedItems);
-    onChange({ type: "a_la_carte", selectedMenuItems: updatedItems, selectedFixedMenu: null });
-  };
-  
-  const handleUpdateItemQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (selectionType !== 'a_la_carte') {
+      setSelectionType('a_la_carte');
+    }
     
-    const updatedItems = selectedMenuItems.map(item =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
+    toast({
+      title: "Sepete Eklendi",
+      description: `${item.name} sepete eklendi.`,
+    });
+  };
+  
+  // Decrement quantity or remove item
+  const decrementOrRemove = (itemId: string) => {
+    const item = selectedMenuItems.find(i => i.id === itemId);
+    
+    if (item && (item.quantity || 1) > 1) {
+      // Decrement quantity
+      const updatedItems = selectedMenuItems.map(i => 
+        i.id === itemId ? { ...i, quantity: (i.quantity || 1) - 1 } : i
+      );
+      setSelectedMenuItems(updatedItems);
+    } else {
+      // Remove item
+      setSelectedMenuItems(selectedMenuItems.filter(i => i.id !== itemId));
+    }
+  };
+  
+  // Remove item from cart
+  const removeFromCart = (itemId: string) => {
+    setSelectedMenuItems(selectedMenuItems.filter(i => i.id !== itemId));
+  };
+  
+  // Loading state
+  if (isLoadingFixedMenus || isLoadingMenuItems) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
     );
-    
-    setSelectedMenuItems(updatedItems);
-    onChange({ type: "a_la_carte", selectedMenuItems: updatedItems, selectedFixedMenu: null });
-  };
-  
-  const calculateTotalPrice = () => {
-    return selectedMenuItems.reduce((total, item) => {
-      const quantity = item.quantity || 1;
-      const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
-      return total + (price * quantity);
-    }, 0);
-  };
+  }
   
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Menü Seçimi</h3>
-        <p className="text-muted-foreground mb-6">
-          Rezervasyonunuz için menü seçiminizi yapın veya restoranımızda seçim yapmayı tercih edin.
-        </p>
+    <div className="space-y-8">
+      <h3 className="text-2xl font-semibold">Menü Seçimi</h3>
+      
+      <RadioGroup 
+        value={selectionType} 
+        onValueChange={(v) => handleSelectionTypeChange(v as 'fixed_menu' | 'a_la_carte' | 'at_restaurant')}
+        className="space-y-4"
+      >
+        <div className={`border p-4 rounded-lg transition-all ${selectionType === 'at_restaurant' ? 'bg-primary/5 border-primary' : 'hover:bg-accent'}`}>
+          <div className="flex items-center space-x-3">
+            <RadioGroupItem value="at_restaurant" id="at_restaurant" />
+            <Label htmlFor="at_restaurant" className="font-medium flex items-center">
+              <UtensilsCrossed className="h-4 w-4 mr-2" />
+              Restoranda Seçim Yapacağım
+            </Label>
+          </div>
+          {selectionType === 'at_restaurant' && (
+            <p className="mt-2 text-sm text-muted-foreground ml-7">
+              Menü seçimini rezervasyonunuza geldiğinizde yapabilirsiniz.
+            </p>
+          )}
+        </div>
         
-        <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="fixed_menu" className="flex items-center gap-2">
-              <ChefHat className="h-4 w-4" />
-              <span className="hidden md:inline">Fix Menüler</span>
-              <span className="md:hidden">Fix</span>
-            </TabsTrigger>
-            <TabsTrigger value="a_la_carte" className="flex items-center gap-2">
-              <Utensils className="h-4 w-4" />
-              <span className="hidden md:inline">A La Carte</span>
-              <span className="md:hidden">Kart</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="at_restaurant" 
-              className="flex items-center gap-2"
-              disabled={selectedFixedMenu !== null || selectedMenuItems.length > 0}
-            >
-              <Store className="h-4 w-4" />
-              <span className="hidden md:inline">Restoranda Seçim</span>
-              <span className="md:hidden">Restoran</span>
-            </TabsTrigger>
-          </TabsList>
+        <div className={`border p-4 rounded-lg transition-all ${selectionType === 'fixed_menu' ? 'bg-primary/5 border-primary' : 'hover:bg-accent'}`}>
+          <div className="flex items-center space-x-3">
+            <RadioGroupItem value="fixed_menu" id="fixed_menu" />
+            <Label htmlFor="fixed_menu" className="font-medium flex items-center">
+              <Menu className="h-4 w-4 mr-2" />
+              Sabit Menü Seçimi
+            </Label>
+          </div>
           
-          <TabsContent value="fixed_menu">
-            <div className="space-y-4">
-              <h4 className="text-md font-medium">Fix Menü Seçenekleri</h4>
-              
-              {loading ? (
-                <div className="flex justify-center p-8">
-                  <div className="animate-pulse">Menüler yükleniyor...</div>
-                </div>
-              ) : fixedMenus.length === 0 ? (
-                <div className="text-center p-8 border rounded-md bg-muted/30">
-                  <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="mt-2">Henüz fix menü seçeneği bulunmamaktadır.</p>
+          {selectionType === 'fixed_menu' && (
+            <div className="mt-4 space-y-4 ml-7">
+              {fixedMenus.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {fixedMenus.map((menu) => (
+                    <Card 
+                      key={menu.id}
+                      className={`cursor-pointer transition-all ${selectedFixedMenu?.id === menu.id ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
+                      onClick={() => handleFixedMenuSelect(menu)}
+                    >
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">{menu.name}</CardTitle>
+                        <CardDescription>{menu.description}</CardDescription>
+                      </CardHeader>
+                      <CardFooter className="p-4 pt-0 flex justify-between">
+                        <p className="font-semibold">{menu.price.toLocaleString('tr-TR')} ₺</p>
+                        {selectedFixedMenu?.id === menu.id && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelFixedMenu();
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> İptal
+                          </Button>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
               ) : (
-                <RadioGroup 
-                  value={selectedFixedMenu?.id?.toString()} 
-                  onValueChange={(value) => {
-                    const selected = fixedMenus.find(menu => menu.id.toString() === value);
-                    if (selected) handleFixedMenuSelect(selected);
-                  }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                >
-                  {fixedMenus.map((menu) => (
-                    <div key={menu.id} className="relative">
-                      <RadioGroupItem
-                        value={menu.id.toString()}
-                        id={`menu-${menu.id}`}
-                        className="peer absolute top-4 right-4 h-5 w-5"
-                      />
-                      <Label
-                        htmlFor={`menu-${menu.id}`}
-                        className="block cursor-pointer peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-primary rounded-lg overflow-hidden"
-                      >
-                        <Card className="h-full border-none">
-                          {menu.image_path && (
-                            <div className="aspect-video w-full overflow-hidden">
-                              <img 
-                                src={menu.image_path} 
-                                alt={menu.name} 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <CardHeader>
-                            <CardTitle className="flex justify-between items-start">
-                              <span>{menu.name}</span>
-                              <span className="text-primary font-bold">
-                                {typeof menu.price === 'number' ? `${menu.price.toLocaleString('tr-TR')} ₺` : ''}
-                              </span>
-                            </CardTitle>
-                            {menu.description && (
-                              <CardDescription>{menu.description}</CardDescription>
-                            )}
-                          </CardHeader>
-                          <CardFooter className="pt-0">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full"
-                              onClick={() => handleFixedMenuSelect(menu)}
-                            >
-                              Seç
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                <p>Sabit menü seçeneği bulunmuyor.</p>
+              )}
+              
+              {selectedFixedMenu && (
+                <div className="mt-6 p-4 bg-muted rounded-lg">
+                  <p className="font-medium">Seçilen Menü: {selectedFixedMenu.name}</p>
+                  <p className="mt-2">
+                    {guestCount} kişi × {selectedFixedMenu.price.toLocaleString('tr-TR')} ₺ = {fixedMenuSubtotal.toLocaleString('tr-TR')} ₺
+                  </p>
+                </div>
               )}
             </div>
-          </TabsContent>
+          )}
+        </div>
+        
+        <div className={`border p-4 rounded-lg transition-all ${selectionType === 'a_la_carte' ? 'bg-primary/5 border-primary' : 'hover:bg-accent'}`}>
+          <div className="flex items-center space-x-3">
+            <RadioGroupItem value="a_la_carte" id="a_la_carte" />
+            <Label htmlFor="a_la_carte" className="font-medium flex items-center">
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              A La Carte Menü
+            </Label>
+          </div>
           
-          <TabsContent value="a_la_carte">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <h4 className="text-md font-medium mb-4">A La Carte Menüsü</h4>
+          {selectionType === 'a_la_carte' && (
+            <div className="mt-4 ml-7">
+              <div className="grid md:grid-cols-[1fr_300px] gap-6">
+                <div className="space-y-8">
+                  {Object.keys(menuByCategory).length > 0 ? (
+                    Object.keys(menuByCategory).map((categoryId) => (
+                      <div key={categoryId} className="space-y-4">
+                        <h4 className="font-medium text-lg border-b pb-2">
+                          {menuByCategory[categoryId][0]?.menu_categories?.name || 'Kategori'}
+                        </h4>
+                        <div className="grid grid-cols-1 gap-4">
+                          {menuByCategory[categoryId].map((item) => (
+                            <div key={item.id} className="flex justify-between items-center p-3 hover:bg-accent rounded-md transition-colors">
+                              <div className="flex-1">
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                                <p className="mt-1 font-semibold">{item.price.toLocaleString('tr-TR')} ₺</p>
+                                <div className="flex gap-2 mt-1">
+                                  {item.is_vegetarian && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vejetaryen</Badge>}
+                                  {item.is_vegan && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Vegan</Badge>}
+                                  {item.is_gluten_free && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-100">Glutensiz</Badge>}
+                                  {item.is_spicy && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100">Acılı</Badge>}
+                                </div>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => addToCart(item)}
+                                className="ml-2 h-8 w-8 rounded-full"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>Menü öğeleri bulunamadı.</p>
+                  )}
+                </div>
                 
-                {loading ? (
-                  <div className="flex justify-center p-8">
-                    <div className="animate-pulse">Menüler yükleniyor...</div>
-                  </div>
-                ) : menuItems.length === 0 ? (
-                  <div className="text-center p-8 border rounded-md bg-muted/30">
-                    <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="mt-2">Menü öğeleri bulunamadı.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {menuItems.map((item) => (
-                      <Card key={item.id} className="h-full overflow-hidden">
-                        {item.image_path && (
-                          <div className="aspect-video w-full overflow-hidden">
-                            <img 
-                              src={item.image_path} 
-                              alt={item.name} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <CardTitle className="flex justify-between items-start">
-                            <span>{item.name}</span>
-                            <span className="text-primary font-bold">
-                              {typeof item.price === 'number' ? `${item.price.toLocaleString('tr-TR')} ₺` : ''}
-                            </span>
-                          </CardTitle>
-                          {item.description && (
-                            <CardDescription>{item.description}</CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardFooter>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full"
-                            onClick={() => handleMenuItemSelect(item)}
-                          >
-                            Ekle
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <div className="lg:col-span-1">
-                <div className="border rounded-lg p-4 sticky top-4">
-                  <h4 className="font-semibold mb-4 flex items-center justify-between">
-                    <span>Seçilen Ürünler</span>
-                    <Badge variant="outline" className="ml-2">
-                      {selectedMenuItems.reduce((total, item) => total + (item.quantity || 1), 0)} ürün
-                    </Badge>
+                <div className="bg-card border rounded-lg p-4 h-fit sticky top-4">
+                  <h4 className="font-medium border-b pb-2 mb-4 flex items-center">
+                    <ShoppingCart className="h-4 w-4 mr-2" /> Sipariş Özeti
                   </h4>
                   
-                  {selectedMenuItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <UtensilsCrossed className="h-6 w-6 mx-auto mb-2" />
-                      <p>Henüz ürün seçilmedi</p>
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[300px] pr-4">
-                      <div className="space-y-3">
-                        {selectedMenuItems.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <div className="flex items-center mt-1">
-                                <button 
-                                  onClick={() => handleUpdateItemQuantity(item.id, (item.quantity || 1) - 1)}
-                                  className="w-6 h-6 flex items-center justify-center bg-muted rounded-md"
+                  {selectedMenuItems.length > 0 ? (
+                    <div className="space-y-4">
+                      <ScrollArea className="max-h-80">
+                        <div className="space-y-3">
+                          {selectedMenuItems.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center border-b pb-2">
+                              <div className="flex-1">
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.quantity || 1} × {item.price.toLocaleString('tr-TR')} ₺
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => decrementOrRemove(item.id)}
+                                  className="h-7 w-7"
                                 >
-                                  -
-                                </button>
-                                <span className="mx-2 min-w-[20px] text-center">{item.quantity || 1}</span>
-                                <button 
-                                  onClick={() => handleUpdateItemQuantity(item.id, (item.quantity || 1) + 1)}
-                                  className="w-6 h-6 flex items-center justify-center bg-muted rounded-md"
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                
+                                <span className="w-6 text-center">{item.quantity || 1}</span>
+                                
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => addToCart(item)}
+                                  className="h-7 w-7"
                                 >
-                                  +
-                                </button>
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => removeFromCart(item.id)}
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-medium text-primary">
-                                {typeof item.price === 'number' ? 
-                                  `${((item.quantity || 1) * item.price).toLocaleString('tr-TR')} ₺` : ''}
-                              </p>
-                              <button 
-                                onClick={() => handleRemoveMenuItem(item.id)}
-                                className="text-destructive text-xs mt-1 hover:underline"
-                              >
-                                Kaldır
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between font-medium">
+                        <span>Toplam:</span>
+                        <span>{subtotal.toLocaleString('tr-TR')} ₺</span>
                       </div>
-                    </ScrollArea>
-                  )}
-                  
-                  {selectedMenuItems.length > 0 && (
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex justify-between font-semibold">
-                        <span>Toplam</span>
-                        <span className="text-primary">{calculateTotalPrice().toLocaleString('tr-TR')} ₺</span>
-                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p>Sepetiniz boş</p>
+                      <p className="text-sm mt-2">Sipariş vermek için menüden ürün ekleyebilirsiniz.</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-          </TabsContent>
+          )}
+        </div>
+      </RadioGroup>
+      
+      <div className="mt-8 p-4 border rounded-lg bg-muted">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-sm text-muted-foreground">Toplam Tutar</p>
+            <p className="text-xl font-semibold">{calculateTotal().toLocaleString('tr-TR')} ₺</p>
+          </div>
           
-          <TabsContent value="at_restaurant">
-            <div className="p-6 border rounded-md bg-card">
-              <div className="text-center py-12">
-                <Store className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h4 className="text-xl font-semibold mb-2">Restoranda Menü Seçimi</h4>
-                <p className="text-muted-foreground mb-6">
-                  Menü seçiminizi restoranda yapmayı tercih ediyorsanız, 
-                  uzman şeflerimiz ve servis ekibimiz size yardımcı olacaktır.
+          {selectionType !== 'at_restaurant' && (
+            <div>
+              {selectionType === 'fixed_menu' && selectedFixedMenu && (
+                <p className="text-sm text-muted-foreground">
+                  {guestCount} kişi × {selectedFixedMenu.price.toLocaleString('tr-TR')} ₺
                 </p>
-                <Button 
-                  onClick={() => onChange({ type: "at_restaurant", selectedMenuItems: [], selectedFixedMenu: null })}
-                  className="bg-primary/10 hover:bg-primary/20 text-primary font-medium"
-                >
-                  Restoranda Seçim
-                </Button>
-              </div>
+              )}
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
-      
-      {selectedFixedMenu && activeTab === "fixed_menu" && (
-        <div className="p-4 bg-primary/10 rounded-lg">
-          <p className="font-medium">Seçilen Menü: {selectedFixedMenu.name}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {parseInt(guestCount) > 1 ? 
-              `${guestCount} kişi için toplam: ${(parseInt(guestCount) * (selectedFixedMenu.price || 0)).toLocaleString('tr-TR')} ₺` : 
-              `Fiyat: ${selectedFixedMenu.price?.toLocaleString('tr-TR')} ₺`}
-          </p>
-        </div>
-      )}
-      
-      {(activeTab === "fixed_menu" && !selectedFixedMenu) || 
-       (activeTab === "a_la_carte" && selectedMenuItems.length === 0) ? (
-        <div className="flex items-center p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-md text-yellow-700">
-          <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-          <p className="text-sm">
-            {activeTab === "fixed_menu" 
-              ? "Lütfen rezervasyonunuz için bir fix menü seçin." 
-              : "Lütfen en az bir menü öğesi seçin."}
-          </p>
-        </div>
-      ) : null}
     </div>
   );
 };
 
-export default MenuSelection;
+export default MenuSelectionComponent;
