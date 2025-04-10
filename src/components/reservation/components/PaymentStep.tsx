@@ -94,7 +94,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ reservation, onPaymentComplet
       <div className="pt-4">
         <PaymentForm 
           amount={total} 
-          onSuccess={handlePaymentSuccess} 
+          onPaymentComplete={handlePaymentSuccess} 
           reservationData={{
             name: reservation.formData.name,
             email: reservation.formData.email,

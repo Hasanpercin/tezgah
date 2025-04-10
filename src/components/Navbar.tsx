@@ -14,7 +14,7 @@ import {
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth(); // Changed signOut to logout to match AuthContext
   const location = useLocation();
   
   // Close mobile menu when route changes
@@ -135,7 +135,7 @@ const Navbar = () => {
                       <Link to="/admin">Yönetim Paneli</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={signOut}>
+                  <DropdownMenuItem onClick={logout}>
                     Çıkış Yap
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -249,7 +249,7 @@ const Navbar = () => {
                   </Link>
                 )}
                 <Button 
-                  onClick={signOut} 
+                  onClick={logout} 
                   variant="destructive"
                   className="mt-2"
                 >

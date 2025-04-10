@@ -13,12 +13,19 @@ type PaymentFormProps = {
   amount: number;
   onPaymentComplete?: (transactionId: string) => void;
   onCancel?: () => void;
+  reservationData?: {
+    name: string;
+    email: string;
+    phone: string;
+    reservationId: string;
+  };
 };
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ 
   amount, 
   onPaymentComplete, 
-  onCancel 
+  onCancel,
+  reservationData 
 }) => {
   const {
     formData,

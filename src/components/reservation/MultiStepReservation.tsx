@@ -148,7 +148,7 @@ const MultiStepReservation = () => {
               onSelectTable={setSelectedTable}
               date={state.formData.date || new Date()}
               time={state.formData.time}
-              guests={parseInt(state.formData.guests)}
+              guests={parseInt(state.formData.guests || '0')} // Fixed by providing a string type
             />
           )}
           
@@ -176,7 +176,7 @@ const MultiStepReservation = () => {
               currentStep={currentStep}
               onNext={currentStep === 2 && state.menuSelection.type === 'at_restaurant' ? skipPaymentStep : handleNextStep}
               onPrev={handlePrevStep}
-              canProceed={canProceed()}
+              canProceed={!!canProceed()} // Fixed by ensuring boolean type
               menuSelectionType={state.menuSelection.type}
             />
           )}
