@@ -1,7 +1,7 @@
 
 import { NavLink } from 'react-router-dom';
 import UserMenu from './UserMenu';
-import { UserType } from '@/context/AuthContext';
+import { UserType } from './types';
 
 interface DesktopNavProps {
   isScrolled: boolean;

@@ -1,8 +1,7 @@
-
 import { Link, NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UserType } from '@/context/AuthContext';
+import { UserType } from './types';
 
 interface MobileMenuProps {
   isMenuOpen: boolean;

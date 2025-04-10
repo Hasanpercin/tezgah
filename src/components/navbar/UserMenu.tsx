@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UserType } from '@/context/AuthContext';
+import { UserType } from './types';
 import {
   DropdownMenu,
   DropdownMenuContent,
