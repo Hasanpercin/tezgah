@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, Users, AlertTriangle, CheckCircle2, Ban } from 'lucide-react';
+import { Calendar, Clock, Users, AlertTriangle, CheckCircle2, Ban, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -48,6 +48,8 @@ const MyReservations = () => {
   const [reservations, setReservations] = useState<UserReservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cancelReservationId, setCancelReservationId] = useState<string | null>(null);
+  const [prepaidWarningOpen, setPrepaidWarningOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<UserReservation | null>(null);
   
   useEffect(() => {
     const fetchReservations = async () => {
@@ -129,6 +131,18 @@ const MyReservations = () => {
     }
   };
   
+  const handleCancelButtonClick = (reservation: UserReservation) => {
+    setSelectedReservation(reservation);
+    
+    if (reservation.has_prepayment) {
+      // Show prepaid warning
+      setPrepaidWarningOpen(true);
+    } else {
+      // Show normal cancel dialog
+      setCancelReservationId(reservation.id);
+    }
+  };
+  
   if (!isAuthenticated) {
     return (
       <div className="container-custom py-20 text-center">
@@ -205,11 +219,15 @@ const MyReservations = () => {
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => setCancelReservationId(reservation.id)}
-                              disabled={reservation.has_prepayment}
+                              onClick={() => handleCancelButtonClick(reservation)}
                             >
                               <Ban className="h-4 w-4 mr-1" /> İptal Et
                             </Button>
+                            {reservation.has_prepayment && (
+                              <div className="text-xs text-muted-foreground mt-1 flex items-center">
+                                <Info className="h-3 w-3 mr-1" /> Ödemeli rezervasyon
+                              </div>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -275,7 +293,7 @@ const MyReservations = () => {
               <div>
                 <h3 className="font-semibold mb-2">İptal Koşulları</h3>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Ön ödeme yapılan rezervasyonlar iptal edilemez.</li>
+                  <li>Ön ödeme yapılan rezervasyonlar iptal edilemez ve ödeme iadesi yapılmaz.</li>
                   <li>Rezervasyon saatinizden 24 saat öncesine kadar iptal işlemi yapabilirsiniz.</li>
                   <li>İptal işlemi sonrası herhangi bir geri ödeme yapılmaz.</li>
                   <li>Özel durumlar için lütfen restoranımızla iletişime geçin: +90 554 434 60 68</li>
@@ -286,6 +304,7 @@ const MyReservations = () => {
         </>
       )}
       
+      {/* Regular cancel confirmation dialog */}
       <AlertDialog open={!!cancelReservationId} onOpenChange={() => setCancelReservationId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -299,6 +318,35 @@ const MyReservations = () => {
             <AlertDialogAction onClick={handleCancelReservation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Evet, İptal Et
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Prepaid reservation warning dialog */}
+      <AlertDialog open={prepaidWarningOpen} onOpenChange={() => setPrepaidWarningOpen(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ödeme Yapılmış Rezervasyon</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-4">
+                <p>Ön ödemesi yapılmış rezervasyonlar uygulama üzerinden iptal edilemez ve ödeme iadesi yapılmaz.</p>
+                
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-md">
+                  <div className="flex">
+                    <AlertTriangle className="text-amber-600 h-5 w-5 mr-2 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800">Önemli Bilgilendirme</p>
+                      <p className="text-amber-700 mt-1">Ön ödeme yapılmış rezervasyonlarınızı iptal etmek için doğrudan bizimle iletişime geçmeniz gerekmektedir. Özel koşullar ve tarihlerde rezervasyonunuzu başka bir zamana aktarma imkanı sunulabilir.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p>İletişim: +90 554 434 60 68</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Anladım</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Users, LayoutDashboard, Settings, Menu, Utensils, ServerCog } from "lucide-react";
+import { CreditCard, Users, LayoutDashboard, Settings, Menu, Utensils } from "lucide-react";
 import { MenuCategoryType } from "@/components/MenuCategory";
 import { ReservationsPanel } from "@/components/admin/reservations/ReservationsPanel";
 import { type Reservation, type ReservationStatus } from "@/components/admin/reservations/types";
 import { MenuQRPanel } from "@/components/admin/MenuQRPanel";
 import { WebsiteContentPanel } from "@/components/admin/WebsiteContentPanel";
 import { MenuManagementPanel } from "@/components/admin/MenuManagementPanel";
-import { TablesManagementPanel } from "@/components/admin/TablesManagementPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentSettingsPanel } from "@/components/admin/PaymentSettingsPanel";
 import { Json } from "@/integrations/supabase/types";
@@ -107,15 +106,12 @@ const AdminCMS = () => {
           </div>
           
           <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard size={16} /> Genel Bakış
               </TabsTrigger>
               <TabsTrigger value="reservations" className="flex items-center gap-2">
                 <Users size={16} /> Rezervasyonlar
-              </TabsTrigger>
-              <TabsTrigger value="tables" className="flex items-center gap-2">
-                <ServerCog size={16} /> Masalar
               </TabsTrigger>
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <Utensils size={16} /> Menü
@@ -171,13 +167,6 @@ const AdminCMS = () => {
                     </button>
                     <button 
                       className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
-                      onClick={() => setActiveTab("tables")}
-                    >
-                      <span>Masaları Düzenle</span>
-                      <ServerCog size={16} />
-                    </button>
-                    <button 
-                      className="w-full text-left p-3 hover:bg-muted rounded-md transition-colors flex justify-between items-center"
                       onClick={() => setActiveTab("menu")}
                     >
                       <span>Menüyü Düzenle</span>
@@ -199,10 +188,6 @@ const AdminCMS = () => {
             
             <TabsContent value="reservations" className="space-y-6">
               <ReservationsPanel />
-            </TabsContent>
-            
-            <TabsContent value="tables" className="space-y-6">
-              <TablesManagementPanel />
             </TabsContent>
             
             <TabsContent value="menu" className="space-y-6">

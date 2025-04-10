@@ -1,206 +1,271 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, User, Menu as MenuIcon, X, Calendar, Crown } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-interface LoyaltyInfo {
-  points: number;
-  level: string;
-}
-const Navbar = () => {
-  const location = useLocation();
-  const {
-    user,
-    isLoading,
-    logout
-  } = useAuth();
-  const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
-  const [loyaltyInfo, setLoyaltyInfo] = useState<LoyaltyInfo | null>(null);
-  const [isLoadingLoyalty, setIsLoadingLoyalty] = useState(false);
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-  useEffect(() => {
-    const fetchLoyaltyPoints = async () => {
-      if (!user) return;
-      setIsLoadingLoyalty(true);
-      try {
-        const {
-          data,
-          error
-        } = await supabase.from('loyalty_points').select('points, level').eq('user_id', user.id).single();
-        if (error) {
-          console.error('Error fetching loyalty points:', error);
-          return;
-        }
-        if (data) {
-          setLoyaltyInfo({
-            points: data.points,
-            level: data.level
-          });
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setIsLoadingLoyalty(false);
-      }
-    };
-    fetchLoyaltyPoints();
-  }, [user]);
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-  
-  // Reordered menu items - moved Reservation between Menu and About
-  const menuItems = [{
-    path: '/',
-    label: 'Anasayfa'
-  }, {
-    path: '/menu',
-    label: 'Menü'
-  }, {
-    path: '/reservation',
-    label: 'Rezervasyon'
-  }, {
-    path: '/about',
-    label: 'Hakkımızda'
-  }, {
-    path: '/gallery',
-    label: 'Galeri'
-  }, {
-    path: '/contact',
-    label: 'İletişim'
-  }];
-  
-  const userMenuItems = [{
-    path: '/profile',
-    label: 'Profil',
-    icon: <User className="h-4 w-4 mr-2" />
-  }, {
-    path: '/my-reservations',
-    label: 'Rezervasyonlarım',
-    icon: <Calendar className="h-4 w-4 mr-2" />
-  }, {
-    path: '/loyalty',
-    label: 'Sadakat Programı',
-    icon: <Crown className="h-4 w-4 mr-2" />
-  }];
-  const isActive = (path: string) => location.pathname === path;
-  return <nav className="bg-white border-b z-50 sticky top-0 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex justify-between w-full">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-xl font-bold">
-                Tezgah<span className="text-primary">Alaçatı</span>
-              </Link>
-            </div>
-            
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
-              {menuItems.map(item => <Link key={item.path} to={item.path} className={`${isActive(item.path) ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                  {item.label}
-                </Link>)}
-              
-              <div className="ml-4 flex items-center">
-                {isLoading ? <Skeleton className="h-9 w-20" /> : user ? <div className="relative group">
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <span className="max-w-[100px] truncate">{user.user_metadata?.name || user.email}</span>
-                    </Button>
-                    <div className="absolute right-0 w-56 mt-2 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                      <div className="px-4 py-3">
-                        <p className="text-sm">Hoş geldiniz</p>
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {user.email}
-                        </p>
-                        {loyaltyInfo && <div className="mt-2 flex items-center">
-                            <Crown className="h-4 w-4 text-amber-500 mr-1" />
-                            <span className="text-xs font-medium text-amber-700">
-                              {loyaltyInfo.level}: {loyaltyInfo.points} Puan
-                            </span>
-                          </div>}
-                      </div>
-                      <div className="py-1">
-                        {userMenuItems.map(item => <Link key={item.path} to={item.path} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            {item.icon}
-                            {item.label}
-                          </Link>)}
-                      </div>
-                      <div className="py-1">
-                        <button onClick={logout} className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Çıkış Yap
-                        </button>
-                      </div>
-                    </div>
-                  </div> : <Button asChild>
-                    <Link to="/login">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Giriş Yap
-                    </Link>
-                  </Button>}
-              </div>
-            </div>
-            
-            <div className="flex items-center sm:hidden">
-              <button type="button" className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary" aria-expanded="false" onClick={toggleMenu}>
-                <span className="sr-only">Open main menu</span>
-                {isOpen ? <X className="block h-6 w-6" aria-hidden="true" /> : <MenuIcon className="block h-6 w-6" aria-hidden="true" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Button } from './ui/button';
+import { Menu, X, ChevronDown } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext'; 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-      {isOpen && <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            {menuItems.map(item => <Link key={item.path} to={item.path} className={`${isActive(item.path) ? 'bg-primary bg-opacity-10 border-primary text-primary' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-                {item.label}
-              </Link>)}
-          </div>
-          <div className="pt-4 pb-3 border-t border-gray-200">
-            {isLoading ? <div className="px-4">
-                <Skeleton className="h-5 w-28 mb-3" />
-                <Skeleton className="h-8 w-full" />
-              </div> : user ? <div>
-                <div className="px-4 py-3 space-y-1">
-                  <div className="flex items-center">
-                    <div className="ml-3">
-                      <div className="text-base font-medium text-gray-800">{user.user_metadata?.name || 'Kullanıcı'}</div>
-                      <div className="text-sm font-medium text-gray-500">{user.email}</div>
-                      {loyaltyInfo && <div className="mt-1 flex items-center">
-                          <Crown className="h-4 w-4 text-amber-500 mr-1" />
-                          <span className="text-xs font-medium text-amber-700">
-                            {loyaltyInfo.level}: {loyaltyInfo.points} Puan
-                          </span>
-                        </div>}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 space-y-1">
-                  {userMenuItems.map(item => <Link key={item.path} to={item.path} className="flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-100">
-                      {item.icon}
-                      {item.label}
-                    </Link>)}
-                  <button onClick={logout} className="flex w-full items-center px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-100">
-                    <LogOut className="h-4 w-4 mr-2" />
+const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isAuthenticated, signOut } = useAuth();
+  const location = useLocation();
+  
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    isScrolled 
+      ? 'bg-white shadow-md py-2' 
+      : 'bg-transparent py-4'
+  }`;
+
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${
+    isScrolled ? 'text-foreground' : 'text-white'
+  }`;
+  
+  const activeLinkClasses = `${linkClasses} ${
+    isScrolled ? 'text-primary' : 'text-primary-foreground font-semibold'
+  }`;
+  
+  const logoClasses = `font-playfair font-bold text-xl ${
+    isScrolled ? 'text-foreground' : 'text-white'
+  }`;
+  
+  const mobileMenuClasses = `fixed inset-0 flex flex-col bg-black/95 z-50 p-6 space-y-6 ${
+    isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+  } transition-transform duration-300 ease-in-out lg:hidden`;
+  
+  const mobileLinkClasses = "text-white/90 text-lg font-medium hover:text-white";
+  const mobileActiveLinkClasses = "text-white font-semibold";
+
+  return (
+    <>
+      <header className={navbarClasses}>
+        <div className="container-custom mx-auto flex items-center justify-between">
+          <Link to="/" className={logoClasses}>Tezgah Alaçatı</Link>
+          
+          <nav className="hidden lg:flex items-center space-x-8">
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+              end
+            >
+              Anasayfa
+            </NavLink>
+            <NavLink 
+              to="/menu" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+            >
+              Menü
+            </NavLink>
+            <NavLink 
+              to="/reservation" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+            >
+              Rezervasyon
+            </NavLink>
+            <NavLink 
+              to="/about" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+            >
+              Hakkımızda
+            </NavLink>
+            <NavLink 
+              to="/contact" 
+              className={({ isActive }) => 
+                isActive ? activeLinkClasses : linkClasses
+              }
+            >
+              İletişim
+            </NavLink>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`${isScrolled ? 'text-foreground' : 'text-white'} p-0`}
+                  >
+                    {user?.email?.split('@')[0] || 'Hesabım'}
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-reservations">Rezervasyonlarım</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profilim</Link>
+                  </DropdownMenuItem>
+                  {user?.email === "admin@example.com" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">Yönetim Paneli</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={signOut}>
                     Çıkış Yap
-                  </button>
-                </div>
-              </div> : <div className="px-4 py-3">
-                <Button asChild className="w-full">
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Giriş Yap
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="ghost" 
+                className={`${isScrolled ? '' : 'text-white'}`} 
+                asChild
+              >
+                <Link to="/login">Giriş Yap</Link>
+              </Button>
+            )}
+          </nav>
+          
+          {/* Mobile menu button */}
+          <button 
+            onClick={toggleMenu} 
+            className={`lg:hidden p-2 ${isScrolled ? 'text-foreground' : 'text-white'}`}
+            aria-label="Toggle menu"
+          >
+            <Menu size={24} />
+          </button>
+        </div>
+      </header>
+      
+      {/* Mobile menu */}
+      <div className={mobileMenuClasses}>
+        <div className="flex justify-end">
+          <button 
+            onClick={toggleMenu} 
+            className="p-2 text-white" 
+            aria-label="Close menu"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        
+        <nav className="flex flex-col space-y-6 items-center pt-16">
+          <NavLink 
+            to="/"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+            end
+          >
+            Anasayfa
+          </NavLink>
+          <NavLink 
+            to="/menu"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+          >
+            Menü
+          </NavLink>
+          <NavLink 
+            to="/reservation"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+          >
+            Rezervasyon
+          </NavLink>
+          <NavLink 
+            to="/about"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+          >
+            Hakkımızda
+          </NavLink>
+          <NavLink 
+            to="/contact"
+            onClick={toggleMenu}
+            className={({ isActive }) => 
+              isActive ? mobileActiveLinkClasses : mobileLinkClasses
+            }
+          >
+            İletişim
+          </NavLink>
+          
+          <div className="pt-4">
+            {isAuthenticated ? (
+              <div className="flex flex-col items-center space-y-4">
+                <Link 
+                  to="/my-reservations" 
+                  className={mobileLinkClasses}
+                  onClick={toggleMenu}
+                >
+                  Rezervasyonlarım
+                </Link>
+                <Link 
+                  to="/profile" 
+                  className={mobileLinkClasses}
+                  onClick={toggleMenu}
+                >
+                  Profilim
+                </Link>
+                {user?.email === "admin@example.com" && (
+                  <Link 
+                    to="/admin" 
+                    className={mobileLinkClasses}
+                    onClick={toggleMenu}
+                  >
+                    Yönetim Paneli
                   </Link>
+                )}
+                <Button 
+                  onClick={signOut} 
+                  variant="destructive"
+                  className="mt-2"
+                >
+                  Çıkış Yap
                 </Button>
-              </div>}
+              </div>
+            ) : (
+              <Button asChild>
+                <Link to="/login">Giriş Yap</Link>
+              </Button>
+            )}
           </div>
-        </div>}
-    </nav>;
+        </nav>
+      </div>
+    </>
+  );
 };
+
 export default Navbar;
