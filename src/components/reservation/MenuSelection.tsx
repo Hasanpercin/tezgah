@@ -271,17 +271,18 @@ const MenuSelectionComponent: React.FC<MenuSelectionProps> = ({ value, onChange,
                   {Object.keys(menuByCategory).length > 0 ? (
                     Object.keys(menuByCategory).map((categoryId) => {
                       const firstItem = menuByCategory[categoryId][0] as ServiceMenuItem;
-                      // Safely extract the category name using type assertion
+                      // Safely extract the category name
                       let categoryName = 'Kategori';
                       
-                      if (firstItem) {
-                        const menuCategories = firstItem.menu_categories;
-                        if (menuCategories && 
-                            typeof menuCategories === 'object' && 
-                            menuCategories !== null && 
-                            'name' in menuCategories) {
-                          categoryName = String(menuCategories.name);
-                        }
+                      // First check if the item has the menu_categories property using type assertion
+                      // We need to use 'as any' to bypass TypeScript's type checking here
+                      const itemAsAny = firstItem as any;
+                      if (itemAsAny && 
+                          itemAsAny.menu_categories && 
+                          typeof itemAsAny.menu_categories === 'object' && 
+                          itemAsAny.menu_categories !== null && 
+                          'name' in itemAsAny.menu_categories) {
+                        categoryName = String(itemAsAny.menu_categories.name);
                       }
                       
                       return (
