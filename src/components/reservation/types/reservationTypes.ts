@@ -16,27 +16,6 @@ export interface Table {
   name?: string;
 }
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  image_path?: string;
-  category_id?: string;
-  is_in_stock?: boolean;
-  quantity?: number; // Added for UI tracking
-}
-
-export interface FixMenuOption {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  image_path?: string;
-  quantity?: number;
-  is_active?: boolean;
-}
-
 export interface ReservationFormData {
   name: string;
   email: string;
@@ -50,26 +29,18 @@ export interface ReservationFormData {
 
 export interface ReservationState {
   selectedTable: Table | null;
-  selectedFixMenu: FixMenuOption | null;
-  selectedALaCarteItems: { item: MenuItem, quantity: number }[];
-  selectAtRestaurant: boolean;
-  isPrePayment: boolean;
-  transactionId: string | null;
   basicFormCompleted: boolean;
   formData: ReservationFormData;
 }
 
-// Define the steps for the reservation process
+// Define the steps for the reservation process - removed menu and payment steps
 export const STEPS = [
   { id: 0, name: "Rezervasyon Bilgileri", icon: "Calendar" },
   { id: 1, name: "Masa Seçimi", icon: "Users" },
-  { id: 2, name: "Menü Seçimi", icon: "Utensils" },
-  { id: 3, name: "Özet & Ödeme", icon: "CreditCard" },
-  { id: 4, name: "Onay", icon: "CheckCircle" }
+  { id: 2, name: "Onay", icon: "CheckCircle" }
 ];
 
 export interface ReservationSummaryProps {
   state: ReservationState;
-  calculateTotal: () => number;
   showPaymentInfo?: boolean;
 }
