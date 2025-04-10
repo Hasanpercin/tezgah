@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { FixMenuOption, MenuItem } from './types/reservationTypes';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 
 interface MenuSelectionProps {
   onFixMenuSelected: (menu: FixMenuOption | null) => void;
@@ -36,6 +38,7 @@ const MenuSelection = ({
   const [fixedMenus, setFixedMenus] = useState<FixMenuOption[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isBasketOpen, setIsBasketOpen] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -92,6 +95,11 @@ const MenuSelection = ({
     onFixMenuSelected(menuWithQuantity);
     onSelectAtRestaurant(false);
     setActiveTab("fixed");
+    
+    toast({
+      title: "Menü seçildi",
+      description: `${menu.name} menüsünü seçtiniz.`
+    });
   };
   
   const handleFixMenuQuantityChange = (value: string) => {
@@ -143,6 +151,11 @@ const MenuSelection = ({
     onALaCarteItemsSelected(updatedItems);
     onSelectAtRestaurant(false);
     setActiveTab("alacarte");
+    
+    toast({
+      title: "Ürün sepete eklendi",
+      description: `${item.name} sepete eklendi.`
+    });
   };
   
   const handleALaCarteQuantityChange = (itemId: string, newQuantity: number) => {
@@ -171,6 +184,11 @@ const MenuSelection = ({
     onFixMenuSelected(null);
     onALaCarteItemsSelected([]);
     setActiveTab("later");
+    
+    toast({
+      title: "Tercih kaydedildi",
+      description: "Menü seçiminizi restoranda yapacaksınız."
+    });
   };
   
   const calculateFixedMenuTotal = () => {
@@ -203,14 +221,31 @@ const MenuSelection = ({
   const isFixMenuSelected = (menuId: string): boolean => {
     return selectedFixMenu?.id === menuId;
   };
-  
+
+  const getTotalItems = () => {
+    return selectedALaCarteItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">Menü Seçimi</h3>
-        <Badge variant="outline" className="text-sm">
-          {guests} kişi
-        </Badge>
+        <div className="flex items-center gap-3">
+          {selectedALaCarteItems.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1"
+              onClick={() => setIsBasketOpen(true)}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <Badge variant="secondary" className="ml-1">{getTotalItems()}</Badge>
+            </Button>
+          )}
+          <Badge variant="outline" className="text-sm">
+            {guests} kişi
+          </Badge>
+        </div>
       </div>
       
       <Tabs 
@@ -309,7 +344,7 @@ const MenuSelection = ({
                       <Card 
                         key={menu.id} 
                         className={cn(
-                          "border transition-all hover:shadow-md cursor-pointer",
+                          "border transition-all hover:shadow-md",
                           isFixMenuSelected(menu.id as string) ? "border-primary/40 shadow-md bg-primary/5" : ""
                         )}
                       >
@@ -325,41 +360,14 @@ const MenuSelection = ({
                           <div className="text-sm text-muted-foreground">
                             Min. {parseInt(guests) || 1} kişilik
                           </div>
-                          <div className="flex items-center space-x-2">
-                            {isFixMenuSelected(menu.id as string) ? (
-                              <>
-                                <Button 
-                                  variant="outline" 
-                                  size="icon"
-                                  onClick={() => handleFixMenuQuantityAdjust(false)}
-                                  disabled={(selectedFixMenu?.quantity || 1) <= 1}
-                                  className="h-8 w-8"
-                                >
-                                  <Minus size={14} />
-                                </Button>
-                                <span className="w-6 text-center font-medium">
-                                  {selectedFixMenu?.quantity || 1}
-                                </span>
-                                <Button 
-                                  variant="outline" 
-                                  size="icon"
-                                  onClick={() => handleFixMenuQuantityAdjust(true)}
-                                  className="h-8 w-8"
-                                >
-                                  <Plus size={14} />
-                                </Button>
-                              </>
-                            ) : (
-                              <Button 
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleSelectFixedMenu(menu)}
-                                className="flex items-center gap-1 rounded-full px-4"
-                              >
-                                Seç
-                              </Button>
-                            )}
-                          </div>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSelectFixedMenu(menu)}
+                            className="rounded-full px-4 bg-green-100 hover:bg-green-200 border-green-300 text-green-800"
+                          >
+                            Seç
+                          </Button>
                         </CardFooter>
                       </Card>
                     ))
@@ -381,114 +389,68 @@ const MenuSelection = ({
               <p>Menü öğeleri yükleniyor...</p>
             </div>
           ) : (
-            <>
-              <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                {menuItems.length > 0 ? (
-                  <div className="divide-y">
-                    {menuItems.map((item) => {
-                      const isSelected = isItemInCart(item.id);
-                      const quantity = getItemQuantity(item.id);
-                      
-                      return (
-                        <div key={item.id} className={cn(
-                          "p-4 flex justify-between items-center hover:bg-muted/30 transition-colors",
-                          isSelected ? "bg-primary/5" : ""
-                        )}>
-                          <div className="flex-1">
-                            <div className="font-medium">{item.name}</div>
-                            {item.description && (
-                              <div className="text-sm text-muted-foreground mt-0.5">{item.description}</div>
-                            )}
-                            <div className="text-primary font-medium mt-1">₺{item.price.toLocaleString()}</div>
-                          </div>
-                          
-                          <div className="ml-4">
-                            {isSelected ? (
-                              <div className="flex items-center space-x-3 bg-background rounded-full border px-2 py-1">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-7 w-7 rounded-full hover:bg-muted"
-                                  onClick={() => handleALaCarteQuantityChange(item.id, quantity - 1)}
-                                >
-                                  <Minus size={14} />
-                                </Button>
-                                <span className="w-5 text-center font-medium">{quantity}</span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="h-7 w-7 rounded-full hover:bg-muted"
-                                  onClick={() => handleALaCarteQuantityChange(item.id, quantity + 1)}
-                                >
-                                  <Plus size={14} />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleAddALaCarteItem(item)}
-                                className="rounded-full"
-                              >
-                                <Plus size={14} className="mr-1" />
-                                Ekle
-                              </Button>
-                            )}
-                          </div>
+            <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+              {menuItems.length > 0 ? (
+                <div className="divide-y">
+                  {menuItems.map((item) => {
+                    const isSelected = isItemInCart(item.id);
+                    const quantity = getItemQuantity(item.id);
+                    
+                    return (
+                      <div key={item.id} className={cn(
+                        "p-4 flex justify-between items-center hover:bg-muted/30 transition-colors",
+                        isSelected ? "bg-primary/5" : ""
+                      )}>
+                        <div className="flex-1">
+                          <div className="font-medium">{item.name}</div>
+                          {item.description && (
+                            <div className="text-sm text-muted-foreground mt-0.5">{item.description}</div>
+                          )}
+                          <div className="text-primary font-medium mt-1">₺{item.price.toLocaleString()}</div>
                         </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Şu anda aktif menü öğesi bulunmamaktadır.
-                  </div>
-                )}
-              </div>
-              
-              {selectedALaCarteItems.length > 0 && (
-                <Card className="shadow-md border-primary/20 mt-8">
-                  <CardHeader className="bg-primary/5 border-b">
-                    <CardTitle className="text-lg text-primary">Seçilen Ürünler</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ul className="divide-y">
-                      {selectedALaCarteItems.map(({ item, quantity }) => (
-                        <li key={item.id} className="py-4 px-6 flex justify-between items-center">
-                          <div>
-                            <span className="font-medium">{item.name}</span>
-                            <div className="flex items-center space-x-3 mt-1">
+                        
+                        <div className="ml-4">
+                          {isSelected ? (
+                            <div className="flex items-center space-x-2">
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-muted"
+                                className="h-8 w-8 rounded-full"
                                 onClick={() => handleALaCarteQuantityChange(item.id, quantity - 1)}
                               >
-                                <Minus size={12} />
+                                <Minus size={14} />
                               </Button>
-                              <span className="text-sm font-medium">{quantity} adet</span>
+                              <span className="w-5 text-center font-medium">{quantity}</span>
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon"
-                                className="h-6 w-6 rounded-full hover:bg-muted"
+                                className="h-8 w-8 rounded-full"
                                 onClick={() => handleALaCarteQuantityChange(item.id, quantity + 1)}
                               >
-                                <Plus size={12} />
+                                <Plus size={14} />
                               </Button>
                             </div>
-                          </div>
-                          <div className="font-medium">₺{(item.price * quantity).toLocaleString()}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t py-4 bg-muted/30">
-                    <span className="font-medium">Toplam:</span>
-                    <span className="text-lg font-bold text-primary">₺{calculateALaCarteTotal().toLocaleString()}</span>
-                  </CardFooter>
-                </Card>
+                          ) : (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddALaCarteItem(item)}
+                              className="rounded-full h-8 w-8 p-0"
+                            >
+                              <Plus size={16} />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Şu anda aktif menü öğesi bulunmamaktadır.
+                </div>
               )}
-            </>
+            </div>
           )}
         </TabsContent>
         
@@ -520,11 +482,11 @@ const MenuSelection = ({
               
               <div className="bg-muted/50 p-4 rounded-md mt-6 text-sm text-muted-foreground">
                 <p className="flex items-center gap-2">
-                  <Check size={16} className="text-primary" />
+                  <Check size={16} className="text-green-600" />
                   Bu seçeneği işaretlerseniz, rezervasyonunuz onaylanacak ve masanız ayrılacaktır. 
                 </p>
                 <p className="flex items-center gap-2 mt-2">
-                  <Check size={16} className="text-primary" />
+                  <Check size={16} className="text-green-600" />
                   Menü seçiminizi restoranda yapabilirsiniz.
                 </p>
               </div>
@@ -532,9 +494,9 @@ const MenuSelection = ({
             {!selectAtRestaurant && (
               <CardFooter className="flex justify-end pt-4 border-t">
                 <Button
-                  variant="default"
+                  variant="outline"
                   onClick={handleSelectAtRestaurant}
-                  className="rounded-full px-6"
+                  className="rounded-full px-6 bg-green-100 hover:bg-green-200 border-green-300 text-green-800"
                 >
                   <Check size={16} className="mr-2" />
                   Seçimi Onayla
@@ -544,6 +506,61 @@ const MenuSelection = ({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Basket Drawer */}
+      <Sheet open={isBasketOpen} onOpenChange={setIsBasketOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Seçilen Ürünler</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            {selectedALaCarteItems.length > 0 ? (
+              <div className="space-y-6">
+                <div className="divide-y border rounded-md overflow-hidden">
+                  {selectedALaCarteItems.map(({ item, quantity }) => (
+                    <div key={item.id} className="p-3 flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-sm text-primary font-medium">₺{item.price.toLocaleString()}</div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => handleALaCarteQuantityChange(item.id, quantity - 1)}
+                        >
+                          <Minus size={14} />
+                        </Button>
+                        <span className="w-5 text-center font-medium">{quantity}</span>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => handleALaCarteQuantityChange(item.id, quantity + 1)}
+                        >
+                          <Plus size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex justify-between items-center font-medium text-lg">
+                    <span>Toplam:</span>
+                    <span className="text-primary">₺{calculateALaCarteTotal().toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Henüz ürün seçilmedi.
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
