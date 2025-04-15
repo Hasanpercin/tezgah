@@ -11,7 +11,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Register = () => {
-  const { register } = useAuth();
+  const { signUp } = useAuth(); // Changed from register to signUp to match context
   const navigate = useNavigate();
   const { toast } = useToast();
   const [name, setName] = useState('');
@@ -33,10 +33,10 @@ const Register = () => {
     }
     
     try {
-      const { error } = await register(email, password, name);
+      const result = await signUp(email, password, name);
       
-      if (error) {
-        setError(error.message);
+      if (result.error) {
+        setError(result.error.message || 'Kayıt yapılamadı.');
       } else {
         toast({
           title: 'Kayıt başarılı',
@@ -45,7 +45,7 @@ const Register = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Beklenmeyen bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }

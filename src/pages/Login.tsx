@@ -1,6 +1,4 @@
 
-// Remove the Hero component and directly render the login form
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -27,10 +25,10 @@ const Login = () => {
     setError(null);
     
     try {
-      const { error } = await login(email, password);
+      const result = await login(email, password);
       
-      if (error) {
-        setError(error.message);
+      if (result.error) {
+        setError(result.error.message || 'Giriş yapılamadı.');
       } else {
         toast({
           title: 'Giriş başarılı',
@@ -39,7 +37,7 @@ const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Beklenmeyen bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }

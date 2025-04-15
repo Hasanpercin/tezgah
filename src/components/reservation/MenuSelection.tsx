@@ -1,19 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Check } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
-import { getFixedMenus } from '@/services/menuService';
-import { FixedMenuItem, MenuSelection } from './types/reservationTypes';
+import { getFixedMenus, FixedMenuItem } from '@/services/menuService';
+import { MenuSelectionData } from './types/reservationTypes';
 import ALaCarteMenu from './components/ALaCarteMenu';
 
 interface MenuSelectionProps {
-  value: MenuSelection;
-  onChange: (value: MenuSelection) => void;
-  guestCount: number;
+  value: MenuSelectionData;
+  onChange: (value: MenuSelectionData) => void;
+  guestCount: number | string;
 }
 
-const MenuSelection = ({ value, onChange, guestCount }: MenuSelectionProps) => {
+const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
   const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixedMenuItem | null>(null);
   
   const { data: fixedMenus, isLoading, isError } = useQuery({
@@ -163,7 +164,7 @@ const MenuSelection = ({ value, onChange, guestCount }: MenuSelectionProps) => {
             <p>Menüler yüklenirken bir hata oluştu.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {fixedMenus?.map((menu) => (
+              {fixedMenus && fixedMenus.map((menu) => (
                 <div 
                   key={menu.id}
                   className={`border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors ${selectedFixedMenu?.id === menu.id ? 'bg-accent text-accent-foreground' : ''}`}

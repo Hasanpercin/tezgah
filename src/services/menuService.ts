@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -17,6 +18,10 @@ export interface MenuItem {
   is_gluten_free?: boolean;
   is_spicy?: boolean;
   is_featured?: boolean;
+  menu_categories?: {
+    name: string;
+    id?: string;
+  };
 }
 
 export interface MenuCategory {
@@ -28,10 +33,19 @@ export interface MenuCategory {
   updated_at: string;
 }
 
+export interface FixedMenuItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  image_path?: string | null;
+  quantity?: number;
+}
+
 export const fetchMenuItems = async () => {
   const { data, error } = await supabase
     .from("menu_items")
-    .select("*")
+    .select("*, menu_categories(*)")
     .eq("is_in_stock", true)
     .order('display_order', { ascending: true });
     
@@ -117,4 +131,19 @@ export const seedMenuData = async () => {
   // This would be an admin function to seed menu data
   // Implementation depends on specific requirements
   return { success: true };
+};
+
+export const getFixedMenus = async () => {
+  const { data, error } = await supabase
+    .from("fixed_menu_packages")
+    .select("*")
+    .eq("is_active", true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Error fetching fixed menus:", error);
+    throw error;
+  }
+  
+  return data as FixedMenuItem[];
 };

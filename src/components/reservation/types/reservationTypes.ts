@@ -51,18 +51,18 @@ export interface MenuItem {
   };
 }
 
-export interface FixMenuOption {
-  id: string | number;
+export interface FixedMenuItem {
+  id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  image_path?: string;
+  image_path?: string | null;
   quantity?: number;
 }
 
-export interface MenuSelection {
+export interface MenuSelectionData {
   type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
-  selectedFixedMenu?: FixMenuOption | null;
+  selectedFixedMenu?: FixedMenuItem | null;
   selectedMenuItems?: MenuItem[];
 }
 
@@ -78,7 +78,7 @@ export interface ReservationState {
   selectedTable: Table | null;
   basicFormCompleted: boolean;
   formData: ReservationFormData;
-  menuSelection: MenuSelection;
+  menuSelection: MenuSelectionData;
   payment?: PaymentInfo;
 }
 
