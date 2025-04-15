@@ -1,6 +1,4 @@
 
-// Remove the Hero component and directly render the login form
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -12,12 +10,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const Login = () => {
-  const { login } = useAuth();
+const Register = () => {
+  const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,15 +26,21 @@ const Login = () => {
     setIsLoading(true);
     setError(null);
     
+    if (password !== confirmPassword) {
+      setError('Şifreler eşleşmiyor');
+      setIsLoading(false);
+      return;
+    }
+    
     try {
-      const { error } = await login(email, password);
+      const { error } = await register(email, password, name);
       
       if (error) {
         setError(error.message);
       } else {
         toast({
-          title: 'Giriş başarılı',
-          description: 'Hesabınıza başarıyla giriş yaptınız.',
+          title: 'Kayıt başarılı',
+          description: 'Hesabınız başarıyla oluşturuldu.',
         });
         navigate('/');
       }
@@ -50,9 +56,9 @@ const Login = () => {
       <div className="container max-w-md">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Giriş Yap</CardTitle>
+            <CardTitle className="text-2xl text-center">Kayıt Ol</CardTitle>
             <CardDescription className="text-center">
-              E-posta ve şifrenizi kullanarak giriş yapın
+              Yeni bir hesap oluşturun
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -63,6 +69,16 @@ const Login = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="name">Ad Soyad</Label>
+                <Input
+                  id="name"
+                  placeholder="Ad Soyad"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">E-posta</Label>
                 <Input
@@ -75,17 +91,22 @@ const Login = () => {
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Şifre</Label>
-                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                    Şifrenizi mi unuttunuz?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Şifre</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Şifre Tekrar</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
               </div>
@@ -99,16 +120,16 @@ const Login = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Giriş yapılıyor...
+                    Kayıt yapılıyor...
                   </>
                 ) : (
-                  'Giriş Yap'
+                  'Kayıt Ol'
                 )}
               </Button>
               <div className="text-center text-sm">
-                Hesabınız yok mu?{' '}
-                <Link to="/register" className="text-primary hover:underline">
-                  Kayıt ol
+                Zaten bir hesabınız var mı?{' '}
+                <Link to="/login" className="text-primary hover:underline">
+                  Giriş yap
                 </Link>
               </div>
             </CardFooter>
@@ -119,4 +140,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

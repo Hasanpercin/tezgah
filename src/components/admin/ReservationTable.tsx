@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,40 @@ type ReservationTableProps = {
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
+  const handleStatusChange = async (id: string, newStatus: ReservationStatus, reservation: Reservation) => {
+    try {
+      await onStatusChange(id, newStatus);
+      
+      if (reservation.email) {
+        const notificationData = {
+          type: 'reservation_status',
+          reservationId: id,
+          status: newStatus,
+          customerEmail: reservation.email,
+          customerName: reservation.name || 'Değerli Müşterimiz',
+          date: format(new Date(reservation.date), "dd.MM.yyyy"),
+          time: reservation.time,
+          guests: reservation.guests,
+          tableInfo: reservation.selected_table?.name || ''
+        };
+        
+        const response = await fetch('https://uvndgrbclfavulineazs.supabase.co/functions/v1/send-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        
+        if (!response.ok) {
+          console.error('Notification email failed to send');
+        }
+      }
+    } catch (error) {
+      console.error("Error updating reservation status:", error);
+    }
+  };
+
   if (!reservations.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -41,7 +74,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
     );
   }
 
-  // Helper function to get the appropriate badge style based on status
   const getBadgeStyle = (status: string) => {
     switch(status) {
       case "Onaylandı": 
@@ -54,7 +86,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
     }
   };
 
-  // Get menu selection type display
   const getMenuTypeDisplay = (type?: string): string => {
     switch (type) {
       case "fixed_menu":
@@ -187,7 +218,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                       <ScrollArea className="max-h-[70vh]">
                         <div className="space-y-6 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Guest Information */}
                             <div>
                               <h3 className="text-sm font-semibold mb-3">Misafir Bilgileri</h3>
                               <div className="space-y-3">
@@ -206,7 +236,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                               </div>
                             </div>
 
-                            {/* Reservation Details */}
                             <div>
                               <h3 className="text-sm font-semibold mb-3">Rezervasyon Detayları</h3>
                               <div className="space-y-3">
@@ -236,7 +265,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
 
                           <Separator />
 
-                          {/* Menu Selection */}
                           <div>
                             <h3 className="text-sm font-semibold mb-3">Menü Seçimi</h3>
                             {res.selected_items ? (
@@ -273,7 +301,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                             )}
                           </div>
 
-                          {/* Notes */}
                           <Separator />
                           <div>
                             <h3 className="text-sm font-semibold mb-2">Notlar</h3>
@@ -292,7 +319,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                             variant="destructive" 
                             size="sm"
                             onClick={() => {
-                              onStatusChange(res.id, "İptal");
+                              handleStatusChange(res.id, "İptal", res);
                               setSelectedReservation(null);
                             }}
                             className="flex-1 sm:flex-auto"
@@ -303,7 +330,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                             variant="default" 
                             size="sm"
                             onClick={() => {
-                              onStatusChange(res.id, "Onaylandı");
+                              handleStatusChange(res.id, "Onaylandı", res);
                               setSelectedReservation(null);
                             }}
                             className="flex-1 sm:flex-auto"
@@ -327,19 +354,19 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem 
-                        onClick={() => onStatusChange(res.id, "Onaylandı")}
+                        onClick={() => handleStatusChange(res.id, "Onaylandı", res)}
                         className="text-green-600"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" /> Onayla
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => onStatusChange(res.id, "Beklemede")}
+                        onClick={() => handleStatusChange(res.id, "Beklemede", res)}
                         className="text-yellow-600"
                       >
                         Beklet
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => onStatusChange(res.id, "İptal")}
+                        onClick={() => handleStatusChange(res.id, "İptal", res)}
                         className="text-red-600"
                       >
                         <XCircle className="mr-2 h-4 w-4" /> İptal Et

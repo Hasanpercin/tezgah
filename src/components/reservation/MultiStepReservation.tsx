@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -16,7 +15,6 @@ import { STEPS } from './types/reservationTypes';
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -49,7 +47,6 @@ const MultiStepReservation = () => {
   const [paymentEnabled, setPaymentEnabled] = useState(true);
   
   useEffect(() => {
-    // If the user is not authenticated, show a message and set the redirect flag
     if (!isAuthenticated) {
       toast({
         title: "Giriş Yapın",
@@ -60,7 +57,6 @@ const MultiStepReservation = () => {
     }
   }, [isAuthenticated, toast]);
   
-  // Fetch payment settings
   useEffect(() => {
     const fetchPaymentSettings = async () => {
       try {
@@ -92,11 +88,9 @@ const MultiStepReservation = () => {
     fetchPaymentSettings();
   }, []);
   
-  // Add loyalty points when reservation is completed
   const addLoyaltyPointsOnCompletion = async () => {
     if (currentStep === 4 && user) {
       try {
-        // Check if user has a loyalty points record
         const { data: loyaltyData } = await supabase
           .from('loyalty_points')
           .select('*')
@@ -104,26 +98,20 @@ const MultiStepReservation = () => {
           .single();
         
         if (loyaltyData) {
-          // Add points for completing a reservation
-          const pointsToAdd = 100; // Base points for reservation
-          
-          // Add extra points if they chose a menu in advance
+          const pointsToAdd = 100;
           const extraPoints = state.menuSelection.type !== 'at_restaurant' ? 50 : 0;
           const totalPoints = pointsToAdd + extraPoints;
           
-          // Update loyalty points
           await supabase
             .from('loyalty_points')
             .update({ 
               points: loyaltyData.points + totalPoints,
-              // Update level if needed (example logic)
               level: loyaltyData.points + totalPoints >= 500 ? 'Gümüş' : 
                      loyaltyData.points + totalPoints >= 1000 ? 'Altın' : 
                      'Bronz'
             })
             .eq('user_id', user.id);
           
-          // Add to point history
           await supabase
             .from('point_history')
             .insert({
@@ -163,7 +151,6 @@ const MultiStepReservation = () => {
     );
   }
   
-  // Calculate if payment step should be skipped based on settings and menu selection
   const shouldSkipPaymentStep = state.menuSelection.type === 'at_restaurant' || !paymentEnabled;
   
   return (

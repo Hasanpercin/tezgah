@@ -29,7 +29,9 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
     if (currentStep === 0) return isMobile ? "Masa" : "Masa Seç";
     if (currentStep === 1) return isMobile ? "Menü" : "Menü Seç";
     if (currentStep === 2) {
-      return isSkippingPayment ? "Tamamla" : (isMobile ? "Ödeme" : "Ödemeye Geç");
+      // If payment is disabled or we're selecting menu at restaurant
+      if (isSkippingPayment) return "Tamamla";
+      return isMobile ? "Ödeme" : "Tamamla";
     }
     return "İleri";
   };
