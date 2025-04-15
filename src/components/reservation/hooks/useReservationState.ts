@@ -6,7 +6,7 @@ import {
   Table, 
   ReservationFormData, 
   ReservationState,
-  MenuSelection,
+  MenuSelectionData as MenuSelection,  // Fixing the import
   PaymentInfo
 } from '../types/reservationTypes';
 import { MenuItem } from '@/services/menuService';

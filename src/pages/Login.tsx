@@ -28,7 +28,8 @@ const Login = () => {
       const result = await login(email, password);
       
       if (result.error) {
-        setError(result.error.message || 'Giriş yapılamadı.');
+        // Fix accessing message property on string by checking its type first
+        setError(typeof result.error === 'string' ? result.error : result.error.message || 'Giriş yapılamadı.');
       } else {
         toast({
           title: 'Giriş başarılı',

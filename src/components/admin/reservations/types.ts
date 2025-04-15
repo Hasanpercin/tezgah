@@ -27,6 +27,12 @@ export interface Reservation {
   notes?: string;
   occasion?: string;
   selected_items?: SelectedItems;
+  selected_table?: {
+    id: string;
+    name?: string;
+    type?: string;
+    size?: number;
+  };
   has_prepayment?: boolean;
   total_amount?: number;
   created_at: string;

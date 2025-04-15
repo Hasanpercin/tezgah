@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -11,7 +10,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Register = () => {
-  const { signUp } = useAuth(); // Changed from register to signUp to match context
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [name, setName] = useState('');
@@ -33,7 +32,7 @@ const Register = () => {
     }
     
     try {
-      const result = await signUp(email, password, name);
+      const result = await signup(email, password, name);
       
       if (result.error) {
         setError(result.error.message || 'Kayıt yapılamadı.');

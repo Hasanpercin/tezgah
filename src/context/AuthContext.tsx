@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -9,8 +8,9 @@ type AuthContextType = {
   profile: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
+  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: any }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
 };
@@ -32,12 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Auth durumu değiştiğinde tetiklenecek fonksiyon
     const handleAuthChange = async (newSession: Session | null) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
-      // Kullanıcı varsa profilini yükle
       if (newSession?.user) {
         await fetchProfile(newSession.user.id);
       } else {
@@ -47,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     };
 
-    // Mevcut oturumu kontrol et
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -58,24 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Auth durum değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
-        // setTimeout kullanarak diğer Supabase çağrılarını erteliyoruz
         setTimeout(() => handleAuthChange(newSession), 0);
       }
     );
 
-    // İlk yükleme kontrolü
     checkSession();
 
-    // Temizleme işlevi
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
 
-  // Kullanıcı profilini getir
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -95,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Giriş yap
   const login = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -117,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Kayıt ol
   const signup = async (email: string, password: string, name: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -142,7 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Çıkış yap
+  const signUp = signup;
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -154,7 +145,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Profil güncelle
   const updateProfile = async (data: Partial<UserProfile>) => {
     try {
       if (!user) throw new Error('Kullanıcı oturum açmış değil');
@@ -169,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // Güncellenmiş profili yeniden yükle
       await fetchProfile(user.id);
       
       return { success: true };
@@ -190,7 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated: !!user, 
       login,
-      signup, 
+      signup,
+      signUp,
       logout,
       updateProfile
     }}>
