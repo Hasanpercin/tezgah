@@ -22,14 +22,14 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const isLastStep = currentStep === STEPS.length - 2; // Payment is the last interactive step
-  const isRestaurantSelection = menuSelectionType === 'at_restaurant' && currentStep === 2;
+  const isSkippingPayment = menuSelectionType === 'at_restaurant' && currentStep === 2;
   
   const getNextButtonText = () => {
     if (isLastStep) return "Tamamla";
     if (currentStep === 0) return isMobile ? "Masa" : "Masa Seç";
     if (currentStep === 1) return isMobile ? "Menü" : "Menü Seç";
     if (currentStep === 2) {
-      return isRestaurantSelection ? "Tamamla" : (isMobile ? "Ödeme" : "Ödemeye Geç");
+      return isSkippingPayment ? "Tamamla" : (isMobile ? "Ödeme" : "Ödemeye Geç");
     }
     return "İleri";
   };

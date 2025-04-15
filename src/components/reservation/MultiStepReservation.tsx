@@ -46,6 +46,7 @@ const MultiStepReservation = () => {
   } = useReservationState();
   
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [paymentEnabled, setPaymentEnabled] = useState(true);
   
   useEffect(() => {
     // If the user is not authenticated, show a message and set the redirect flag
@@ -58,6 +59,38 @@ const MultiStepReservation = () => {
       setShouldRedirect(true);
     }
   }, [isAuthenticated, toast]);
+  
+  // Fetch payment settings
+  useEffect(() => {
+    const fetchPaymentSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('website_content')
+          .select('value')
+          .eq('section', 'payment')
+          .eq('key', 'payment_settings')
+          .single();
+          
+        if (error) {
+          console.error("Error fetching payment settings:", error);
+          return;
+        }
+        
+        if (data && data.value) {
+          try {
+            const settings = JSON.parse(data.value);
+            setPaymentEnabled(settings.enable_payment_step);
+          } catch (parseError) {
+            console.error("Error parsing payment settings:", parseError);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching payment settings:", error);
+      }
+    };
+    
+    fetchPaymentSettings();
+  }, []);
   
   // Add loyalty points when reservation is completed
   const addLoyaltyPointsOnCompletion = async () => {
@@ -130,13 +163,16 @@ const MultiStepReservation = () => {
     );
   }
   
+  // Calculate if payment step should be skipped based on settings and menu selection
+  const shouldSkipPaymentStep = state.menuSelection.type === 'at_restaurant' || !paymentEnabled;
+  
   return (
     <QueryClientProvider client={queryClient}>
       <div ref={containerRef} className="space-y-6" data-reservation-step>
         <StepIndicator 
           currentStep={currentStep} 
           steps={STEPS}
-          skipStep={state.menuSelection.type === 'at_restaurant' ? 3 : undefined}
+          skipStep={shouldSkipPaymentStep ? 3 : undefined}
         />
         
         <Card className={`${isMobile ? 'p-4' : 'p-6'} overflow-x-hidden`}>
@@ -163,7 +199,7 @@ const MultiStepReservation = () => {
               />
             )}
             
-            {currentStep === 3 && state.menuSelection.type !== 'at_restaurant' && (
+            {currentStep === 3 && paymentEnabled && state.menuSelection.type !== 'at_restaurant' && (
               <PaymentStep 
                 reservation={state}
                 onPaymentComplete={setPaymentComplete}
@@ -178,7 +214,7 @@ const MultiStepReservation = () => {
           {currentStep < STEPS.length - 1 && (
             <NavigationButtons
               currentStep={currentStep}
-              onNext={currentStep === 2 && state.menuSelection.type === 'at_restaurant' ? skipPaymentStep : handleNextStep}
+              onNext={currentStep === 2 && shouldSkipPaymentStep ? skipPaymentStep : handleNextStep}
               onPrev={handlePrevStep}
               canProceed={!!canProceed()}
               menuSelectionType={state.menuSelection.type}
