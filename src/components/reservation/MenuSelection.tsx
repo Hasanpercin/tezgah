@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { toast } from '@/hooks/use-toast';
 
 interface MenuSelectionProps {
   value: MenuSelectionData;
@@ -27,6 +29,21 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   });
   
   useEffect(() => {
+    console.log('MenuSelection mounted, fetching fixed menus...');
+    console.log('Current value:', value);
+    
+    if (isError) {
+      console.error('Error fetching fixed menus');
+      toast({
+        title: "Menü Seçenekleri Yüklenemedi",
+        description: "Menü seçeneklerini yüklerken bir hata oluştu. Lütfen tekrar deneyin.",
+        variant: "destructive"
+      });
+    }
+  }, [isError]);
+
+  useEffect(() => {
+    // Initialize selectedMenuTypes based on the current value
     const types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[] = [];
     if (value.type === 'at_restaurant') {
       types.push('at_restaurant');
@@ -38,8 +55,15 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
         types.push('a_la_carte');
       }
     }
+    
+    // If no type is selected, default to at_restaurant
+    if (types.length === 0 && !value.type) {
+      types.push('at_restaurant');
+    }
+    
     setSelectedMenuTypes(types);
     
+    // Initialize selectedFixedMenus
     if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
       setSelectedFixedMenus(value.selectedFixedMenus.map(item => ({
         menu: item.menu,
@@ -48,6 +72,9 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     } else {
       setSelectedFixedMenus([]);
     }
+    
+    console.log('Initialized selectedMenuTypes:', types);
+    console.log('Initialized selectedFixedMenus:', selectedFixedMenus);
   }, [value]);
 
   const handleMenuTypeChange = (type: string, checked: boolean) => {
@@ -68,6 +95,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       newTypes = newTypes.filter(t => t !== type);
     }
     
+    console.log('Menu type change:', type, checked, 'New types:', newTypes);
     setSelectedMenuTypes(newTypes);
     
     updateParentWithCurrentSelections(newTypes);
@@ -146,6 +174,16 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       return total + (price * item.quantity);
     }, 0);
   };
+
+  // Debugging 
+  console.log('Rendering MenuSelection with:', { 
+    fixedMenus, 
+    value, 
+    selectedMenuTypes, 
+    selectedFixedMenus,
+    isLoading,
+    isError
+  });
 
   return (
     <div className="space-y-8">
@@ -346,55 +384,61 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
               
               <ScrollArea className="max-h-[450px] pr-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {fixedMenus && fixedMenus.map((menu) => (
-                    <Card 
-                      key={menu.id}
-                      className={`overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md ${
-                        selectedFixedMenus.some(item => item.menu.id === menu.id)
-                          ? 'ring-2 ring-primary ring-offset-2' 
-                          : 'hover:border-primary/50'
-                      }`}
-                      onClick={() => handleFixedMenuSelect(menu)}
-                    >
-                      <div className="relative">
-                        {menu.image_path && (
-                          <div 
-                            className="h-40 w-full bg-cover bg-center" 
-                            style={{ backgroundImage: `url(${menu.image_path})` }}
-                          />
-                        )}
-                        {!menu.image_path && (
-                          <div className="h-40 w-full bg-muted/50 flex items-center justify-center">
-                            <ChefHat size={48} className="text-muted-foreground/40" />
-                          </div>
-                        )}
-                        {selectedFixedMenus.some(item => item.menu.id === menu.id) && (
-                          <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
-                            {selectedFixedMenus.find(item => item.menu.id === menu.id)?.quantity || 0} adet
-                          </div>
-                        )}
-                      </div>
-                      
-                      <CardContent className="p-4">
-                        <h5 className="text-lg font-medium mb-1">{menu.name}</h5>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{menu.description}</p>
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold text-primary">{menu.price} ₺</span>
-                          <Button 
-                            variant={selectedFixedMenus.some(item => item.menu.id === menu.id) ? "default" : "outline"}
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFixedMenuSelect(menu);
-                            }}
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            {selectedFixedMenus.some(item => item.menu.id === menu.id) ? 'Ekle' : 'Seç'}
-                          </Button>
+                  {fixedMenus && fixedMenus.length > 0 ? (
+                    fixedMenus.map((menu) => (
+                      <Card 
+                        key={menu.id}
+                        className={`overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md ${
+                          selectedFixedMenus.some(item => item.menu.id === menu.id)
+                            ? 'ring-2 ring-primary ring-offset-2' 
+                            : 'hover:border-primary/50'
+                        }`}
+                        onClick={() => handleFixedMenuSelect(menu)}
+                      >
+                        <div className="relative">
+                          {menu.image_path && (
+                            <div 
+                              className="h-40 w-full bg-cover bg-center" 
+                              style={{ backgroundImage: `url(${menu.image_path})` }}
+                            />
+                          )}
+                          {!menu.image_path && (
+                            <div className="h-40 w-full bg-muted/50 flex items-center justify-center">
+                              <ChefHat size={48} className="text-muted-foreground/40" />
+                            </div>
+                          )}
+                          {selectedFixedMenus.some(item => item.menu.id === menu.id) && (
+                            <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
+                              {selectedFixedMenus.find(item => item.menu.id === menu.id)?.quantity || 0} adet
+                            </div>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        
+                        <CardContent className="p-4">
+                          <h5 className="text-lg font-medium mb-1">{menu.name}</h5>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{menu.description}</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-lg font-semibold text-primary">{menu.price} ₺</span>
+                            <Button 
+                              variant={selectedFixedMenus.some(item => item.menu.id === menu.id) ? "default" : "outline"}
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFixedMenuSelect(menu);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              {selectedFixedMenus.some(item => item.menu.id === menu.id) ? 'Ekle' : 'Seç'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center p-8">
+                      <p className="text-muted-foreground">Hiç fix menü bulunamadı.</p>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </>

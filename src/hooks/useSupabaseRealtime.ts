@@ -29,9 +29,8 @@ export const useSupabaseRealtime = ({
     const channel = supabase
       .channel(`${table}-changes`)
       .on(
-        'postgres_changes', 
-        // TypeScript hatası için aşağıdaki satırı değiştiriyoruz
-        { event, schema, table, filter } as any, 
+        'postgres_changes',
+        { event, schema, table, filter },
         (payload) => {
           console.log('Realtime change detected:', payload);
           setPayload(payload as ChangePayload);

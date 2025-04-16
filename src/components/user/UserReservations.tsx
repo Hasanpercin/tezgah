@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ChevronDown, ChevronUp, Calendar, Clock, Users, XCircle, Utensils } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 import {
   Dialog,
   DialogContent,
@@ -39,37 +40,52 @@ const UserReservations = () => {
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const [cancelReservationId, setCancelReservationId] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  
+  // Use Supabase realtime to listen for changes to reservations
+  const { payload } = useSupabaseRealtime({
+    table: 'reservations',
+    event: '*',
+    filter: user ? `user_id=eq.${user.id}` : undefined,
+  });
 
   // Fetch user reservations
+  const fetchReservations = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+      setReservations(data || []);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+      toast({
+        title: 'Hata',
+        description: 'Rezervasyonlar yüklenirken bir hata oluştu.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchReservations = async () => {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('reservations')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date', { ascending: true })
-          .order('time', { ascending: true });
-
-        if (error) throw error;
-        setReservations(data || []);
-      } catch (error) {
-        console.error('Error fetching reservations:', error);
-        toast({
-          title: 'Hata',
-          description: 'Rezervasyonlar yüklenirken bir hata oluştu.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReservations();
   }, [user, toast]);
+  
+  // Refresh when realtime updates are received
+  useEffect(() => {
+    if (payload) {
+      console.log("Received realtime update for reservations:", payload);
+      fetchReservations();
+    }
+  }, [payload]);
 
   const toggleDetails = (id: string) => {
     setExpandedDetails(expandedDetails === id ? null : id);
@@ -91,11 +107,6 @@ const UserReservations = () => {
         
       if (error) throw error;
       
-      // Update local state
-      setReservations(reservations.map(res => 
-        res.id === cancelReservationId ? { ...res, status: 'İptal' } : res
-      ));
-      
       toast({
         title: 'Rezervasyon İptal Edildi',
         description: 'Rezervasyonunuz başarıyla iptal edilmiştir.',
@@ -103,6 +114,10 @@ const UserReservations = () => {
       
       setCancelDialogOpen(false);
       setCancelReservationId(null);
+      
+      // Refresh reservations after cancellation
+      fetchReservations();
+      
     } catch (error) {
       console.error('Error canceling reservation:', error);
       toast({

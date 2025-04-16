@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -134,16 +133,24 @@ export const seedMenuData = async () => {
 };
 
 export const getFixedMenus = async () => {
-  const { data, error } = await supabase
-    .from("fixed_menu_packages")
-    .select("*")
-    .eq("is_active", true)
-    .order('created_at', { ascending: false });
+  try {
+    console.log("Fetching fixed menus from Supabase...");
+    
+    const { data, error } = await supabase
+      .from("fixed_menu_packages")
+      .select("*")
+      .eq("is_active", true)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error("Error fetching fixed menus:", error);
+    if (error) {
+      console.error("Error fetching fixed menus:", error);
+      throw error;
+    }
+    
+    console.log(`Fetched ${data?.length || 0} fixed menus`);
+    return data as FixedMenuItem[];
+  } catch (error) {
+    console.error("Exception while fetching fixed menus:", error);
     throw error;
   }
-  
-  return data as FixedMenuItem[];
 };
