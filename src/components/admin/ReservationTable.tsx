@@ -37,27 +37,27 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
   
-  const handleStatusChange = async (id: string, newStatus: ReservationStatus, reservation: Reservation) => {
+  const handleStatusChange = async (id: string, newStatus: ReservationStatus) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('reservations')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()  // Explicitly update timestamp
         })
-        .eq('id', id)
-        .select();
+        .eq('id', id);
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        onStatusChange(id, newStatus);
-        
-        toast({
-          title: 'Başarılı',
-          description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : 'iptal edildi'}.`,
-        });
-      }
+      // Call the onStatusChange callback to update the UI
+      onStatusChange(id, newStatus);
+      
+      toast({
+        title: 'Başarılı',
+        description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : newStatus === 'İptal' ? 'iptal edildi' : 'beklemede olarak güncellendi'}.`,
+      });
+      
+      setDialogOpen(false);
     } catch (error) {
       console.error("Error updating reservation status:", error);
       
@@ -66,8 +66,6 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
         description: 'Rezervasyon durumu güncellenirken bir hata oluştu.',
         variant: 'destructive',
       });
-    } finally {
-      setDialogOpen(false);
     }
   };
 
@@ -97,6 +95,8 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
         return "Fix Menü";
       case "a_la_carte":
         return "A La Carte";
+      case "mixed":
+        return "Karışık Seçim";
       case "at_restaurant":
         return "Restoranda Seçim";
       default:
@@ -287,11 +287,13 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                                 </Badge>
                               </p>
                               
-                              {res.selected_items.menuSelectionType === "fixed_menu" && res.selected_items.fixedMenuId && (
+                              {(res.selected_items.menuSelectionType === "fixed_menu" || res.selected_items.menuSelectionType === "mixed") && 
+                               res.selected_items.fixedMenuId && (
                                 <p>Fix menü seçildi (ID: {res.selected_items.fixedMenuId})</p>
                               )}
                               
-                              {res.selected_items.menuSelectionType === "a_la_carte" && res.selected_items.items?.length > 0 && (
+                              {(res.selected_items.menuSelectionType === "a_la_carte" || res.selected_items.menuSelectionType === "mixed") && 
+                               res.selected_items.items?.length > 0 && (
                                 <div>
                                   <p className="mb-1 text-sm">Seçilen ürünler:</p>
                                   <ul className="list-disc list-inside text-sm">
@@ -330,7 +332,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                         <Button 
                           variant="destructive" 
                           size="sm"
-                          onClick={() => handleStatusChange(res.id, "İptal", res)}
+                          onClick={() => handleStatusChange(res.id, "İptal")}
                           className="flex-1 sm:flex-auto"
                         >
                           <XCircle className="mr-2 h-4 w-4" /> İptal Et
@@ -338,7 +340,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                         <Button 
                           variant="default" 
                           size="sm"
-                          onClick={() => handleStatusChange(res.id, "Onaylandı", res)}
+                          onClick={() => handleStatusChange(res.id, "Onaylandı")}
                           className="flex-1 sm:flex-auto"
                         >
                           <CheckCircle className="mr-2 h-4 w-4" /> Onayla
@@ -360,19 +362,19 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem 
-                      onClick={() => handleStatusChange(res.id, "Onaylandı", res)}
+                      onClick={() => handleStatusChange(res.id, "Onaylandı")}
                       className="text-green-600"
                     >
                       <CheckCircle className="mr-2 h-4 w-4" /> Onayla
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => handleStatusChange(res.id, "Beklemede", res)}
+                      onClick={() => handleStatusChange(res.id, "Beklemede")}
                       className="text-yellow-600"
                     >
                       Beklet
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => handleStatusChange(res.id, "İptal", res)}
+                      onClick={() => handleStatusChange(res.id, "İptal")}
                       className="text-red-600"
                     >
                       <XCircle className="mr-2 h-4 w-4" /> İptal Et

@@ -60,9 +60,15 @@ export interface FixedMenuItem {
   quantity?: number;
 }
 
+export interface FixedMenuSelection {
+  menu: FixedMenuItem;
+  quantity: number;
+}
+
 export interface MenuSelectionData {
-  type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
-  selectedFixedMenu?: FixedMenuItem | null;
+  type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant' | 'mixed';
+  selectedFixedMenu?: FixedMenuItem | null; // Kept for backward compatibility
+  selectedFixedMenus?: FixedMenuSelection[];
   selectedMenuItems?: MenuItem[];
 }
 
