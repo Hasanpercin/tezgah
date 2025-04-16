@@ -3,8 +3,10 @@ import { ChefHat, CakeSlice, FileText } from 'lucide-react';
 import SelectionCard from './SelectionCard';
 import { useEffect } from 'react';
 
+type MenuType = 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
+
 interface MenuTypeSelectionProps {
-  selectedMenuTypes: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[];
+  selectedMenuTypes: MenuType[];
   onMenuTypeChange: (type: string, checked: boolean) => void;
 }
 

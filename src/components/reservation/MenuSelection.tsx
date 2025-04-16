@@ -18,13 +18,15 @@ interface MenuSelectionProps {
   guestCount: number | string;
 }
 
+type MenuType = 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
+
 const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
   const { toast } = useToast();
-  const [selectedMenuTypes, setSelectedMenuTypes] = useState<('fixed_menu' | 'a_la_carte' | 'at_restaurant')[]>(
+  const [selectedMenuTypes, setSelectedMenuTypes] = useState<MenuType[]>(
     value?.type ? (
       value.type === 'mixed' 
         ? ['fixed_menu', 'a_la_carte'] 
-        : [value.type]
+        : [value.type as MenuType]
     ) : ['at_restaurant']
   );
   
@@ -52,7 +54,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     }
     
     // Menü tiplerini başlat
-    let types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[] = [];
+    let types: MenuType[] = [];
     if (value.type === 'at_restaurant') {
       types = ['at_restaurant'];
     } 
@@ -68,8 +70,10 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
         types = ['at_restaurant'];
       }
     }
-    else {
-      types = [value.type];
+    else if (value.type) {
+      types = [value.type as MenuType];
+    } else {
+      types = ['at_restaurant'];
     }
     
     setSelectedMenuTypes(types);
@@ -100,13 +104,13 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     
     if (checked) {
       if (type === 'at_restaurant') {
-        newTypes = ['at_restaurant'];
+        newTypes = ['at_restaurant' as MenuType];
         handleClearSelections();
       } else {
         newTypes = newTypes.filter(t => t !== 'at_restaurant');
         
-        if (!newTypes.includes(type as any)) {
-          newTypes.push(type as any);
+        if (!newTypes.includes(type as MenuType)) {
+          newTypes.push(type as MenuType);
         }
       }
     } else {
@@ -114,7 +118,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       
       // Eğer hiç tip seçili değilse, restoran seçeneğini varsayılan olarak ayarla
       if (newTypes.length === 0) {
-        newTypes = ['at_restaurant'];
+        newTypes = ['at_restaurant' as MenuType];
         handleClearSelections();
       }
     }
@@ -134,7 +138,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     setSelectedFixedMenus([]);
   };
   
-  const updateParentWithCurrentSelections = (types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[]) => {
+  const updateParentWithCurrentSelections = (types: MenuType[]) => {
     if (!onChange || typeof onChange !== 'function') {
       console.error('onChange is not a function in updateParentWithCurrentSelections');
       return;
@@ -171,7 +175,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     }
     
     if (typeof onChange === 'function') {
-      const newTypes = selectedMenuTypes.includes('fixed_menu') ? selectedMenuTypes : [...selectedMenuTypes, 'fixed_menu'];
+      const newTypes = selectedMenuTypes.includes('fixed_menu') ? selectedMenuTypes : [...selectedMenuTypes, 'fixed_menu' as MenuType];
       setSelectedMenuTypes(newTypes);
       updateParentWithCurrentSelections(newTypes);
     }
@@ -185,7 +189,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       // Eğer hiç fix menü kalmadıysa ve a la carte de seçili değilse, restoran seçeneğini seç
       let newTypes = [...selectedMenuTypes];
       if (newSelectedMenus.length === 0 && !selectedMenuTypes.includes('a_la_carte')) {
-        newTypes = ['at_restaurant'];
+        newTypes = ['at_restaurant' as MenuType];
       }
       updateParentWithCurrentSelections(newTypes);
     }
@@ -215,7 +219,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       // A La Carte seçildiğinde menü tipi olarak eklenmemişse ekle
       let newTypes = selectedMenuTypes;
       if (!selectedMenuTypes.includes('a_la_carte')) {
-        newTypes = [...selectedMenuTypes.filter(t => t !== 'at_restaurant'), 'a_la_carte'];
+        newTypes = [...selectedMenuTypes.filter(t => t !== 'at_restaurant'), 'a_la_carte' as MenuType];
         setSelectedMenuTypes(newTypes);
       }
       
