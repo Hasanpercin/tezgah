@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -42,7 +41,9 @@ const MultiStepReservation = () => {
     setSelectedTable,
     setMenuSelection,
     setPaymentComplete,
-    skipPaymentStep
+    skipPaymentStep,
+    setFormData,
+    setBasicFormCompleted
   } = useReservationState();
   
   const [shouldRedirect, setShouldRedirect] = useState(false);
@@ -58,6 +59,28 @@ const MultiStepReservation = () => {
       setShouldRedirect(true);
     }
   }, [isAuthenticated, toast]);
+  
+  useEffect(() => {
+    const handleReservationCompleted = (event: any) => {
+      const { formData, reservationId } = event.detail;
+      console.log("Reservation completed event detected:", formData, reservationId);
+      
+      if (formData) {
+        setFormData(formData);
+        setBasicFormCompleted(true);
+        handleNextStep();
+      }
+    };
+    
+    const elem = containerRef.current;
+    if (elem) {
+      elem.addEventListener('reservationCompleted', handleReservationCompleted);
+      
+      return () => {
+        elem.removeEventListener('reservationCompleted', handleReservationCompleted);
+      };
+    }
+  }, [containerRef, setFormData, setBasicFormCompleted, handleNextStep]);
   
   useEffect(() => {
     const fetchPaymentSettings = async () => {

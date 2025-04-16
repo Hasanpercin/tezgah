@@ -233,21 +233,8 @@ export const useReservationState = () => {
     currentStep,
     containerRef,
     state,
-    setFormData: (data: Partial<FormData>) => {
-      setState((prevState) => ({
-        ...prevState,
-        formData: {
-          ...prevState.formData,
-          ...data
-        }
-      }));
-    },
-    setBasicFormCompleted: (completed: boolean) => {
-      setState((prevState) => ({
-        ...prevState,
-        basicFormCompleted: completed
-      }));
-    },
+    setFormData,
+    setBasicFormCompleted,
     canProceed,
     handleNextStep,
     handlePrevStep,
