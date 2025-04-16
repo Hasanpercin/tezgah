@@ -28,13 +28,9 @@ export const useSupabaseRealtime = ({
     // Create a channel for the specific table changes
     const channel = supabase
       .channel(`${table}-changes`)
-      .on('postgres_changes', // This is the event type
-        { 
-          event, 
-          schema, 
-          table,
-          filter 
-        }, 
+      .on(
+        'postgres_changes', 
+        { event, schema, table, filter }, 
         (payload) => {
           console.log('Realtime change detected:', payload);
           setPayload(payload as ChangePayload);
