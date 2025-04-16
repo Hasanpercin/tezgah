@@ -1,23 +1,39 @@
 
 import React from 'react';
-import { ReservationState } from '../types/reservationTypes';
+import { ReservationState, PaymentInfo } from '../types/reservationTypes';
 import PaymentForm from '@/components/payments/PaymentForm';
 
 interface PaymentStepProps {
   reservation: ReservationState;
-  onPaymentComplete: (transactionId: string) => void;
+  onPaymentComplete: (paymentInfo: PaymentInfo) => void;
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({ reservation, onPaymentComplete }) => {
   // Calculate the subtotal based on selection type
   const calculateSubtotal = () => {
-    if (reservation.menuSelection.type === 'fixed_menu' && reservation.menuSelection.selectedFixedMenu) {
-      const quantity = reservation.menuSelection.selectedFixedMenu.quantity || parseInt(reservation.formData.guests);
-      return reservation.menuSelection.selectedFixedMenu.price * quantity;
+    if (reservation.menuSelection.type === 'fixed_menu' && reservation.menuSelection.selectedFixedMenus && reservation.menuSelection.selectedFixedMenus.length > 0) {
+      return reservation.menuSelection.selectedFixedMenus.reduce((sum, item) => {
+        return sum + (item.menu.price * item.quantity);
+      }, 0);
     } else if (reservation.menuSelection.type === 'a_la_carte' && reservation.menuSelection.selectedMenuItems) {
       return reservation.menuSelection.selectedMenuItems.reduce((sum, item) => {
         return sum + (item.price * (item.quantity || 1));
       }, 0);
+    } else if (reservation.menuSelection.type === 'mixed') {
+      let total = 0;
+      // Add fixed menu items
+      if (reservation.menuSelection.selectedFixedMenus && reservation.menuSelection.selectedFixedMenus.length > 0) {
+        total += reservation.menuSelection.selectedFixedMenus.reduce((sum, item) => {
+          return sum + (item.menu.price * item.quantity);
+        }, 0);
+      }
+      // Add a la carte items
+      if (reservation.menuSelection.selectedMenuItems && reservation.menuSelection.selectedMenuItems.length > 0) {
+        total += reservation.menuSelection.selectedMenuItems.reduce((sum, item) => {
+          return sum + (item.price * (item.quantity || 1));
+        }, 0);
+      }
+      return total;
     }
     return 0;
   };
@@ -37,7 +53,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ reservation, onPaymentComplet
   const total = subtotal - discount.amount;
 
   const handlePaymentSuccess = (transactionId: string) => {
-    onPaymentComplete(transactionId);
+    onPaymentComplete({
+      transactionId,
+      isPaid: true,
+      amount: total,
+      discountPercentage: discount.percentage,
+      discountAmount: discount.amount
+    });
   };
 
   return (
@@ -52,14 +74,24 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ reservation, onPaymentComplet
           <p><span className="font-medium">Saat:</span> {reservation.formData.time}</p>
           <p><span className="font-medium">Kişi Sayısı:</span> {reservation.formData.guests}</p>
           
-          {reservation.menuSelection.type === 'fixed_menu' && reservation.menuSelection.selectedFixedMenu && (
-            <p>
-              <span className="font-medium">Menü:</span> {reservation.menuSelection.selectedFixedMenu.name} x 
-              {reservation.menuSelection.selectedFixedMenu.quantity || reservation.formData.guests}
-            </p>
+          {(reservation.menuSelection.type === 'fixed_menu' || reservation.menuSelection.type === 'mixed') && 
+           reservation.menuSelection.selectedFixedMenus && 
+           reservation.menuSelection.selectedFixedMenus.length > 0 && (
+            <div>
+              <span className="font-medium">Seçilen Menüler:</span>
+              <ul className="list-disc list-inside pl-2">
+                {reservation.menuSelection.selectedFixedMenus.map((item, index) => (
+                  <li key={`fixed-${index}`}>
+                    {item.menu.name} x {item.quantity}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           
-          {reservation.menuSelection.type === 'a_la_carte' && reservation.menuSelection.selectedMenuItems && (
+          {(reservation.menuSelection.type === 'a_la_carte' || reservation.menuSelection.type === 'mixed') && 
+           reservation.menuSelection.selectedMenuItems && 
+           reservation.menuSelection.selectedMenuItems.length > 0 && (
             <div>
               <span className="font-medium">Seçilen Yemekler:</span>
               <ul className="list-disc list-inside pl-2">
