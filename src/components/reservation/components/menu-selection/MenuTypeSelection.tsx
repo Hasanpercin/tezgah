@@ -9,9 +9,10 @@ interface MenuTypeSelectionProps {
 }
 
 const MenuTypeSelection = ({ selectedMenuTypes, onMenuTypeChange }: MenuTypeSelectionProps) => {
-  // Eğer hiç bir seçenek seçilmemişse, varsayılan olarak restoranda seçimi aktif et
+  // Ensure we have a valid onMenuTypeChange function before using it
   useEffect(() => {
-    if (selectedMenuTypes.length === 0) {
+    if (selectedMenuTypes.length === 0 && typeof onMenuTypeChange === 'function') {
+      console.log('No menu type selected, defaulting to restaurant');
       onMenuTypeChange('at_restaurant', true);
     }
   }, [selectedMenuTypes.length, onMenuTypeChange]);
@@ -26,7 +27,11 @@ const MenuTypeSelection = ({ selectedMenuTypes, onMenuTypeChange }: MenuTypeSele
           discount="%10 İndirim"
           description="Şefimizin özel olarak hazırladığı fix menülerden seçebilirsiniz."
           isSelected={selectedMenuTypes.includes('fixed_menu')}
-          onChange={(checked) => onMenuTypeChange('fixed_menu', checked)}
+          onChange={(checked) => {
+            if (typeof onMenuTypeChange === 'function') {
+              onMenuTypeChange('fixed_menu', checked);
+            }
+          }}
         />
         
         <SelectionCard
@@ -36,7 +41,11 @@ const MenuTypeSelection = ({ selectedMenuTypes, onMenuTypeChange }: MenuTypeSele
           discount="%10 İndirim"
           description="Menümüzden dilediğiniz yemekleri seçerek kişiselleştirilmiş bir deneyim yaşayabilirsiniz."
           isSelected={selectedMenuTypes.includes('a_la_carte')}
-          onChange={(checked) => onMenuTypeChange('a_la_carte', checked)}
+          onChange={(checked) => {
+            if (typeof onMenuTypeChange === 'function') {
+              onMenuTypeChange('a_la_carte', checked);
+            }
+          }}
         />
         
         <SelectionCard
@@ -45,7 +54,11 @@ const MenuTypeSelection = ({ selectedMenuTypes, onMenuTypeChange }: MenuTypeSele
           title="Restoranda Seçim"
           description="Siparişinizi restoranda vermeyi tercih edebilirsiniz. Bu durumda önden indirim uygulanmaz."
           isSelected={selectedMenuTypes.includes('at_restaurant')}
-          onChange={(checked) => onMenuTypeChange('at_restaurant', checked)}
+          onChange={(checked) => {
+            if (typeof onMenuTypeChange === 'function') {
+              onMenuTypeChange('at_restaurant', checked);
+            }
+          }}
         />
       </div>
     </div>

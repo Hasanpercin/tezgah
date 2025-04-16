@@ -5,6 +5,7 @@ import { FormData, FormError } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
+import { MenuSelectionData } from './types/reservationTypes';
 
 export const useReservationForm = () => {
   const { toast } = useToast();
@@ -19,6 +20,12 @@ export const useReservationForm = () => {
     guests: '2',
     occasion: '',
     notes: '',
+  });
+  
+  const [menuSelection, setMenuSelection] = useState<MenuSelectionData>({
+    type: 'at_restaurant',
+    selectedFixedMenus: [],
+    selectedMenuItems: []
   });
   
   const [errors, setErrors] = useState<FormError>({});
@@ -97,6 +104,11 @@ export const useReservationForm = () => {
         date: undefined,
       });
     }
+  };
+  
+  const handleMenuSelectionChange = (value: MenuSelectionData) => {
+    console.log('Menu selection changed:', value);
+    setMenuSelection(value);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,9 +217,11 @@ export const useReservationForm = () => {
     formData,
     errors,
     isSubmitting,
+    menuSelection,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
     handleSubmit,
+    handleMenuSelectionChange,
   };
 };

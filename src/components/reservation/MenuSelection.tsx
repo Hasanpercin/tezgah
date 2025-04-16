@@ -40,6 +40,14 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   }, [isError]);
 
   useEffect(() => {
+    // Make sure value is defined and has a valid type before using it
+    if (!value || typeof value !== 'object') {
+      console.log('Value is not properly defined, initializing with defaults');
+      setSelectedMenuTypes(['at_restaurant']);
+      setSelectedFixedMenus([]);
+      return;
+    }
+    
     // Initialize selectedMenuTypes based on the current value
     const types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[] = [];
     if (value.type === 'at_restaurant') {
@@ -101,7 +109,12 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     console.log('Menu type change:', type, checked, 'New types:', newTypes);
     setSelectedMenuTypes(newTypes);
     
-    updateParentWithCurrentSelections(newTypes);
+    // Only call updateParentWithCurrentSelections if onChange is a function
+    if (typeof onChange === 'function') {
+      updateParentWithCurrentSelections(newTypes);
+    } else {
+      console.error('onChange prop is not a function:', onChange);
+    }
   };
   
   const handleClearSelections = () => {
@@ -109,6 +122,11 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   };
   
   const updateParentWithCurrentSelections = (types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[]) => {
+    if (!onChange || typeof onChange !== 'function') {
+      console.error('onChange is not a function in updateParentWithCurrentSelections');
+      return;
+    }
+    
     if (types.includes('at_restaurant')) {
       onChange({
         type: 'at_restaurant',
@@ -121,7 +139,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     onChange({
       type: types.length === 1 ? types[0] : 'mixed',
       selectedFixedMenus: selectedFixedMenus,
-      selectedMenuItems: value.selectedMenuItems || []
+      selectedMenuItems: value && value.selectedMenuItems ? value.selectedMenuItems : []
     });
   };
   
@@ -136,14 +154,18 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       setSelectedFixedMenus([...selectedFixedMenus, { menu, quantity: 1 }]);
     }
     
-    updateParentWithCurrentSelections(selectedMenuTypes);
+    if (typeof onChange === 'function') {
+      updateParentWithCurrentSelections(selectedMenuTypes);
+    }
   };
   
   const handleFixedMenuRemove = (menuId: string) => {
     const newSelectedMenus = selectedFixedMenus.filter(item => item.menu.id !== menuId);
     setSelectedFixedMenus(newSelectedMenus);
     
-    updateParentWithCurrentSelections(selectedMenuTypes);
+    if (typeof onChange === 'function') {
+      updateParentWithCurrentSelections(selectedMenuTypes);
+    }
   };
   
   const handleFixedMenuQuantityChange = (menuId: string, change: number) => {
@@ -159,16 +181,20 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       }
       setSelectedFixedMenus(newSelectedMenus);
       
-      updateParentWithCurrentSelections(selectedMenuTypes);
+      if (typeof onChange === 'function') {
+        updateParentWithCurrentSelections(selectedMenuTypes);
+      }
     }
   };
   
   const handleALaCarteMenuSelect = (items: MenuItem[]) => {
-    onChange({
-      type: selectedMenuTypes.includes('fixed_menu') ? 'mixed' : 'a_la_carte',
-      selectedFixedMenus: selectedFixedMenus,
-      selectedMenuItems: items
-    });
+    if (typeof onChange === 'function') {
+      onChange({
+        type: selectedMenuTypes.includes('fixed_menu') ? 'mixed' : 'a_la_carte',
+        selectedFixedMenus: selectedFixedMenus,
+        selectedMenuItems: items
+      });
+    }
   };
 
   return (
