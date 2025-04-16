@@ -1,4 +1,5 @@
 
+
 // Fix this file with proper TypeScript types for the reservation system
 
 export interface Table {
@@ -111,3 +112,4 @@ export interface StepIndicatorProps {
   }>;
   skipStep?: number;
 }
+

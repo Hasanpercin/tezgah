@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -287,12 +288,14 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                                 </Badge>
                               </p>
                               
-                              {(res.selected_items.menuSelectionType === "fixed_menu" || res.selected_items.menuSelectionType === "mixed") && 
+                              {(res.selected_items.menuSelectionType === "fixed_menu" || 
+                                res.selected_items.menuSelectionType === "mixed") && 
                                res.selected_items.fixedMenuId && (
                                 <p>Fix menü seçildi (ID: {res.selected_items.fixedMenuId})</p>
                               )}
                               
-                              {(res.selected_items.menuSelectionType === "a_la_carte" || res.selected_items.menuSelectionType === "mixed") && 
+                              {(res.selected_items.menuSelectionType === "a_la_carte" || 
+                                res.selected_items.menuSelectionType === "mixed") && 
                                res.selected_items.items?.length > 0 && (
                                 <div>
                                   <p className="mb-1 text-sm">Seçilen ürünler:</p>
@@ -389,3 +392,4 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
     </Table>
   );
 };
+

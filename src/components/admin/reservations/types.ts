@@ -4,7 +4,7 @@ import { Json } from "@/integrations/supabase/types";
 export type ReservationStatus = 'Beklemede' | 'Onaylandı' | 'İptal';
 
 export interface SelectedItems {
-  menuSelectionType: 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
+  menuSelectionType: 'fixed_menu' | 'a_la_carte' | 'at_restaurant' | 'mixed';
   fixedMenuId?: string | number;
   items?: Array<{
     id: string;
