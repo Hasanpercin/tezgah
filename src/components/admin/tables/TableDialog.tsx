@@ -151,34 +151,7 @@ export const TableDialog = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="position_x">Konum X (%)</Label>
-              <Input
-                id="position_x"
-                name="position_x"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.position_x}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="position_y">Konum Y (%)</Label>
-              <Input
-                id="position_y"
-                name="position_y"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.position_y}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
+          {/* Removed the position X and Y inputs */}
           
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" type="button" onClick={onClose}>

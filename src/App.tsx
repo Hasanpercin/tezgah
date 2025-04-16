@@ -10,6 +10,7 @@ import Contact from './pages/Contact';
 import Gallery from './pages/Gallery';
 import Reservation from './pages/Reservation';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminCMS from './pages/AdminCMS';
 import MyReservations from './pages/MyReservations';
@@ -34,6 +35,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/reservation" element={<Reservation />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-reservations" element={<MyReservations />} />
               <Route path="/admin" element={<AdminCMS />} />

@@ -59,19 +59,20 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Hero Section with reduced height */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555224177-391776d8221d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000"
         title="Menümüz"
         subtitle="En lezzetli yemeklerimizi keşfedin"
         showButtons={false}
+        className="h-[30vh]" // Added reduced height class
       />
       
       {/* Menu Content */}
-      <section className="section-padding">
+      <section className="section-padding pt-8">
         <div className="container-custom max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-2">
               Günün Menüsü
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
