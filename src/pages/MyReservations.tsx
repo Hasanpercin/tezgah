@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface UserReservation {
   id: string;
@@ -45,41 +46,28 @@ interface UserReservation {
 const MyReservations = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [reservations, setReservations] = useState<UserReservation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [cancelReservationId, setCancelReservationId] = useState<string | null>(null);
   const [prepaidWarningOpen, setPrepaidWarningOpen] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<UserReservation | null>(null);
+  const queryClient = useQueryClient();
   
-  useEffect(() => {
-    const fetchReservations = async () => {
-      if (!user) return;
+  // Using react-query for better data fetching and caching
+  const { data: reservations = [], isLoading, refetch } = useQuery({
+    queryKey: ['userReservations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
       
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date', { ascending: true });
-          
-        if (error) throw error;
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
         
-        setReservations(data || []);
-      } catch (error) {
-        console.error('Error fetching reservations:', error);
-        toast({
-          title: 'Hata',
-          description: 'Rezervasyonlarınız yüklenirken bir hata oluştu.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchReservations();
-  }, [user, toast]);
+      if (error) throw error;
+      return data as UserReservation[];
+    },
+    enabled: !!user,
+  });
   
   const handleCancelReservation = async () => {
     if (!cancelReservationId) return;
@@ -106,14 +94,8 @@ const MyReservations = () => {
         
       if (error) throw error;
       
-      // Update local state
-      setReservations(prev => 
-        prev.map(res => 
-          res.id === cancelReservationId 
-            ? { ...res, status: 'İptal' } 
-            : res
-        )
-      );
+      // Refetch data to update UI
+      await refetch();
       
       toast({
         title: 'Rezervasyon İptal Edildi',
