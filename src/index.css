@@ -44,7 +44,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-lato;
+    @apply bg-background text-foreground font-sans; // Changed from font-lato to font-sans
     overflow-x: hidden;
   }
 

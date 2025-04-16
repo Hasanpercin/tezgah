@@ -21,7 +21,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
+        sans: ["Lato", ...fontFamily.sans],  // Add Lato as the default sans font
         playfair: ['Playfair Display', 'serif'],
       },
       colors: {
@@ -81,4 +81,4 @@ export default {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+} satisfies Config;
