@@ -1,197 +1,258 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchMenuItems } from '@/services/menuService';
-import { MenuItem } from '@/services/menuService';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Plus, Minus } from 'lucide-react';
-import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from 'react';
+import { fetchMenuItems, MenuItem } from '@/services/menuService';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Trash2, Plus, Minus } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ALaCarteMenuProps {
   onChange: (items: MenuItem[]) => void;
   guestCount: number | string;
 }
 
-const ALaCarteMenu: React.FC<ALaCarteMenuProps> = ({ onChange, guestCount }) => {
+const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
+  const { toast } = useToast();
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<{[key: string]: string}>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedItems, setSelectedItems] = useState<MenuItem[]>([]);
-  const numGuests = typeof guestCount === 'string' ? parseInt(guestCount) : guestCount;
-  
-  const { data: menuItems, isLoading } = useQuery({
-    queryKey: ['menuItems'],
-    queryFn: fetchMenuItems
-  });
-  
-  // Group menu items by category
-  const getMenuItemsByCategory = () => {
-    if (!menuItems) return {};
-    
-    return menuItems.reduce((acc: {[key: string]: MenuItem[]}, item) => {
-      const categoryId = item.category_id;
-      if (!acc[categoryId]) {
-        acc[categoryId] = [];
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMenuItems = async () => {
+      try {
+        setIsLoading(true);
+        const items = await fetchMenuItems();
+        console.log("Fetched menu items:", items);
+        
+        if (!items || items.length === 0) {
+          console.log("No menu items found");
+          toast({
+            title: "Menü Bulunamadı",
+            description: "Menü öğeleri yüklenirken bir sorun oluştu.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        setMenuItems(items);
+        
+        // Extract categories
+        const cats: {[key: string]: string} = {};
+        items.forEach(item => {
+          if (item.menu_categories && item.category_id) {
+            cats[item.category_id] = item.menu_categories.name;
+          }
+        });
+        setCategories(cats);
+        
+      } catch (error) {
+        console.error('Error loading menu items:', error);
+        toast({
+          title: "Menü Yüklenemedi",
+          description: "Menü öğeleri yüklenirken bir hata oluştu.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
-      acc[categoryId].push(item);
-      return acc;
-    }, {});
-  };
-  
-  const handleAddItem = (item: MenuItem) => {
-    const existingItem = selectedItems.find(selected => selected.id === item.id);
+    };
     
-    if (existingItem) {
-      // Update quantity if item already exists
-      const updatedItems = selectedItems.map(selected => 
-        selected.id === item.id 
-          ? { ...selected, quantity: (selected.quantity || 1) + 1 }
-          : selected
-      );
+    loadMenuItems();
+  }, [toast]);
+
+  const handleItemSelect = (item: MenuItem) => {
+    const existingItemIndex = selectedItems.findIndex(i => i.id === item.id);
+    
+    if (existingItemIndex >= 0) {
+      // Item already exists, increment quantity
+      const updatedItems = [...selectedItems];
+      updatedItems[existingItemIndex] = {
+        ...updatedItems[existingItemIndex],
+        quantity: (updatedItems[existingItemIndex].quantity || 1) + 1
+      };
       setSelectedItems(updatedItems);
     } else {
-      // Add new item with quantity 1
+      // New item, add with quantity 1
       setSelectedItems([...selectedItems, { ...item, quantity: 1 }]);
     }
-  };
-  
-  const handleRemoveItem = (item: MenuItem) => {
-    const existingItem = selectedItems.find(selected => selected.id === item.id);
     
-    if (existingItem && existingItem.quantity && existingItem.quantity > 1) {
-      // Decrease quantity if more than 1
-      const updatedItems = selectedItems.map(selected => 
-        selected.id === item.id 
-          ? { ...selected, quantity: (selected.quantity || 1) - 1 }
-          : selected
-      );
-      setSelectedItems(updatedItems);
-    } else {
-      // Remove item if quantity is 1
-      setSelectedItems(selectedItems.filter(selected => selected.id !== item.id));
+    onChange([...selectedItems, { ...item, quantity: 1 }]);
+  };
+
+  const handleItemQuantityChange = (itemId: string, change: number) => {
+    const updatedItems = selectedItems.map(item => {
+      if (item.id === itemId) {
+        const newQuantity = (item.quantity || 1) + change;
+        return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+      }
+      return item;
+    }).filter(Boolean) as MenuItem[];
+    
+    setSelectedItems(updatedItems);
+    onChange(updatedItems);
+  };
+
+  const handleItemRemove = (itemId: string) => {
+    const updatedItems = selectedItems.filter(item => item.id !== itemId);
+    setSelectedItems(updatedItems);
+    onChange(updatedItems);
+  };
+
+  const filterMenuItems = () => {
+    if (selectedCategory === 'all') {
+      return menuItems.filter(item => item.is_in_stock);
     }
+    return menuItems.filter(item => 
+      item.category_id === selectedCategory && item.is_in_stock
+    );
   };
-  
-  useEffect(() => {
-    onChange(selectedItems);
-  }, [selectedItems, onChange]);
-  
-  const getItemQuantity = (itemId: string) => {
-    const item = selectedItems.find(selected => selected.id === itemId);
-    return item ? item.quantity || 0 : 0;
-  };
-  
+
   const calculateTotal = () => {
     return selectedItems.reduce((total, item) => {
       return total + (item.price * (item.quantity || 1));
     }, 0);
   };
-  
-  if (isLoading) return <p>Menü yükleniyor...</p>;
-  
-  const groupedItems = getMenuItemsByCategory();
-  
+
+  const filteredItems = filterMenuItems();
+
+  if (isLoading) {
+    return (
+      <div className="text-center p-8">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Menü öğeleri yükleniyor...</p>
+      </div>
+    );
+  }
+
+  if (menuItems.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">A la carte menü bulunamadı.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Selected Items Summary */}
-      <div className="p-4 border rounded-md bg-accent/10">
-        <h4 className="font-medium mb-3">Seçilen Ürünler</h4>
-        
-        {selectedItems.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Henüz ürün seçmediniz.</p>
-        ) : (
-          <div className="space-y-2">
-            {selectedItems.map(item => (
-              <div key={item.id} className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    x{item.quantity}
-                  </span>
+      {selectedItems.length > 0 && (
+        <div className="bg-muted/30 rounded-lg p-4 mb-6">
+          <h5 className="font-medium text-lg mb-3">Seçilen Yemekler</h5>
+          <div className="space-y-3">
+            {selectedItems.map((item) => (
+              <div key={item.id} className="flex items-center justify-between border-b border-border pb-3 last:border-0">
+                <div className="flex-1">
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-muted-foreground">{item.price} ₺ × {item.quantity}</p>
                 </div>
-                <div className="flex items-center">
-                  <span className="mr-2">{item.price * (item.quantity || 1)} ₺</span>
-                  <div className="flex items-center space-x-1">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 w-7 p-0" 
-                      onClick={() => handleRemoveItem(item)}
-                    >
-                      <Minus size={14} />
-                    </Button>
-                    <span className="w-5 text-center">{item.quantity}</span>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 w-7 p-0" 
-                      onClick={() => handleAddItem(item)}
-                    >
-                      <Plus size={14} />
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => handleItemQuantityChange(item.id, -1)}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => handleItemQuantityChange(item.id, 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 text-destructive hover:text-destructive" 
+                    onClick={() => handleItemRemove(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
-            
-            <Separator className="my-2" />
-            
-            <div className="flex justify-between font-medium">
-              <span>Toplam</span>
-              <span>{calculateTotal()} ₺</span>
-            </div>
-            
-            {numGuests > 0 && (
-              <div className="text-xs text-muted-foreground text-right">
-                Kişi başı yaklaşık {(calculateTotal() / numGuests).toFixed(2)} ₺
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Menu Items */}
-      <div className="space-y-6">
-        {Object.entries(groupedItems).map(([categoryId, items]) => (
-          <div key={categoryId} className="space-y-2">
-            <h5 className="font-medium">{items[0]?.menu_categories?.name || 'Kategori'}</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {items.map(item => (
-                <div key={item.id} className="flex justify-between border p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    {item.description && (
-                      <div className="text-sm text-muted-foreground">{item.description}</div>
-                    )}
-                    <div className="mt-1 text-primary font-medium">{item.price} ₺</div>
-                  </div>
-                  <div className="flex items-center">
-                    {getItemQuantity(item.id) > 0 && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleRemoveItem(item)}
-                        >
-                          <Minus size={16} />
-                        </Button>
-                        <span className="w-8 text-center">{getItemQuantity(item.id)}</span>
-                      </>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-8 w-8 p-0" 
-                      onClick={() => handleAddItem(item)}
-                    >
-                      <Plus size={16} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="flex justify-end pt-3 font-semibold">
+              <span>Toplam: {calculateTotal().toFixed(2)} ₺</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Category Filter */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button
+          variant={selectedCategory === 'all' ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedCategory('all')}
+        >
+          Tümü
+        </Button>
+        {Object.entries(categories).map(([id, name]) => (
+          <Button
+            key={id}
+            variant={selectedCategory === id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(id)}
+          >
+            {name}
+          </Button>
         ))}
       </div>
+
+      <Separator className="my-6" />
+
+      {/* Menu Items */}
+      <ScrollArea className="max-h-[450px] pr-4">
+        {filteredItems.length === 0 ? (
+          <p className="text-center p-4 text-muted-foreground">Bu kategoride ürün bulunamadı.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredItems.map((item) => (
+              <Card
+                key={item.id}
+                className="overflow-hidden cursor-pointer hover:shadow-md"
+                onClick={() => handleItemSelect(item)}
+              >
+                <CardContent className="p-0">
+                  <div className="flex flex-col">
+                    {item.image_path && (
+                      <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${item.image_path})` }}></div>
+                    )}
+                    <div className="p-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-medium">{item.name}</h3>
+                        <span className="text-primary font-medium">{item.price} ₺</span>
+                      </div>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                      )}
+                      <div className="mt-3 flex justify-end">
+                        <Button 
+                          variant={selectedItems.some(i => i.id === item.id) ? "default" : "outline"}
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleItemSelect(item);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Ekle
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
     </div>
   );
 };

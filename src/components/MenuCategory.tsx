@@ -24,6 +24,11 @@ type MenuCategoryProps = {
 const MenuCategory = ({ categories }: MenuCategoryProps) => {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || '');
   
+  // Make sure we have categories before rendering
+  if (!categories || categories.length === 0) {
+    return <div className="p-8 text-center">No menu categories available</div>;
+  }
+  
   return (
     <div className="w-full">
       {/* Category Tabs */}

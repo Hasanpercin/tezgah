@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -147,8 +148,13 @@ export const getFixedMenus = async () => {
       throw error;
     }
     
-    console.log(`Fetched ${data?.length || 0} fixed menus`);
-    return data as FixedMenuItem[];
+    if (!data || data.length === 0) {
+      console.log("No fixed menus found or data is empty");
+    } else {
+      console.log(`Successfully fetched ${data.length} fixed menus:`, data);
+    }
+    
+    return data || [];
   } catch (error) {
     console.error("Exception while fetching fixed menus:", error);
     throw error;
