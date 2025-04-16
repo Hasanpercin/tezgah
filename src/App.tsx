@@ -16,6 +16,7 @@ import AdminCMS from './pages/AdminCMS';
 import MyReservations from './pages/MyReservations';
 import NotFound from './pages/NotFound';
 import Loyalty from './pages/Loyalty';
+import ForgotPassword from './pages/ForgotPassword';
 import { Toaster } from './components/ui/sonner';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
@@ -36,6 +37,7 @@ function App() {
               <Route path="/reservation" element={<Reservation />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-reservations" element={<MyReservations />} />
               <Route path="/admin" element={<AdminCMS />} />

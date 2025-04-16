@@ -1,8 +1,12 @@
+
 import Hero from '@/components/Hero';
 import MenuCategory from '@/components/MenuCategory';
 import { useEffect, useState } from 'react';
 import { MenuItemType, MenuCategoryType } from '@/components/MenuCategory';
 import { fetchFeaturedMenuItems } from '@/services/menuService';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Sparkles, UtensilsCrossed } from 'lucide-react';
 
 const Index = () => {
   const heroImage = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000";
@@ -44,13 +48,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <Hero backgroundImage={heroImage} title="Lezzetli Anlar" subtitle="Enfes yemekler, sıcak bir atmosfer ve unutulmaz deneyimler" showButtons={true} />
+      <Hero 
+        backgroundImage={heroImage} 
+        title="Lezzetli Anlar" 
+        subtitle="Enfes yemekler, sıcak bir atmosfer ve unutulmaz deneyimler" 
+        showButtons={true}
+        titleGradient={true}
+      />
 
       {/* Featured Menu Section */}
       <section className="section-padding">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4">Öne Çıkan Lezzetler</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-amber-500 mr-2" />
+              Öne Çıkan Lezzetler
+              <Sparkles className="h-6 w-6 text-amber-500 ml-2" />
+            </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Şefimizin özel seçimiyle hazırlanan, en sevilen ve beğenilen lezzetlerimizden bazıları.
             </p>
@@ -62,6 +76,14 @@ const Index = () => {
           {!isLoading && !error && menuCategories.length > 0 && (
             <MenuCategory categories={menuCategories} />
           )}
+
+          <div className="text-center mt-12">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+              <Link to="/menu" className="flex items-center">
+                <UtensilsCrossed className="mr-2" /> Tüm Menüyü Görüntüle
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 

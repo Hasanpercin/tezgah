@@ -5,7 +5,7 @@ import MenuCategory from '@/components/MenuCategory';
 import { useToast } from "@/hooks/use-toast";
 import { fetchMenuItemsByCategory } from "@/services/menuService";
 import { MenuCategoryType } from '@/components/MenuCategory';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 
 const Menu = () => {
   const [menuCategories, setMenuCategories] = useState<MenuCategoryType[]>([]);
@@ -59,21 +59,25 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section with reduced height */}
+      {/* Hero Section with gradient background and smaller height */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555224177-391776d8221d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000"
         title="Menümüz"
         subtitle="En lezzetli yemeklerimizi keşfedin"
         showButtons={false}
-        className="h-[30vh]" // Added reduced height class
+        className="h-[30vh]"
+        overlayColor="rgba(0, 0, 0, 0.7)"
+        titleGradient={true}
       />
       
       {/* Menu Content */}
       <section className="section-padding pt-8">
         <div className="container-custom max-w-5xl">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-2">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-2 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-amber-500 mr-2" />
               Günün Menüsü
+              <Sparkles className="h-6 w-6 text-amber-500 ml-2" />
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Özenle seçilmiş malzemelerle hazırlanan, damak zevkinize hitap edecek

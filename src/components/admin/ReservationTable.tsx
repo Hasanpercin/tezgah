@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,8 @@ type ReservationTableProps = {
 
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  
   const handleStatusChange = async (id: string, newStatus: ReservationStatus, reservation: Reservation) => {
     try {
       await onStatusChange(id, newStatus);
@@ -61,6 +63,9 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
           console.error('Notification email failed to send');
         }
       }
+      
+      // Eğer dialog açıksa, işlem sonrası kapat
+      setDialogOpen(false);
     } catch (error) {
       console.error("Error updating reservation status:", error);
     }
@@ -201,9 +206,17 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Dialog>
+                  <Dialog open={dialogOpen && selectedReservation?.id === res.id} onOpenChange={(open) => {
+                    setDialogOpen(open);
+                    if (open) {
+                      setSelectedReservation(res);
+                    }
+                  }}>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={() => setSelectedReservation(res)}>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        setSelectedReservation(res);
+                        setDialogOpen(true);
+                      }}>
                         <Eye size={16} />
                       </Button>
                     </DialogTrigger>
@@ -318,10 +331,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                           <Button 
                             variant="destructive" 
                             size="sm"
-                            onClick={() => {
-                              handleStatusChange(res.id, "İptal", res);
-                              setSelectedReservation(null);
-                            }}
+                            onClick={() => handleStatusChange(res.id, "İptal", res)}
                             className="flex-1 sm:flex-auto"
                           >
                             <XCircle className="mr-2 h-4 w-4" /> İptal Et
@@ -329,10 +339,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                           <Button 
                             variant="default" 
                             size="sm"
-                            onClick={() => {
-                              handleStatusChange(res.id, "Onaylandı", res);
-                              setSelectedReservation(null);
-                            }}
+                            onClick={() => handleStatusChange(res.id, "Onaylandı", res)}
                             className="flex-1 sm:flex-auto"
                           >
                             <CheckCircle className="mr-2 h-4 w-4" /> Onayla
