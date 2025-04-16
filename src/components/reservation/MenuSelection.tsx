@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Check, ChefHat, CakeSlice, Utensils, FileText } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
-import { getFixedMenus, FixedMenuItem } from '@/services/menuService';
+import { getFixedMenus } from '@/services/menuService';
 import { MenuSelectionData } from './types/reservationTypes';
 import ALaCarteMenu from './components/ALaCarteMenu';
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ interface MenuSelectionProps {
 }
 
 const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
-  const [selectedFixedMenu, setSelectedFixedMenu] = useState<FixedMenuItem | null>(null);
+  const [selectedFixedMenu, setSelectedFixedMenu] = useState<any | null>(null);
   
   const { data: fixedMenus, isLoading, isError } = useQuery({
     queryKey: ['fixedMenus'],
@@ -40,7 +40,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     });
   };
   
-  const handleFixedMenuSelect = (menu: FixedMenuItem) => {
+  const handleFixedMenuSelect = (menu: any) => {
     setSelectedFixedMenu(menu);
     onChange({
       type: 'fixed_menu',
@@ -221,13 +221,13 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
                     onClick={() => handleFixedMenuSelect(menu)}
                   >
                     <div className="relative">
-                      {menu.image && (
+                      {menu.image_path && (
                         <div 
                           className="h-40 w-full bg-cover bg-center" 
-                          style={{ backgroundImage: `url(${menu.image})` }}
+                          style={{ backgroundImage: `url(${menu.image_path})` }}
                         />
                       )}
-                      {!menu.image && (
+                      {!menu.image_path && (
                         <div className="h-40 w-full bg-muted/50 flex items-center justify-center">
                           <ChefHat size={48} className="text-muted-foreground/40" />
                         </div>
