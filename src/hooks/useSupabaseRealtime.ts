@@ -29,7 +29,7 @@ export const useSupabaseRealtime = ({
     const channel = supabase
       .channel(`${table}-changes`)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any, // Use type assertion to resolve the type mismatch
         { event, schema, table, filter },
         (payload) => {
           console.log('Realtime change detected:', payload);
