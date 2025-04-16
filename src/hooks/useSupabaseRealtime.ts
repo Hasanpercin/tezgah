@@ -28,14 +28,13 @@ export const useSupabaseRealtime = ({
     // Create a channel for the specific table changes
     const channel = supabase
       .channel(`${table}-changes`)
-      .on(
-        'postgres_changes', // This is correct, but we need to properly structure the subscription
-        {
-          event,
-          schema,
+      .on('postgres_changes', // This is the event type
+        { 
+          event, 
+          schema, 
           table,
-          filter,
-        },
+          filter 
+        }, 
         (payload) => {
           console.log('Realtime change detected:', payload);
           setPayload(payload as ChangePayload);
