@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getFixedMenus } from '@/services/menuService';
 import { MenuSelectionData, FixedMenuItem } from './types/reservationTypes';
 import { MenuItem } from '@/services/menuService';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import MenuTypeSelection from './components/menu-selection/MenuTypeSelection';
 import FixedMenuSection from './components/menu-selection/FixedMenuSection';
 import ALaCarteSection from './components/menu-selection/ALaCarteSection';
 import RestaurantSelection from './components/menu-selection/RestaurantSelection';
+import { Separator } from '@/components/ui/separator';
+import { ChevronDown } from 'lucide-react';
 
 interface MenuSelectionProps {
   value: MenuSelectionData;
@@ -17,7 +19,15 @@ interface MenuSelectionProps {
 }
 
 const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
-  const [selectedMenuTypes, setSelectedMenuTypes] = useState<('fixed_menu' | 'a_la_carte' | 'at_restaurant')[]>([]);
+  const { toast } = useToast();
+  const [selectedMenuTypes, setSelectedMenuTypes] = useState<('fixed_menu' | 'a_la_carte' | 'at_restaurant')[]>(
+    value?.type ? (
+      value.type === 'mixed' 
+        ? ['fixed_menu', 'a_la_carte'] 
+        : [value.type]
+    ) : ['at_restaurant']
+  );
+  
   const [selectedFixedMenus, setSelectedFixedMenus] = useState<{ menu: FixedMenuItem; quantity: number }[]>([]);
   
   const { isError } = useQuery({
@@ -25,10 +35,56 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     queryFn: getFixedMenus,
   });
   
+  // Başlangıç değerleri ayarla
   useEffect(() => {
-    console.log('MenuSelection mounted, fetching fixed menus...');
-    console.log('Current value:', value);
+    if (!value || typeof value !== 'object') {
+      console.log('Value is not defined, initializing with defaults');
+      if (typeof onChange === 'function') {
+        onChange({
+          type: 'at_restaurant',
+          selectedFixedMenus: [],
+          selectedMenuItems: []
+        });
+      }
+      setSelectedMenuTypes(['at_restaurant']);
+      setSelectedFixedMenus([]);
+      return;
+    }
     
+    // Menü tiplerini başlat
+    let types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[] = [];
+    if (value.type === 'at_restaurant') {
+      types = ['at_restaurant'];
+    } 
+    else if (value.type === 'mixed') {
+      types = [];
+      if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
+        types.push('fixed_menu');
+      }
+      if (value.selectedMenuItems && value.selectedMenuItems.length > 0) {
+        types.push('a_la_carte');
+      }
+      if (types.length === 0) {
+        types = ['at_restaurant'];
+      }
+    }
+    else {
+      types = [value.type];
+    }
+    
+    setSelectedMenuTypes(types);
+    
+    // Fix menü seçimlerini başlat
+    if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
+      setSelectedFixedMenus(value.selectedFixedMenus);
+    } else {
+      setSelectedFixedMenus([]);
+    }
+
+  }, []);
+
+  // Hata durumunu kontrol et
+  useEffect(() => {
     if (isError) {
       console.error('Error fetching fixed menus');
       toast({
@@ -37,50 +93,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
         variant: "destructive"
       });
     }
-  }, [isError]);
-
-  useEffect(() => {
-    // Make sure value is defined and has a valid type before using it
-    if (!value || typeof value !== 'object') {
-      console.log('Value is not properly defined, initializing with defaults');
-      setSelectedMenuTypes(['at_restaurant']);
-      setSelectedFixedMenus([]);
-      return;
-    }
-    
-    // Initialize selectedMenuTypes based on the current value
-    const types: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[] = [];
-    if (value.type === 'at_restaurant') {
-      types.push('at_restaurant');
-    } else {
-      if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
-        types.push('fixed_menu');
-      }
-      if (value.selectedMenuItems && value.selectedMenuItems.length > 0) {
-        types.push('a_la_carte');
-      }
-    }
-    
-    // If no type is selected, default to at_restaurant
-    if (types.length === 0) {
-      types.push('at_restaurant');
-    }
-    
-    setSelectedMenuTypes(types);
-    
-    // Initialize selectedFixedMenus
-    if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
-      setSelectedFixedMenus(value.selectedFixedMenus.map(item => ({
-        menu: item.menu,
-        quantity: item.quantity || 1
-      })));
-    } else {
-      setSelectedFixedMenus([]);
-    }
-    
-    console.log('Initialized selectedMenuTypes:', types);
-    console.log('Initialized selectedFixedMenus:', selectedFixedMenus);
-  }, [value]);
+  }, [isError, toast]);
 
   const handleMenuTypeChange = (type: string, checked: boolean) => {
     let newTypes = [...selectedMenuTypes];
@@ -99,7 +112,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     } else {
       newTypes = newTypes.filter(t => t !== type);
       
-      // If no types selected, default to restaurant
+      // Eğer hiç tip seçili değilse, restoran seçeneğini varsayılan olarak ayarla
       if (newTypes.length === 0) {
         newTypes = ['at_restaurant'];
         handleClearSelections();
@@ -109,7 +122,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     console.log('Menu type change:', type, checked, 'New types:', newTypes);
     setSelectedMenuTypes(newTypes);
     
-    // Only call updateParentWithCurrentSelections if onChange is a function
+    // onChange prop'u bir fonksiyon ise updateParentWithCurrentSelections'ı çağır
     if (typeof onChange === 'function') {
       updateParentWithCurrentSelections(newTypes);
     } else {
@@ -136,8 +149,11 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       return;
     }
     
+    // Fixed menu ve a la carte birlikte seçilmişse mixed olarak ayarla
+    const menuType = types.length > 1 ? 'mixed' : types[0];
+    
     onChange({
-      type: types.length === 1 ? types[0] : 'mixed',
+      type: menuType,
       selectedFixedMenus: selectedFixedMenus,
       selectedMenuItems: value && value.selectedMenuItems ? value.selectedMenuItems : []
     });
@@ -155,7 +171,9 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     }
     
     if (typeof onChange === 'function') {
-      updateParentWithCurrentSelections(selectedMenuTypes);
+      const newTypes = selectedMenuTypes.includes('fixed_menu') ? selectedMenuTypes : [...selectedMenuTypes, 'fixed_menu'];
+      setSelectedMenuTypes(newTypes);
+      updateParentWithCurrentSelections(newTypes);
     }
   };
   
@@ -164,7 +182,12 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     setSelectedFixedMenus(newSelectedMenus);
     
     if (typeof onChange === 'function') {
-      updateParentWithCurrentSelections(selectedMenuTypes);
+      // Eğer hiç fix menü kalmadıysa ve a la carte de seçili değilse, restoran seçeneğini seç
+      let newTypes = [...selectedMenuTypes];
+      if (newSelectedMenus.length === 0 && !selectedMenuTypes.includes('a_la_carte')) {
+        newTypes = ['at_restaurant'];
+      }
+      updateParentWithCurrentSelections(newTypes);
     }
   };
   
@@ -189,8 +212,15 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   
   const handleALaCarteMenuSelect = (items: MenuItem[]) => {
     if (typeof onChange === 'function') {
+      // A La Carte seçildiğinde menü tipi olarak eklenmemişse ekle
+      let newTypes = selectedMenuTypes;
+      if (!selectedMenuTypes.includes('a_la_carte')) {
+        newTypes = [...selectedMenuTypes.filter(t => t !== 'at_restaurant'), 'a_la_carte'];
+        setSelectedMenuTypes(newTypes);
+      }
+      
       onChange({
-        type: selectedMenuTypes.includes('fixed_menu') ? 'mixed' : 'a_la_carte',
+        type: newTypes.length > 1 ? 'mixed' : 'a_la_carte',
         selectedFixedMenus: selectedFixedMenus,
         selectedMenuItems: items
       });
@@ -206,30 +236,47 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
         </p>
       </div>
       
-      <MenuTypeSelection 
-        selectedMenuTypes={selectedMenuTypes} 
-        onMenuTypeChange={handleMenuTypeChange} 
-      />
+      <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-6 shadow-sm">
+        <MenuTypeSelection 
+          selectedMenuTypes={selectedMenuTypes} 
+          onMenuTypeChange={handleMenuTypeChange} 
+        />
+      </div>
 
       {selectedMenuTypes.includes('fixed_menu') && (
-        <FixedMenuSection
-          selectedFixedMenus={selectedFixedMenus}
-          onSelectMenu={handleFixedMenuSelect}
-          onRemoveMenu={handleFixedMenuRemove}
-          onQuantityChange={handleFixedMenuQuantityChange}
-        />
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md animate-fade-in">
+          <FixedMenuSection
+            selectedFixedMenus={selectedFixedMenus}
+            onSelectMenu={handleFixedMenuSelect}
+            onRemoveMenu={handleFixedMenuRemove}
+            onQuantityChange={handleFixedMenuQuantityChange}
+          />
+        </div>
       )}
 
       {selectedMenuTypes.includes('a_la_carte') && (
-        <ALaCarteSection 
-          onMenuItemsSelect={handleALaCarteMenuSelect}
-          guestCount={guestCount}
-        />
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md animate-fade-in">
+          <ALaCarteSection 
+            onMenuItemsSelect={handleALaCarteMenuSelect}
+            guestCount={guestCount}
+          />
+        </div>
       )}
       
       {selectedMenuTypes.includes('at_restaurant') && (
-        <RestaurantSelection />
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md animate-fade-in">
+          <RestaurantSelection />
+        </div>
       )}
+      
+      <div className="text-center pt-4">
+        <p className="text-sm text-muted-foreground">
+          <span className="inline-flex items-center">
+            <ChevronDown size={16} className="mr-1" />
+            Lütfen bir sonraki adıma devam ederek masa rezervasyonunuzu tamamlayın
+          </span>
+        </p>
+      </div>
     </div>
   );
 };

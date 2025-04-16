@@ -1,68 +1,75 @@
 
 import React from 'react';
-import { Label } from "@/components/ui/label";
 import { Check } from 'lucide-react';
 
 interface SelectionCardProps {
   id: string;
   icon: React.ReactNode;
   title: string;
-  discount?: string;
   description: string;
   isSelected: boolean;
   onChange: (checked: boolean) => void;
+  discount?: string;
 }
 
 const SelectionCard = ({
   id,
   icon,
   title,
-  discount,
   description,
   isSelected,
-  onChange
+  onChange,
+  discount
 }: SelectionCardProps) => {
+  const handleClick = () => {
+    if (typeof onChange === 'function') {
+      onChange(!isSelected);
+    }
+  };
+
   return (
-    <div className="relative">
-      <input 
-        type="checkbox" 
-        id={id} 
-        className="peer sr-only" 
-        checked={isSelected}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <Label 
-        htmlFor={id} 
-        className={`
-          h-full flex flex-col
-          rounded-xl border-2 p-5
-          ${isSelected 
-            ? 'border-primary bg-primary/5' 
-            : 'border-border hover:border-primary/50 hover:bg-muted/50'}
-          cursor-pointer transition-all duration-200
-        `}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-2 rounded-full bg-primary/10 text-primary">
-            {icon}
-          </div>
-          {isSelected && (
-            <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-              <Check className="h-3 w-3 text-white" />
-            </span>
-          )}
+    <div 
+      onClick={handleClick}
+      className={`
+        relative cursor-pointer flex flex-col rounded-xl border p-4 transition-all
+        ${isSelected 
+          ? 'border-amber-600 bg-amber-50/70 shadow-md' 
+          : 'border-gray-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'
+        }
+      `}
+    >
+      {discount && (
+        <div className="absolute -top-3 -right-2">
+          <span className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-medium shadow-sm">
+            {discount}
+          </span>
+        </div>
+      )}
+      
+      <div className="flex items-start gap-3 mb-2">
+        <div className={`
+          p-2 rounded-lg
+          ${isSelected ? 'bg-amber-100' : 'bg-gray-100'} 
+        `}>
+          {icon}
         </div>
         
-        <div>
-          <h4 className="text-lg font-medium">{title}</h4>
-          {discount && (
-            <p className="text-sm text-green-600 font-medium my-1">{discount}</p>
-          )}
-          <p className="text-sm text-muted-foreground mt-2">
-            {description}
-          </p>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">{title}</h3>
+            <div className={`
+              w-5 h-5 rounded-full border flex items-center justify-center
+              ${isSelected 
+                ? 'bg-amber-600 border-amber-600' 
+                : 'border-gray-300'
+              }
+            `}>
+              {isSelected && <Check size={14} className="text-white" />}
+            </div>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">{description}</p>
         </div>
-      </Label>
+      </div>
     </div>
   );
 };
