@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,20 +18,35 @@ const ResetPassword = () => {
   const [success, setSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if we have a hash from the URL (from the email link)
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+    // Extract access_token from URL if it exists
+    const handleHashFragment = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
       
-      if (error) {
-        console.error("Session check error:", error);
-        setError("Oturum doğrulama hatası. Lütfen tekrar şifre sıfırlama talebinde bulunun.");
+      if (accessToken) {
+        try {
+          // Set the session using the access token
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: '',
+          });
+          
+          if (error) {
+            setError("Oturum doğrulama hatası. Lütfen tekrar şifre sıfırlama talebinde bulunun.");
+            console.error("Error setting session:", error);
+          }
+        } catch (err) {
+          console.error("Error processing access token:", err);
+          setError("Şifre sıfırlama linkinde bir sorun var. Lütfen yeni bir şifre sıfırlama talebi gönderin.");
+        }
       }
     };
     
-    checkSession();
-  }, []);
+    handleHashFragment();
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

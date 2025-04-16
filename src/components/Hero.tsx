@@ -52,7 +52,7 @@ const Hero: React.FC<HeroProps> = ({
             <Button asChild className="bg-primary hover:bg-primary/90">
               <Link to="/reservation">Rezervasyon Yap</Link>
             </Button>
-            <Button asChild variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button asChild variant="outline" className="bg-amber-400 text-black border-amber-400 hover:bg-amber-500 hover:border-amber-500 hover:text-black">
               <Link to="/menu">Menüyü Gör</Link>
             </Button>
           </div>

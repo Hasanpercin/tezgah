@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, Clock } from 'lucide-react';
 const Footer = () => {
@@ -72,7 +73,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white/20 py-6 text-center text-sm opacity-70">
-          <p className="">&copy; {currentYear} Lezzet Durağı. Tüm Hakları Saklıdır.</p>
+          <p className="">&copy; {currentYear} Tezgah Alaçatı. Tüm Hakları Saklıdır.</p>
         </div>
       </div>
     </footer>;

@@ -66,7 +66,7 @@ const Menu = () => {
         subtitle="En lezzetli yemeklerimizi keşfedin"
         showButtons={false}
         className="h-[30vh]"
-        overlayColor="rgba(249, 115, 22, 0.7)" // Vibrant orange color with transparency
+        overlayColor="rgba(115, 191, 130, 0.7)" // Light green color with transparency
         titleGradient={true}
       />
       
