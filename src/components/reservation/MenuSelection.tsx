@@ -54,7 +54,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     }
     
     // If no type is selected, default to at_restaurant
-    if (types.length === 0 && !value.type) {
+    if (types.length === 0) {
       types.push('at_restaurant');
     }
     
@@ -90,6 +90,12 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       }
     } else {
       newTypes = newTypes.filter(t => t !== type);
+      
+      // If no types selected, default to restaurant
+      if (newTypes.length === 0) {
+        newTypes = ['at_restaurant'];
+        handleClearSelections();
+      }
     }
     
     console.log('Menu type change:', type, checked, 'New types:', newTypes);
@@ -113,7 +119,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     }
     
     onChange({
-      type: types.length === 0 ? 'at_restaurant' : types.length === 1 ? types[0] : 'mixed',
+      type: types.length === 1 ? types[0] : 'mixed',
       selectedFixedMenus: selectedFixedMenus,
       selectedMenuItems: value.selectedMenuItems || []
     });

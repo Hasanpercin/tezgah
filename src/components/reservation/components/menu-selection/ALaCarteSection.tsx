@@ -10,7 +10,7 @@ interface ALaCarteSectionProps {
 
 const ALaCarteSection = ({ onMenuItemsSelect, guestCount }: ALaCarteSectionProps) => {
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-8 space-y-6" data-testid="a-la-carte-section">
       <div className="flex items-center gap-2 border-b pb-4">
         <CakeSlice className="h-5 w-5 text-primary" />
         <h4 className="text-xl font-medium">A La Carte Menü</h4>

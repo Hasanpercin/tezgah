@@ -2,6 +2,7 @@
 import { useReservationForm } from './reservation/useReservationForm';
 import BasicInfoForm from './reservation/BasicInfoForm';
 import SubmitButton from './reservation/SubmitButton';
+import MenuSelection from './reservation/MenuSelection';
 
 const ReservationForm = () => {
   const {
@@ -11,7 +12,9 @@ const ReservationForm = () => {
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleSubmit
+    handleSubmit,
+    menuSelection,
+    handleMenuSelectionChange
   } = useReservationForm();
 
   return (
@@ -23,6 +26,14 @@ const ReservationForm = () => {
         handleSelectChange={handleSelectChange}
         handleDateChange={handleDateChange}
       />
+
+      {formData.guests && (
+        <MenuSelection
+          value={menuSelection}
+          onChange={handleMenuSelectionChange}
+          guestCount={formData.guests}
+        />
+      )}
 
       <div className="pt-4">
         <SubmitButton isSubmitting={isSubmitting} />

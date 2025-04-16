@@ -1,6 +1,7 @@
 
 import { ChefHat, CakeSlice, FileText } from 'lucide-react';
 import SelectionCard from './SelectionCard';
+import { useEffect } from 'react';
 
 interface MenuTypeSelectionProps {
   selectedMenuTypes: ('fixed_menu' | 'a_la_carte' | 'at_restaurant')[];
@@ -8,6 +9,13 @@ interface MenuTypeSelectionProps {
 }
 
 const MenuTypeSelection = ({ selectedMenuTypes, onMenuTypeChange }: MenuTypeSelectionProps) => {
+  // Eğer hiç bir seçenek seçilmemişse, varsayılan olarak restoranda seçimi aktif et
+  useEffect(() => {
+    if (selectedMenuTypes.length === 0) {
+      onMenuTypeChange('at_restaurant', true);
+    }
+  }, [selectedMenuTypes.length, onMenuTypeChange]);
+
   return (
     <div className="grid grid-cols-1 gap-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
