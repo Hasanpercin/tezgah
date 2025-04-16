@@ -30,7 +30,7 @@ export const useSupabaseRealtime = ({
       .channel(`${table}-changes`)
       .on(
         'postgres_changes', 
-        { event, schema, table, filter }, 
+        { event, schema, table, filter } as any, 
         (payload) => {
           console.log('Realtime change detected:', payload);
           setPayload(payload as ChangePayload);
