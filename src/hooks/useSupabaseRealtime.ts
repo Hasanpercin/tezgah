@@ -25,10 +25,11 @@ export const useSupabaseRealtime = ({
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Create a channel for the specific table changes
     const channel = supabase
       .channel(`${table}-changes`)
       .on(
-        'postgres_changes',
+        'postgres_changes', // This is correct, but we need to properly structure the subscription
         {
           event,
           schema,
