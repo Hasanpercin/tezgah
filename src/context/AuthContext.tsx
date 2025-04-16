@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -10,8 +9,8 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
-  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: any }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: any }>;
+  signup: (email: string, password: string, name: string, phone: string) => Promise<{ success: boolean; error?: any }>;
+  signUp: (email: string, password: string, name: string, phone: string) => Promise<{ success: boolean; error?: any }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: any }>;
@@ -110,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, phone: string) => {
     try {
       // Check if user already exists before sign up attempt
       const { data: existingUsers } = await supabase
@@ -130,7 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           data: {
-            name
+            name,
+            phone
           }
         }
       });

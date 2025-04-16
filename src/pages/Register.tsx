@@ -16,6 +16,7 @@ const Register = () => {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +33,16 @@ const Register = () => {
       return;
     }
     
+    // Validate phone number 
+    const phoneRegex = /^[0-9]{10}$/; // 10 digit phone number
+    if (!phoneRegex.test(phone.replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '').replace(/-/g, ''))) {
+      setError('Geçerli bir telefon numarası giriniz (Örn: 5551234567)');
+      setIsLoading(false);
+      return;
+    }
+    
     try {
-      const result = await signup(email, password, name);
+      const result = await signup(email, password, name, phone);
       
       if (result.error) {
         setError(result.error.message || 'Kayıt yapılamadı.');
@@ -87,6 +96,16 @@ const Register = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefon Numarası</Label>
+                <Input
+                  id="phone"
+                  placeholder="555 123 45 67"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                 />
               </div>

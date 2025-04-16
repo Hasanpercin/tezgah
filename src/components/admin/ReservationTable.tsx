@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -33,41 +34,64 @@ type ReservationTableProps = {
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const { toast } = useToast();
   
   const handleStatusChange = async (id: string, newStatus: ReservationStatus, reservation: Reservation) => {
     try {
-      await onStatusChange(id, newStatus);
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      onStatusChange(id, newStatus);
       
       if (reservation.email) {
-        const notificationData = {
-          type: 'reservation_status',
-          reservationId: id,
-          status: newStatus,
-          customerEmail: reservation.email,
-          customerName: reservation.name || 'Değerli Müşterimiz',
-          date: format(new Date(reservation.date), "dd.MM.yyyy"),
-          time: reservation.time,
-          guests: reservation.guests,
-          tableInfo: reservation.selected_table?.name || ''
-        };
-        
-        const response = await fetch('https://uvndgrbclfavulineazs.supabase.co/functions/v1/send-notification', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-        
-        if (!response.ok) {
-          console.error('Notification email failed to send');
+        try {
+          const notificationResponse = await fetch(
+            'https://uvndgrbclfavulineazs.supabase.co/functions/v1/send-notification', 
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                type: 'reservation_status',
+                reservationId: id,
+                status: newStatus,
+                customerEmail: reservation.email,
+                customerName: reservation.name || 'Değerli Müşterimiz',
+                date: format(new Date(reservation.date), "dd.MM.yyyy"),
+                time: reservation.time,
+                guests: reservation.guests,
+                tableInfo: reservation.selected_table?.name || ''
+              })
+            }
+          );
+          
+          if (!notificationResponse.ok) {
+            console.error('Notification email failed to send');
+          }
+        } catch (notificationError) {
+          console.error('Error sending notification:', notificationError);
         }
       }
       
-      // Eğer dialog açıksa, işlem sonrası kapat
       setDialogOpen(false);
+      
+      toast({
+        title: 'Başarılı',
+        description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : 'iptal edildi'}.`,
+      });
     } catch (error) {
       console.error("Error updating reservation status:", error);
+      
+      toast({
+        title: 'Hata',
+        description: 'Rezervasyon durumu güncellenirken bir hata oluştu.',
+        variant: 'destructive',
+      });
     }
   };
 

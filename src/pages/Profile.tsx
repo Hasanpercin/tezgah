@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { User, Settings, Clock, Award, LogOut } from 'lucide-react';
+import { User, Settings, Award, LogOut } from 'lucide-react';
 
 const Profile = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -145,19 +144,15 @@ const Profile = () => {
           <div className="mb-12 text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 font-playfair">Hesabım</h1>
             <p className="text-xl text-muted-foreground">
-              Profil bilgilerinizi düzenleyin ve rezervasyonlarınızı yönetin
+              Profil bilgilerinizi düzenleyin
             </p>
           </div>
           
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 Profil Bilgileri
-              </TabsTrigger>
-              <TabsTrigger value="reservations" className="flex items-center">
-                <Clock className="mr-2 h-4 w-4" />
-                Rezervasyonlar
               </TabsTrigger>
               <TabsTrigger value="loyalty" className="flex items-center">
                 <Award className="mr-2 h-4 w-4" />
@@ -240,28 +235,6 @@ const Profile = () => {
                     {isSaving ? 'Kaydediliyor...' : 'Bilgileri Güncelle'}
                   </Button>
                 </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="reservations">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5" />
-                    Rezervasyonlarım
-                  </CardTitle>
-                  <CardDescription>
-                    Geçmiş ve gelecek rezervasyonlarınızı görüntüleyin
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <p className="text-muted-foreground mb-4">Henüz bir rezervasyonunuz bulunmuyor</p>
-                    <Button onClick={() => navigate('/reservation')}>
-                      Rezervasyon Yap
-                    </Button>
-                  </div>
-                </CardContent>
               </Card>
             </TabsContent>
             

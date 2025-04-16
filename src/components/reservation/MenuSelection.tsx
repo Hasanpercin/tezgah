@@ -38,11 +38,12 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   };
   
   const handleFixedMenuSelect = (menu: FixedMenuItem) => {
+    // Ensure the selected menu is fully set
     setSelectedFixedMenu(menu);
     onChange({
-      ...value,
       type: 'fixed_menu',
-      selectedFixedMenu: menu
+      selectedFixedMenu: menu,
+      selectedMenuItems: []
     });
   };
   
@@ -60,7 +61,8 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       peer-checked:text-accent-foreground
       relative border p-4 rounded-md cursor-pointer
       hover:bg-accent transition-colors
-      ${value.type === menuType ? 'bg-accent text-accent-foreground' : ''}
+      ${value.type === menuType ? 'bg-accent text-accent-foreground' : 'bg-white'}
+      flex flex-col space-y-2
     `;
   };
 
@@ -87,14 +89,14 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
               htmlFor="fixed_menu" 
               className={getMenuOptionClasses('fixed_menu')}
             >
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <div>
                   <div className="font-medium mb-1">Fix Menü</div>
                   <div className="text-sm text-muted-foreground">
                     %10 indirim
                   </div>
                 </div>
-                <Check className={value.type === 'fixed_menu' ? 'opacity-100' : 'opacity-0'} />
+                {value.type === 'fixed_menu' && <Check className="text-primary" />}
               </div>
               <div className="text-sm leading-relaxed mt-2">
                 Fix menü seçeneklerinden birini seçebilirsiniz. Her menü, özel olarak hazırlanmış yemeklerden oluşur.
@@ -112,14 +114,14 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
               htmlFor="a_la_carte" 
               className={getMenuOptionClasses('a_la_carte')}
             >
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <div>
                   <div className="font-medium mb-1">A La Carte</div>
                   <div className="text-sm text-muted-foreground">
                     %10 indirim
                   </div>
                 </div>
-                <Check className={value.type === 'a_la_carte' ? 'opacity-100' : 'opacity-0'} />
+                {value.type === 'a_la_carte' && <Check className="text-primary" />}
               </div>
               <div className="text-sm leading-relaxed mt-2">
                 Geniş menümüzden dilediğiniz yemekleri seçerek kendi menünüzü oluşturabilirsiniz.
@@ -137,14 +139,14 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
               htmlFor="at_restaurant" 
               className={getMenuOptionClasses('at_restaurant')}
             >
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <div>
                   <div className="font-medium mb-1">Restoranda Seçim</div>
                   <div className="text-sm text-muted-foreground">
                     İndirim Yok
                   </div>
                 </div>
-                <Check className={value.type === 'at_restaurant' ? 'opacity-100' : 'opacity-0'} />
+                {value.type === 'at_restaurant' && <Check className="text-primary" />}
               </div>
               <div className="text-sm leading-relaxed mt-2">
                 Menü seçiminizi restorana geldiğinizde yapabilirsiniz.
@@ -167,7 +169,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
               {fixedMenus && fixedMenus.map((menu) => (
                 <div 
                   key={menu.id}
-                  className={`border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors ${selectedFixedMenu?.id === menu.id ? 'bg-accent text-accent-foreground' : ''}`}
+                  className={`border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors ${selectedFixedMenu?.id === menu.id ? 'bg-accent text-accent-foreground border-primary' : ''}`}
                   onClick={() => handleFixedMenuSelect(menu)}
                 >
                   <div className="font-medium">{menu.name}</div>
@@ -186,7 +188,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
           <ALaCarteMenu onChange={handleALaCarteMenuSelect} guestCount={guestCount} />
         </div>
       )}
-      
     </div>
   );
 };
