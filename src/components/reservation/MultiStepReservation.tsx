@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -175,7 +174,7 @@ const MultiStepReservation = () => {
                 onSelectTable={setSelectedTable}
                 date={state.formData.date || new Date()}
                 time={state.formData.time}
-                guests={parseInt(state.formData.guests.toString())} // Convert to number using toString() first
+                guests={state.formData.guests.toString()} // Convert to string explicitly
               />
             )}
             
