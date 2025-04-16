@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -13,6 +14,7 @@ type AuthContextType = {
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: any }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: any }>;
 };
 
 export type UserProfile = {
@@ -110,6 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (email: string, password: string, name: string) => {
     try {
+      // Check if user already exists before sign up attempt
+      const { data: existingUsers } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email);
+        
+      if (existingUsers && existingUsers.length > 0) {
+        return {
+          success: false,
+          error: { message: 'Bu e-posta adresi ile kayıtlı bir kullanıcı zaten var.' }
+        };
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -125,14 +140,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     } catch (error: any) {
       console.error('Kayıt sırasında hata:', error.message);
+      
+      // Improve error messages
+      let errorMessage = 'Kayıt sırasında bir hata oluştu';
+      if (error.message === 'User already registered') {
+        errorMessage = 'Bu e-posta adresi ile kayıtlı bir kullanıcı zaten var.';
+      }
+      
       return { 
         success: false, 
-        error: error.message || 'Kayıt sırasında bir hata oluştu'
+        error: { message: errorMessage }
       };
     }
   };
 
   const signUp = signup;
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password'
+      });
+
+      if (error) throw error;
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Şifre sıfırlama sırasında hata:', error.message);
+      return { 
+        success: false, 
+        error: error.message || 'Şifre sıfırlama işlemi başarısız oldu.'
+      };
+    }
+  };
 
   const logout = async () => {
     try {
@@ -182,7 +222,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup,
       signUp,
       logout,
-      updateProfile
+      updateProfile,
+      resetPassword
     }}>
       {children}
     </AuthContext.Provider>
