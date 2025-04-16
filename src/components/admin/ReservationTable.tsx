@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -24,7 +22,6 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -36,28 +33,13 @@ type ReservationTableProps = {
 export const ReservationTable = ({ reservations, onStatusChange }: ReservationTableProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const { toast } = useToast();
   
   const handleStatusChange = async (id: string, newStatus: ReservationStatus) => {
     try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()  // Explicitly update timestamp
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Call the onStatusChange callback to update the UI
-      onStatusChange(id, newStatus);
-      
-      toast({
-        title: 'Başarılı',
-        description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : newStatus === 'İptal' ? 'iptal edildi' : 'beklemede olarak güncellendi'}.`,
-      });
-      
+      setIsUpdating(true);
+      await onStatusChange(id, newStatus);
       setDialogOpen(false);
     } catch (error) {
       console.error("Error updating reservation status:", error);
@@ -67,6 +49,8 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
         description: 'Rezervasyon durumu güncellenirken bir hata oluştu.',
         variant: 'destructive',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -336,6 +320,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                           variant="destructive" 
                           size="sm"
                           onClick={() => handleStatusChange(res.id, "İptal")}
+                          disabled={isUpdating}
                           className="flex-1 sm:flex-auto"
                         >
                           <XCircle className="mr-2 h-4 w-4" /> İptal Et
@@ -344,6 +329,7 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                           variant="default" 
                           size="sm"
                           onClick={() => handleStatusChange(res.id, "Onaylandı")}
+                          disabled={isUpdating}
                           className="flex-1 sm:flex-auto"
                         >
                           <CheckCircle className="mr-2 h-4 w-4" /> Onayla
@@ -367,18 +353,21 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
                     <DropdownMenuItem 
                       onClick={() => handleStatusChange(res.id, "Onaylandı")}
                       className="text-green-600"
+                      disabled={isUpdating}
                     >
                       <CheckCircle className="mr-2 h-4 w-4" /> Onayla
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleStatusChange(res.id, "Beklemede")}
                       className="text-yellow-600"
+                      disabled={isUpdating}
                     >
                       Beklet
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleStatusChange(res.id, "İptal")}
                       className="text-red-600"
+                      disabled={isUpdating}
                     >
                       <XCircle className="mr-2 h-4 w-4" /> İptal Et
                     </DropdownMenuItem>
@@ -392,4 +381,3 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
     </Table>
   );
 };
-

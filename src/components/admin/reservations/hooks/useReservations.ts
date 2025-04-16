@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Reservation, ReservationStatus, SelectedItems } from "../types";
 import { Json } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Helper function to safely convert JSON data to SelectedItems type
 const parseSelectedItems = (jsonData: Json | null): SelectedItems | undefined => {
@@ -53,18 +54,32 @@ const mapToReservations = (data: any[]): Reservation[] => {
 };
 
 export const useReservations = (selectedDate?: Date) => {
+  const { toast } = useToast();
+
+  // Realtime subscription için state
+  const [subscribed, setSubscribed] = useState(false);
+  
   const fetchReservations = async () => {
-    let query = supabase.from('reservations').select('*');
-    
-    if (selectedDate) {
-      const dateString = selectedDate.toISOString().split('T')[0];
-      query = query.eq('date', dateString);
+    try {
+      let query = supabase.from('reservations').select('*');
+      
+      if (selectedDate) {
+        const dateString = selectedDate.toISOString().split('T')[0];
+        query = query.eq('date', dateString);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return mapToReservations(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Veri çekme hatası",
+        description: error.message || "Rezervasyonlar yüklenirken bir hata oluştu.",
+        variant: "destructive",
+      });
+      return [];
     }
-    
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return mapToReservations(data || []);
   };
 
   const { data, error, isLoading, refetch } = useQuery({
@@ -72,10 +87,63 @@ export const useReservations = (selectedDate?: Date) => {
     queryFn: fetchReservations,
   });
 
+  // Realtime güncellemeler için subscription
+  useEffect(() => {
+    if (subscribed) return;
+
+    const channel = supabase
+      .channel('reservations-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'reservations' }, 
+        (payload) => {
+          console.log('Supabase realtime update:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+      
+    setSubscribed(true);
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch, subscribed]);
+
+  const updateReservationStatus = async (id: string, status: ReservationStatus) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Durum güncellendi",
+        description: `Rezervasyon durumu ${status} olarak güncellendi.`,
+      });
+      
+      // Veriyi manuel olarak refetch edelim (realtime olmama durumuna karşı)
+      refetch();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Hata",
+        description: error.message || "Rezervasyon durumu güncellenirken hata oluştu.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     reservations: data || [],
     isLoading,
     error,
-    mutate: refetch
+    mutate: refetch,
+    updateReservationStatus
   };
 };

@@ -10,24 +10,17 @@ import { Reservation, ReservationStatus } from "./types";
 export const ReservationsPanel = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
-  const { reservations, isLoading, error, mutate } = useReservations(selectedDate);
+  const { reservations, isLoading, error, mutate, updateReservationStatus } = useReservations(selectedDate);
 
   const handleStatusChange = async (id: string, newStatus: ReservationStatus) => {
     try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ status: newStatus })
-        .eq('id', id);
+      // updateReservationStatus fonksiyonunu kullanıyoruz
+      const success = await updateReservationStatus(id, newStatus);
       
-      if (error) throw error;
+      if (!success) throw new Error("Status update failed");
       
-      // Update local data
-      mutate();
+      // Başarılı güncelleme durumunda otomatik olarak mutate edilecek (hook içinde)
       
-      toast({
-        title: "Durum Güncellendi",
-        description: `Rezervasyon durumu ${newStatus} olarak güncellendi.`,
-      });
     } catch (error: any) {
       console.error("Error updating reservation status:", error.message);
       toast({

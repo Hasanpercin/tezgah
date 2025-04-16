@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 
 type SubmitButtonProps = {
   isSubmitting: boolean;
+  onClick?: () => void;
 };
 
-const SubmitButton = ({ isSubmitting }: SubmitButtonProps) => {
+const SubmitButton = ({ isSubmitting, onClick }: SubmitButtonProps) => {
   return (
     <Button 
       type="submit" 
       className="w-full" 
       disabled={isSubmitting}
+      onClick={onClick}
     >
       {isSubmitting ? (
         <span className="flex items-center">
