@@ -33,7 +33,8 @@ export const useSupabaseRealtime = ({
         { event, schema, table, filter },
         (payload) => {
           console.log('Realtime change detected:', payload);
-          setPayload(payload as ChangePayload);
+          // Cast the payload to unknown first and then to ChangePayload to satisfy TypeScript
+          setPayload(payload as unknown as ChangePayload);
         }
       )
       .subscribe((status) => {
