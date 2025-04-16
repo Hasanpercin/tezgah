@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { getFixedMenus } from '@/services/menuService';
-import { MenuSelectionData, FixedMenuItem } from './types/reservationTypes';
-import { MenuItem } from '@/services/menuService';
+import { MenuSelectionData } from './types/reservationTypes';
 import { useToast } from '@/hooks/use-toast';
 import MenuTypeSelection from './components/menu-selection/MenuTypeSelection';
 import FixedMenuSection from './components/menu-selection/FixedMenuSection';
 import ALaCarteSection from './components/menu-selection/ALaCarteSection';
 import RestaurantSelection from './components/menu-selection/RestaurantSelection';
-import { Separator } from '@/components/ui/separator';
 import { ChevronDown } from 'lucide-react';
+import { useMenuSelection } from './hooks/useMenuSelection';
 
 interface MenuSelectionProps {
   value: MenuSelectionData;
@@ -18,77 +17,25 @@ interface MenuSelectionProps {
   guestCount: number | string;
 }
 
-type MenuType = 'fixed_menu' | 'a_la_carte' | 'at_restaurant';
-
 const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCount }) => {
   const { toast } = useToast();
-  const [selectedMenuTypes, setSelectedMenuTypes] = useState<MenuType[]>(
-    value?.type ? (
-      value.type === 'mixed' 
-        ? ['fixed_menu', 'a_la_carte'] 
-        : [value.type as MenuType]
-    ) : ['at_restaurant']
-  );
-  
-  const [selectedFixedMenus, setSelectedFixedMenus] = useState<{ menu: FixedMenuItem; quantity: number }[]>([]);
+  const {
+    selectedMenuTypes,
+    selectedFixedMenus,
+    handleMenuTypeChange,
+    handleFixedMenuSelect,
+    handleFixedMenuRemove,
+    handleFixedMenuQuantityChange,
+    handleALaCarteMenuSelect
+  } = useMenuSelection(value, onChange);
   
   const { isError } = useQuery({
     queryKey: ['fixedMenus'],
     queryFn: getFixedMenus,
   });
-  
-  // Başlangıç değerleri ayarla
-  useEffect(() => {
-    if (!value || typeof value !== 'object') {
-      console.log('Value is not defined, initializing with defaults');
-      if (typeof onChange === 'function') {
-        onChange({
-          type: 'at_restaurant',
-          selectedFixedMenus: [],
-          selectedMenuItems: []
-        });
-      }
-      setSelectedMenuTypes(['at_restaurant']);
-      setSelectedFixedMenus([]);
-      return;
-    }
-    
-    // Menü tiplerini başlat
-    let types: MenuType[] = [];
-    if (value.type === 'at_restaurant') {
-      types = ['at_restaurant'];
-    } 
-    else if (value.type === 'mixed') {
-      types = [];
-      if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
-        types.push('fixed_menu');
-      }
-      if (value.selectedMenuItems && value.selectedMenuItems.length > 0) {
-        types.push('a_la_carte');
-      }
-      if (types.length === 0) {
-        types = ['at_restaurant'];
-      }
-    }
-    else if (value.type) {
-      types = [value.type as MenuType];
-    } else {
-      types = ['at_restaurant'];
-    }
-    
-    setSelectedMenuTypes(types);
-    
-    // Fix menü seçimlerini başlat
-    if (value.selectedFixedMenus && value.selectedFixedMenus.length > 0) {
-      setSelectedFixedMenus(value.selectedFixedMenus);
-    } else {
-      setSelectedFixedMenus([]);
-    }
 
-  }, []);
-
-  // Hata durumunu kontrol et
-  useEffect(() => {
+  // Check for error loading fixed menus
+  React.useEffect(() => {
     if (isError) {
       console.error('Error fetching fixed menus');
       toast({
@@ -98,138 +45,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       });
     }
   }, [isError, toast]);
-
-  const handleMenuTypeChange = (type: string, checked: boolean) => {
-    let newTypes = [...selectedMenuTypes];
-    
-    if (checked) {
-      if (type === 'at_restaurant') {
-        newTypes = ['at_restaurant' as MenuType];
-        handleClearSelections();
-      } else {
-        newTypes = newTypes.filter(t => t !== 'at_restaurant');
-        
-        if (!newTypes.includes(type as MenuType)) {
-          newTypes.push(type as MenuType);
-        }
-      }
-    } else {
-      newTypes = newTypes.filter(t => t !== type);
-      
-      // Eğer hiç tip seçili değilse, restoran seçeneğini varsayılan olarak ayarla
-      if (newTypes.length === 0) {
-        newTypes = ['at_restaurant' as MenuType];
-        handleClearSelections();
-      }
-    }
-    
-    console.log('Menu type change:', type, checked, 'New types:', newTypes);
-    setSelectedMenuTypes(newTypes);
-    
-    // onChange prop'u bir fonksiyon ise updateParentWithCurrentSelections'ı çağır
-    if (typeof onChange === 'function') {
-      updateParentWithCurrentSelections(newTypes);
-    } else {
-      console.error('onChange prop is not a function:', onChange);
-    }
-  };
-  
-  const handleClearSelections = () => {
-    setSelectedFixedMenus([]);
-  };
-  
-  const updateParentWithCurrentSelections = (types: MenuType[]) => {
-    if (!onChange || typeof onChange !== 'function') {
-      console.error('onChange is not a function in updateParentWithCurrentSelections');
-      return;
-    }
-    
-    if (types.includes('at_restaurant')) {
-      onChange({
-        type: 'at_restaurant',
-        selectedFixedMenus: [],
-        selectedMenuItems: []
-      });
-      return;
-    }
-    
-    // Fixed menu ve a la carte birlikte seçilmişse mixed olarak ayarla
-    const menuType = types.length > 1 ? 'mixed' : types[0];
-    
-    onChange({
-      type: menuType,
-      selectedFixedMenus: selectedFixedMenus,
-      selectedMenuItems: value && value.selectedMenuItems ? value.selectedMenuItems : []
-    });
-  };
-  
-  const handleFixedMenuSelect = (menu: FixedMenuItem) => {
-    const existingIndex = selectedFixedMenus.findIndex(item => item.menu.id === menu.id);
-    
-    if (existingIndex >= 0) {
-      const newSelectedMenus = [...selectedFixedMenus];
-      newSelectedMenus[existingIndex].quantity += 1;
-      setSelectedFixedMenus(newSelectedMenus);
-    } else {
-      setSelectedFixedMenus([...selectedFixedMenus, { menu, quantity: 1 }]);
-    }
-    
-    if (typeof onChange === 'function') {
-      const newTypes = selectedMenuTypes.includes('fixed_menu') ? selectedMenuTypes : [...selectedMenuTypes, 'fixed_menu' as MenuType];
-      setSelectedMenuTypes(newTypes);
-      updateParentWithCurrentSelections(newTypes);
-    }
-  };
-  
-  const handleFixedMenuRemove = (menuId: string) => {
-    const newSelectedMenus = selectedFixedMenus.filter(item => item.menu.id !== menuId);
-    setSelectedFixedMenus(newSelectedMenus);
-    
-    if (typeof onChange === 'function') {
-      // Eğer hiç fix menü kalmadıysa ve a la carte de seçili değilse, restoran seçeneğini seç
-      let newTypes = [...selectedMenuTypes];
-      if (newSelectedMenus.length === 0 && !selectedMenuTypes.includes('a_la_carte')) {
-        newTypes = ['at_restaurant' as MenuType];
-      }
-      updateParentWithCurrentSelections(newTypes);
-    }
-  };
-  
-  const handleFixedMenuQuantityChange = (menuId: string, change: number) => {
-    const newSelectedMenus = [...selectedFixedMenus];
-    const index = newSelectedMenus.findIndex(item => item.menu.id === menuId);
-    
-    if (index >= 0) {
-      const newQuantity = newSelectedMenus[index].quantity + change;
-      if (newQuantity > 0) {
-        newSelectedMenus[index].quantity = newQuantity;
-      } else {
-        newSelectedMenus.splice(index, 1);
-      }
-      setSelectedFixedMenus(newSelectedMenus);
-      
-      if (typeof onChange === 'function') {
-        updateParentWithCurrentSelections(selectedMenuTypes);
-      }
-    }
-  };
-  
-  const handleALaCarteMenuSelect = (items: MenuItem[]) => {
-    if (typeof onChange === 'function') {
-      // A La Carte seçildiğinde menü tipi olarak eklenmemişse ekle
-      let newTypes = selectedMenuTypes;
-      if (!selectedMenuTypes.includes('a_la_carte')) {
-        newTypes = [...selectedMenuTypes.filter(t => t !== 'at_restaurant'), 'a_la_carte' as MenuType];
-        setSelectedMenuTypes(newTypes);
-      }
-      
-      onChange({
-        type: newTypes.length > 1 ? 'mixed' : 'a_la_carte',
-        selectedFixedMenus: selectedFixedMenus,
-        selectedMenuItems: items
-      });
-    }
-  };
 
   return (
     <div className="space-y-8">
