@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('email')
         .eq('email', email);
-        
+      
       if (existingUsers && existingUsers.length > 0) {
         return {
           success: false,

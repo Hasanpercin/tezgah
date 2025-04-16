@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -33,19 +32,22 @@ const Register = () => {
       return;
     }
     
-    // Validate phone number 
-    const phoneRegex = /^[0-9]{10}$/; // 10 digit phone number
-    if (!phoneRegex.test(phone.replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '').replace(/-/g, ''))) {
-      setError('Geçerli bir telefon numarası giriniz (Örn: 5551234567)');
+    const phoneRegex = /^(05|5)[0-9]{9}$/; // Starts with 05 or 5, followed by 9 digits
+    const cleanedPhone = phone.replace(/\D/g, ''); // Remove non-digit characters
+    
+    if (!phoneRegex.test(cleanedPhone)) {
+      setError('Geçerli bir Türk telefon numarası giriniz (Örn: 5551234567)');
       setIsLoading(false);
       return;
     }
     
+    const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : '0' + cleanedPhone;
+    
     try {
-      const result = await signup(email, password, name, phone);
+      const signUpResult = await signup(email, password, name, formattedPhone);
       
-      if (result.error) {
-        setError(result.error.message || 'Kayıt yapılamadı.');
+      if (signUpResult.error) {
+        setError(signUpResult.error.message || 'Kayıt yapılamadı.');
       } else {
         toast({
           title: 'Kayıt başarılı',

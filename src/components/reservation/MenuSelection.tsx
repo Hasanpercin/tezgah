@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getFixedMenus, FixedMenuItem } from '@/services/menuService';
 import { MenuSelectionData } from './types/reservationTypes';
 import ALaCarteMenu from './components/ALaCarteMenu';
+import { Button } from "@/components/ui/button";
 
 interface MenuSelectionProps {
   value: MenuSelectionData;
@@ -38,7 +39,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   };
   
   const handleFixedMenuSelect = (menu: FixedMenuItem) => {
-    // Ensure the selected menu is fully set
     setSelectedFixedMenu(menu);
     onChange({
       type: 'fixed_menu',
@@ -60,8 +60,8 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       peer-checked:bg-accent
       peer-checked:text-accent-foreground
       relative border p-4 rounded-md cursor-pointer
-      hover:bg-accent transition-colors
-      ${value.type === menuType ? 'bg-accent text-accent-foreground' : 'bg-white'}
+      hover:bg-accent/10 transition-colors
+      ${value.type === menuType ? 'bg-accent/20 border-primary' : 'bg-white'}
       flex flex-col space-y-2
     `;
   };
@@ -69,9 +69,9 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Menü Seçimi</h3>
+        <h3 className="text-lg font-semibold mb-4">Menü Seçimi</h3>
         <p className="text-muted-foreground mb-4">
-          Lütfen menü tercihinizi seçiniz. Rezervasyon öncesi menü seçimi yaparak %10 indirim kazanabilirsiniz.
+          Lütfen menü tercihinizi seçiniz. Menü seçimi yaparak %10 indirim kazanabilirsiniz.
         </p>
         
         <RadioGroup 
@@ -161,21 +161,25 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
           <h4 className="text-md font-medium">Fix Menü Seçenekleri</h4>
           
           {isLoading ? (
-            <p>Menüler yükleniyor...</p>
+            <div className="text-center text-muted-foreground">Menüler yükleniyor...</div>
           ) : isError ? (
-            <p>Menüler yüklenirken bir hata oluştu.</p>
+            <div className="text-center text-destructive">Menüler yüklenemedi</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {fixedMenus && fixedMenus.map((menu) => (
-                <div 
+                <Button
                   key={menu.id}
-                  className={`border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors ${selectedFixedMenu?.id === menu.id ? 'bg-accent text-accent-foreground border-primary' : ''}`}
+                  variant={selectedFixedMenu?.id === menu.id ? "default" : "outline"}
+                  className="flex flex-col h-auto p-4 text-left"
                   onClick={() => handleFixedMenuSelect(menu)}
                 >
-                  <div className="font-medium">{menu.name}</div>
-                  <div className="text-sm text-muted-foreground">{menu.description}</div>
+                  <div className="font-medium mb-2">{menu.name}</div>
+                  <div className="text-sm text-muted-foreground mb-2">{menu.description}</div>
                   <div className="mt-2 text-primary font-semibold">{menu.price} ₺</div>
-                </div>
+                  {selectedFixedMenu?.id === menu.id && (
+                    <Check className="absolute top-2 right-2 text-primary" />
+                  )}
+                </Button>
               ))}
             </div>
           )}

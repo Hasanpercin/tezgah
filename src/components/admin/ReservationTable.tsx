@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { 
@@ -38,52 +38,25 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
   
   const handleStatusChange = async (id: string, newStatus: ReservationStatus, reservation: Reservation) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reservations')
-        .update({ status: newStatus })
-        .eq('id', id);
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()  // Explicitly update timestamp
+        })
+        .eq('id', id)
+        .select();
       
       if (error) throw error;
       
-      onStatusChange(id, newStatus);
-      
-      if (reservation.email) {
-        try {
-          const notificationResponse = await fetch(
-            'https://uvndgrbclfavulineazs.supabase.co/functions/v1/send-notification', 
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                type: 'reservation_status',
-                reservationId: id,
-                status: newStatus,
-                customerEmail: reservation.email,
-                customerName: reservation.name || 'Değerli Müşterimiz',
-                date: format(new Date(reservation.date), "dd.MM.yyyy"),
-                time: reservation.time,
-                guests: reservation.guests,
-                tableInfo: reservation.selected_table?.name || ''
-              })
-            }
-          );
-          
-          if (!notificationResponse.ok) {
-            console.error('Notification email failed to send');
-          }
-        } catch (notificationError) {
-          console.error('Error sending notification:', notificationError);
-        }
+      if (data && data.length > 0) {
+        onStatusChange(id, newStatus);
+        
+        toast({
+          title: 'Başarılı',
+          description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : 'iptal edildi'}.`,
+        });
       }
-      
-      setDialogOpen(false);
-      
-      toast({
-        title: 'Başarılı',
-        description: `Rezervasyon ${newStatus === 'Onaylandı' ? 'onaylandı' : 'iptal edildi'}.`,
-      });
     } catch (error) {
       console.error("Error updating reservation status:", error);
       
@@ -92,6 +65,8 @@ export const ReservationTable = ({ reservations, onStatusChange }: ReservationTa
         description: 'Rezervasyon durumu güncellenirken bir hata oluştu.',
         variant: 'destructive',
       });
+    } finally {
+      setDialogOpen(false);
     }
   };
 
