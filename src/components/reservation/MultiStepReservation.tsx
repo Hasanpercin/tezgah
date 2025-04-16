@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useReservationState } from './hooks/useReservationState';
+import { MenuSelectionType } from './types';
 import ReservationForm from '@/components/ReservationForm';
 import TableSelection from './TableSelection';
 import StepIndicator from './components/StepIndicator';
@@ -215,4 +216,3 @@ const MultiStepReservation = () => {
 };
 
 export default MultiStepReservation;
-

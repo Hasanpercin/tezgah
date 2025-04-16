@@ -1,6 +1,6 @@
 
-
 // Fix this file with proper TypeScript types for the reservation system
+import { MenuSelectionType } from '../types';
 
 export interface Table {
   id: string | number;
@@ -67,7 +67,7 @@ export interface FixedMenuSelection {
 }
 
 export interface MenuSelectionData {
-  type: 'fixed_menu' | 'a_la_carte' | 'at_restaurant' | 'mixed';
+  type: MenuSelectionType;
   selectedFixedMenu?: FixedMenuItem | null; // Kept for backward compatibility
   selectedFixedMenus?: FixedMenuSelection[];
   selectedMenuItems?: MenuItem[];
@@ -112,4 +112,3 @@ export interface StepIndicatorProps {
   }>;
   skipStep?: number;
 }
-

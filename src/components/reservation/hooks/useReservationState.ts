@@ -1,613 +1,260 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { FormData } from '../types';
+import { MenuSelectionType } from '../types';
 import { 
   Table, 
   ReservationFormData, 
-  ReservationState,
-  MenuSelectionData as MenuSelection,  // Fixing the import
-  PaymentInfo
+  MenuSelectionData,
+  PaymentInfo 
 } from '../types/reservationTypes';
-import { MenuItem } from '@/services/menuService';
-
-interface DiscountSettings {
-  standard_discount_percentage: number;
-  high_amount_discount_percentage: number;
-  high_amount_threshold: number;
-}
-
-interface PaymentSettings {
-  enable_payment_step: boolean;
-  admin_notification_email: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 export const useReservationState = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [reservationId, setReservationId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [discountSettings, setDiscountSettings] = useState<DiscountSettings>({
-    standard_discount_percentage: 10,
-    high_amount_discount_percentage: 15,
-    high_amount_threshold: 3000,
-  });
-  
-  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
-    enable_payment_step: true,
-    admin_notification_email: 'hasanpercin35@gmail.com'
-  });
-  
-  const [state, setState] = useState<ReservationState>({
-    selectedTable: null,
-    basicFormCompleted: false,
+
+  // State for the current step in the reservation process
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // State for the form data, selected table, etc.
+  const [state, setState] = useState({
     formData: {
       name: '',
       email: '',
       phone: '',
       date: null,
       time: '',
-      guests: '2',
+      guests: '',
       notes: '',
-    },
+      occasion: '',
+    } as ReservationFormData,
+    selectedTable: null as Table | null,
+    basicFormCompleted: false,
     menuSelection: {
-      type: 'at_restaurant'
-    }
+      type: 'at_restaurant' as MenuSelectionType,
+      selectedFixedMenu: null,
+      selectedFixedMenus: [],
+      selectedMenuItems: []
+    } as MenuSelectionData,
+    payment: undefined as PaymentInfo | undefined,
   });
-  
-  // Fetch settings from database
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        // Fetch discount settings
-        const { data: discountData, error: discountError } = await supabase
-          .from('website_content')
-          .select('value')
-          .eq('section', 'payment')
-          .eq('key', 'discount_settings')
-          .single();
-          
-        if (discountError) {
-          console.error("Error fetching discount settings:", discountError);
-        } else if (discountData && discountData.value) {
-          try {
-            const settings = JSON.parse(discountData.value);
-            setDiscountSettings(settings);
-          } catch (parseError) {
-            console.error("Error parsing discount settings:", parseError);
-          }
-        }
-        
-        // Fetch payment settings
-        const { data: paymentData, error: paymentError } = await supabase
-          .from('website_content')
-          .select('value')
-          .eq('section', 'payment')
-          .eq('key', 'payment_settings')
-          .single();
-          
-        if (paymentError) {
-          console.error("Error fetching payment settings:", paymentError);
-        } else if (paymentData && paymentData.value) {
-          try {
-            const settings = JSON.parse(paymentData.value);
-            setPaymentSettings(settings);
-          } catch (parseError) {
-            console.error("Error parsing payment settings:", parseError);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching settings:", error);
-      }
-    };
-    
-    fetchSettings();
+
+  // Function to handle scrolling to the next step
+  const scrollToNextStep = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
   }, []);
-  
-  const handleFormDataChange = (data: Partial<ReservationFormData>) => {
-    setState({
-      ...state,
+
+  // Function to handle moving to the next step
+  const handleNextStep = useCallback(() => {
+    setCurrentStep((prevStep) => prevStep + 1);
+    scrollToNextStep();
+  }, [scrollToNextStep]);
+
+  // Function to handle moving to the previous step
+  const handlePrevStep = useCallback(() => {
+    setCurrentStep((prevStep) => prevStep - 1);
+    scrollToNextStep();
+  }, [scrollToNextStep]);
+
+  const setFormData = useCallback((data: Partial<FormData>) => {
+    setState((prevState) => ({
+      ...prevState,
       formData: {
-        ...state.formData,
-        ...data,
+        ...prevState.formData,
+        ...data
       }
-    });
-  };
+    }));
+  }, []);
 
-  useEffect(() => {
-    const handleReservationCompleted = (event: CustomEvent) => {
-      const newReservationId = event.detail?.reservationId;
-      
-      setState(prevState => ({
-        ...prevState,
-        basicFormCompleted: true,
-        formData: {
-          ...prevState.formData,
-          ...(event.detail?.formData || {})
-        }
-      }));
-      
-      if (newReservationId) {
-        setReservationId(newReservationId);
-      }
-      
-      if (currentStep === 0) {
-        setCurrentStep(1);
-      }
-    };
+  const setBasicFormCompleted = useCallback((completed: boolean) => {
+    setState((prevState) => ({
+      ...prevState,
+      basicFormCompleted: completed
+    }));
+  }, []);
 
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('reservationCompleted', 
-        handleReservationCompleted as EventListener);
+  // Set the selected table
+  const setSelectedTable = useCallback((table: Table | null) => {
+    setState((prevState) => ({
+      ...prevState,
+      selectedTable: table,
+    }));
+  }, []);
 
-      return () => {
-        container.removeEventListener('reservationCompleted', 
-          handleReservationCompleted as EventListener);
-      };
-    }
-  }, [currentStep]);
+  // Set the menu selection
+  const setMenuSelection = useCallback((menuSelection: MenuSelectionData) => {
+    setState((prevState) => ({
+      ...prevState,
+      menuSelection,
+    }));
+  }, []);
 
-  // Calculate the total based on selection type for payment
-  const calculateSubtotal = () => {
-    if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-      const quantity = state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests);
-      return state.menuSelection.selectedFixedMenu.price * quantity;
-    } else if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems) {
-      return state.menuSelection.selectedMenuItems.reduce((sum, item) => {
-        return sum + (item.price * (item.quantity || 1));
-      }, 0);
-    }
-    return 0;
-  };
-  
-  // Calculate discount using settings from the database
-  const calculateDiscount = (subtotal: number) => {
-    if (subtotal >= discountSettings.high_amount_threshold) {
-      // High amount discount
-      return {
-        percentage: discountSettings.high_amount_discount_percentage,
-        amount: subtotal * (discountSettings.high_amount_discount_percentage / 100)
-      };
-    } else if (subtotal > 0) {
-      // Standard discount
-      return {
-        percentage: discountSettings.standard_discount_percentage,
-        amount: subtotal * (discountSettings.standard_discount_percentage / 100)
-      };
-    }
-    return {
-      percentage: 0,
-      amount: 0
-    };
-  };
+  // Set payment complete
+  const setPaymentComplete = useCallback((paymentInfo: PaymentInfo) => {
+    setState((prevState) => ({
+      ...prevState,
+      payment: paymentInfo,
+    }));
 
-  const canProceed = () => {
+    // Move to the next step when payment is complete
+    setCurrentStep(4);
+  }, []);
+
+  // For skipping payment step when menu selection is at_restaurant
+  const skipPaymentStep = useCallback(() => {
+    setCurrentStep(4);
+  }, []);
+
+  // Check if the current step can proceed to the next
+  const canProceed = useCallback(() => {
     switch (currentStep) {
-      case 0: // Basic details
-        return state.basicFormCompleted || (
-          state.formData.name && 
-          state.formData.email && 
-          state.formData.phone && 
-          state.formData.date && 
-          state.formData.time && 
-          state.formData.guests
-        );
-      case 1: // Table selection
-        return state.selectedTable !== null;
-      case 2: // Menu selection
-        // Check if menu selection type exists and is not empty
-        return state.menuSelection && 
-               state.menuSelection.type !== undefined && 
-               state.menuSelection.type.length > 0;  
-      case 3: // Payment
-        // Can only proceed if payment is completed
-        return state.payment?.isPaid === true;
+      case 0:
+        return state.basicFormCompleted;
+      case 1:
+        return !!state.selectedTable;
+      case 2:
+        return true; // Always allow proceeding from menu selection
+      case 3:
+        return state.payment?.isPaid;
       default:
         return true;
     }
-  };
+  }, [currentStep, state.basicFormCompleted, state.selectedTable, state.payment?.isPaid]);
 
-  // Function to send email notification when payment step is skipped
-  const sendEmailNotification = async () => {
+  // Function to handle submitting the reservation
+  const submitReservation = useCallback(async () => {
     try {
-      const subtotal = calculateSubtotal();
-      const discount = calculateDiscount(subtotal);
-      const total = subtotal - discount.amount;
-      
-      // Prepare email content
-      const menuSelectionDetails = state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu 
-        ? `Sabit Menü: ${state.menuSelection.selectedFixedMenu.name} x ${state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests)}`
-        : state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems?.length
-          ? `A La Carte: ${state.menuSelection.selectedMenuItems.map(item => `${item.name} x ${item.quantity || 1}`).join(', ')}`
-          : 'Restorantta seçim yapılacak';
-      
-      const emailContent = {
-        to: paymentSettings.admin_notification_email,
-        subject: `Yeni Rezervasyon: ${state.formData.name}`,
-        html: `
-          <h2>Yeni Rezervasyon Bilgisi</h2>
-          <p><strong>Ad Soyad:</strong> ${state.formData.name}</p>
-          <p><strong>E-posta:</strong> ${state.formData.email}</p>
-          <p><strong>Telefon:</strong> ${state.formData.phone}</p>
-          <p><strong>Tarih:</strong> ${state.formData.date ? state.formData.date.toLocaleDateString('tr-TR') : ''}</p>
-          <p><strong>Saat:</strong> ${state.formData.time}</p>
-          <p><strong>Kişi Sayısı:</strong> ${state.formData.guests}</p>
-          <p><strong>Menü Seçimi:</strong> ${menuSelectionDetails}</p>
-          <p><strong>Toplam Tutar:</strong> ${total.toLocaleString('tr-TR')} ₺ (Ödeme yapılmadı)</p>
-          ${state.formData.notes ? `<p><strong>Notlar:</strong> ${state.formData.notes}</p>` : ''}
-        `,
-        from: 'Restoran Rezervasyon <noreply@yourrestaurant.com>'
-      };
-      
-      // Send the email via a webhook or API endpoint
-      // This is a placeholder - in a real implementation you'd use a proper email service
-      console.log("Email notification would be sent with content:", emailContent);
-      
-      toast({
-        title: "Bildirim Gönderildi",
-        description: "Rezervasyon bilgileri yöneticiye e-posta ile iletildi.",
-        duration: 3000,
-      });
-      
-      return true;
-    } catch (error: any) {
-      console.error("Email notification error:", error.message);
-      toast({
-        title: "Bildirim Hatası",
-        description: "E-posta gönderilemedi, ancak rezervasyonunuz başarıyla kaydedildi.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  // Function to skip the payment step for at_restaurant selection
-  const skipPaymentStep = async () => {
-    if ((state.menuSelection.type === 'at_restaurant' || !paymentSettings.enable_payment_step) && 
-        currentStep === 2 && canProceed()) {
-      try {
-        if (reservationId && state.selectedTable) {
-          // Save the table selection
-          await supabase
-            .from('reservation_tables')
-            .insert({
-              reservation_id: reservationId,
-              table_id: state.selectedTable.id.toString()
-            });
-          
-          // Save menu selection if it's a fixed menu and payment step is disabled
-          if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu && !paymentSettings.enable_payment_step) {
-            await supabase
-              .from('reservation_fixed_menus')
-              .insert({
-                reservation_id: reservationId,
-                fixed_menu_id: state.menuSelection.selectedFixedMenu.id.toString(),
-                quantity: state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests)
-              });
-          }
-
-          // Save selected menu items if a_la_carte and payment step is disabled
-          if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems?.length && !paymentSettings.enable_payment_step) {
-            const menuItemEntries = state.menuSelection.selectedMenuItems.map(item => ({
-              reservation_id: reservationId,
-              menu_item_id: item.id,
-              quantity: item.quantity || 1
-            }));
-
-            if (menuItemEntries.length > 0) {
-              await supabase
-                .from('reservation_menu_items')
-                .insert(menuItemEntries);
-            }
-          }
-          
-          // Convert menu items to a simpler structure for JSON storage
-          const simplifiedMenuItems = state.menuSelection.selectedMenuItems?.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || 1
-          }));
-          
-          // Update reservation status for skipped payment
-          await supabase
-            .from('reservations')
-            .update({
-              status: 'Onaylandı',
-              selected_items: { 
-                menuSelectionType: state.menuSelection.type,
-                fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
-                fixedMenuQuantity: state.menuSelection.selectedFixedMenu?.quantity,
-                items: simplifiedMenuItems || [],
-                paymentSkipped: true
-              }
-            })
-            .eq('id', reservationId);
-            
-          // Send email notification if payment step is disabled and menu is selected
-          if (!paymentSettings.enable_payment_step && state.menuSelection.type !== 'at_restaurant') {
-            await sendEmailNotification();
-          }
-          
-          // Send webhook notification
-          const webhookSuccess = await sendReservationToWebhook();
-          if (webhookSuccess) {
-            toast({
-              title: "Rezervasyon Tamamlandı",
-              description: "Rezervasyon bilgileri başarıyla kaydedildi.",
-              variant: "default",
-            });
-          }
-        }
-        
-        setCurrentStep(4); // Skip to confirmation step
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-      } catch (error: any) {
-        console.error("Reservation update error:", error);
-        toast({
-          title: "Hata",
-          description: "Rezervasyon bilgileri güncellenirken bir hata oluştu: " + error.message,
-          variant: "destructive",
-        });
+      if (!user) {
+        throw new Error("User not authenticated");
       }
-    }
-  };
-  
-  const handleNextStep = async () => {
-    if (currentStep < 4 && canProceed()) {
-      // If it's the menu selection step and the user has selected "at_restaurant"
-      // OR payment step is disabled, skip the payment step and go directly to the confirmation step
-      if (currentStep === 2 && (state.menuSelection.type === 'at_restaurant' || !paymentSettings.enable_payment_step)) {
-        await skipPaymentStep();
-        return; // Exit early since skipPaymentStep takes care of the navigation
-      }
-      
-      if (currentStep === 2) {
-        // Moving from menu selection to payment step - no saving yet
-        setCurrentStep(currentStep + 1);
-      }
-      else if (currentStep === 3) {
-        try {
-          if (reservationId && state.selectedTable) {
-            // Save the table selection
-            await supabase
-              .from('reservation_tables')
-              .insert({
-                reservation_id: reservationId,
-                table_id: state.selectedTable.id.toString()
-              });
-            
-            // Save menu selection if it's a fixed menu
-            if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu) {
-              await supabase
-                .from('reservation_fixed_menus')
-                .insert({
-                  reservation_id: reservationId,
-                  fixed_menu_id: state.menuSelection.selectedFixedMenu.id.toString(),
-                  quantity: state.menuSelection.selectedFixedMenu.quantity || parseInt(state.formData.guests)
-                });
-            }
 
-            // Save selected menu items if a_la_carte
-            if (state.menuSelection.type === 'a_la_carte' && state.menuSelection.selectedMenuItems?.length) {
-              const menuItemEntries = state.menuSelection.selectedMenuItems.map(item => ({
-                reservation_id: reservationId,
-                menu_item_id: item.id,
-                quantity: item.quantity || 1
-              }));
+      // Generate a unique ID for the reservation
+      const reservationId = uuidv4();
 
-              if (menuItemEntries.length > 0) {
-                await supabase
-                  .from('reservation_menu_items')
-                  .insert(menuItemEntries);
-              }
-            }
-          }
-          
-          // Calculate payment amounts
-          const subtotal = calculateSubtotal();
-          const discount = calculateDiscount(subtotal);
-          const total = subtotal - discount.amount;
-          
-          // Add payment record
-          if (reservationId && state.payment?.transactionId) {
-            await supabase
-              .from('reservation_payments')
-              .insert({
-                reservation_id: reservationId,
-                amount: total,
-                is_prepayment: true,
-                payment_status: 'completed',
-                transaction_id: state.payment.transactionId
-              });
-          }
-          
-          // Convert menu items to a simpler structure for JSON storage
-          const simplifiedMenuItems = state.menuSelection.selectedMenuItems?.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || 1
-          }));
-          
-          // Update reservation status and menu selection type
-          await supabase
-            .from('reservations')
-            .update({
-              status: 'Onaylandı',
-              total_amount: total,
-              has_prepayment: true,
-              selected_items: { 
-                menuSelectionType: state.menuSelection.type,
-                fixedMenuId: state.menuSelection.selectedFixedMenu?.id,
-                fixedMenuQuantity: state.menuSelection.selectedFixedMenu?.quantity,
-                items: simplifiedMenuItems || []
-              }
-            })
-            .eq('id', reservationId);
-            
-          // Send webhook notification
-          const webhookSuccess = await sendReservationToWebhook();
-          if (webhookSuccess) {
-            toast({
-              title: "Rezervasyon Tamamlandı",
-              description: "Rezervasyon bilgileri başarıyla kaydedildi ve iletildi.",
-              variant: "default",
-            });
-          }
-        } catch (error: any) {
-          console.error("Reservation update error:", error);
-          toast({
-            title: "Hata",
-            description: "Rezervasyon bilgileri güncellenirken bir hata oluştu: " + error.message,
-            variant: "destructive",
-          });
-        }
-      }
-      
-      setCurrentStep(currentStep + 1);
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      console.log("Can't proceed to next step", { 
-        currentStep, 
-        canProceed: canProceed(),
-        state: {
-          selectedTable: !!state.selectedTable,
-          menuSelection: state.menuSelection
-        }
-      });
-      
-      toast({
-        title: "Lütfen Tüm Gerekli Bilgileri Doldurun",
-        description: "Devam etmek için gerekli tüm alanları doldurduğunuzdan emin olun.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handlePrevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-  
-  const sendReservationToWebhook = async () => {
-    try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
-      
-      // Enhanced webhook data with menu selection details
-      const menuSelectionDetails = state.menuSelection.type === 'at_restaurant' 
-        ? 'Restoranda seçim yapılacak' 
-        : state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenu 
-          ? `Sabit Menü: ${state.menuSelection.selectedFixedMenu.name}`
-          : `A La Carte: ${state.menuSelection.selectedMenuItems?.map(item => `${item.name} (${item.quantity || 1})`).join(', ')}`;
-      
-      const webhookData = {
+      // Prepare reservation data
+      const reservationData = {
+        id: reservationId,
+        user_id: user.id,
         name: state.formData.name,
         email: state.formData.email,
         phone: state.formData.phone,
-        reservationId: reservationId,
-        date: state.formData.date ? state.formData.date.toISOString().split('T')[0] : null,
+        date: state.formData.date?.toISOString(),
         time: state.formData.time,
-        guests: state.formData.guests,
-        notes: state.formData.notes || '',
-        occasion: state.formData.occasion || '',
-        tableName: state.selectedTable?.name || state.selectedTable?.label || '',
-        tableType: state.selectedTable?.type || '',
-        tableSize: state.selectedTable?.size || 0,
-        menuSelectionType: state.menuSelection?.type || 'at_restaurant',
-        menuDetails: menuSelectionDetails,
-        selectedFixedMenu: state.menuSelection?.selectedFixedMenu?.name || '',
-        paymentAmount: state.payment?.amount || 0,
-        paymentTransactionId: state.payment?.transactionId || '',
-        paymentSkipped: !paymentSettings.enable_payment_step && state.menuSelection.type !== 'at_restaurant'
+        guests: parseInt(state.formData.guests),
+        notes: state.formData.notes,
+        occasion: state.formData.occasion,
+        status: "Beklemede",
+        selected_table: state.selectedTable ? { id: state.selectedTable.id } : null,
+        selected_items: {
+          menuSelectionType: state.menuSelection.type,
+          fixedMenuId: state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0 ? state.menuSelection.selectedFixedMenus[0].menu.id : null,
+          items: state.menuSelection.selectedMenuItems ? state.menuSelection.selectedMenuItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity || 1
+          })) : null
+        },
+        has_prepayment: state.payment?.isPaid || false,
+        total_amount: state.payment?.amount || 0,
       };
-      
-      console.log("Sending reservation data to webhook:", JSON.stringify(webhookData, null, 2));
-      
-      try {
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          mode: 'no-cors',
-          body: JSON.stringify(webhookData)
-        });
-        
-        console.log("Webhook notification attempted, no response expected due to no-cors mode");
-      } catch (fetchError) {
-        console.error("Fetch error in webhook:", fetchError);
+
+      // Insert reservation data into Supabase
+      const { error } = await supabase
+        .from("reservations")
+        .insert([reservationData]);
+
+      if (error) {
+        throw error;
       }
-      
+
+      // If a fixed menu is selected, save it to the reservation_fixed_menus table
+      if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {
+        await Promise.all(state.menuSelection.selectedFixedMenus.map(async (fixedMenu) => {
+          await supabase
+            .from('reservation_fixed_menus')
+            .insert({
+              reservation_id: reservationId,
+              fixed_menu_id: fixedMenu.menu.id,
+              quantity: fixedMenu.quantity
+            });
+        }));
+      }
+
+      // Show success message
       toast({
-        title: "Rezervasyon Bilgileri Gönderildi",
-        description: "Rezervasyon bilgileri başarıyla sistem yöneticisine iletildi.",
-        duration: 3000,
+        title: "Rezervasyon Başarılı!",
+        description: "Rezervasyonunuz başarıyla oluşturuldu. Onay için lütfen bekleyiniz.",
       });
-      
-      return true;
+
+      // Reset the state
+      setState({
+        formData: {
+          name: '',
+          email: '',
+          phone: '',
+          date: null,
+          time: '',
+          guests: '',
+          notes: '',
+          occasion: '',
+        } as ReservationFormData,
+        selectedTable: null as Table | null,
+        basicFormCompleted: false,
+        menuSelection: {
+          type: 'at_restaurant' as MenuSelectionType,
+          selectedFixedMenu: null,
+          selectedFixedMenus: [],
+          selectedMenuItems: []
+        } as MenuSelectionData,
+        payment: undefined as PaymentInfo | undefined,
+      });
+      setCurrentStep(0);
     } catch (error: any) {
-      console.error("Webhook error:", error.message);
+      // Show error message
       toast({
-        title: "Bildirim Hatası",
-        description: "Rezervasyon bilgileri gönderilemedi, ancak rezervasyonunuz başarıyla kaydedildi.",
+        title: "Rezervasyon Hatası",
+        description: error.message || "Rezervasyon oluşturulurken bir hata oluştu.",
         variant: "destructive",
       });
-      
-      return false;
     }
-  };
-
-  const setSelectedTable = (table: Table | null) => {
-    setState({
-      ...state,
-      selectedTable: table
-    });
-  };
-  
-  const setMenuSelection = (menuSelection: MenuSelection) => {
-    setState({
-      ...state,
-      menuSelection
-    });
-  };
-  
-  const setPaymentComplete = (transactionId: string) => {
-    // Calculate payment amounts
-    const subtotal = calculateSubtotal();
-    const discount = calculateDiscount(subtotal);
-    const total = subtotal - discount.amount;
-    
-    setState({
-      ...state,
-      payment: {
-        transactionId,
-        isPaid: true,
-        amount: total,
-        discountPercentage: discount.percentage,
-        discountAmount: discount.amount
-      }
-    });
-  };
+  }, [state, user, toast]);
 
   return {
     currentStep,
     containerRef,
     state,
-    reservationId,
+    setFormData: (data: Partial<FormData>) => {
+      setState((prevState) => ({
+        ...prevState,
+        formData: {
+          ...prevState.formData,
+          ...data
+        }
+      }));
+    },
+    setBasicFormCompleted: (completed: boolean) => {
+      setState((prevState) => ({
+        ...prevState,
+        basicFormCompleted: completed
+      }));
+    },
     canProceed,
     handleNextStep,
     handlePrevStep,
     setSelectedTable,
     setMenuSelection,
     setPaymentComplete,
-    skipPaymentStep
+    skipPaymentStep,
+    submitReservation
   };
 };
