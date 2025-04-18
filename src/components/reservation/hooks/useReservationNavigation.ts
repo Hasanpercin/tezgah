@@ -18,15 +18,15 @@ export const useReservationNavigation = (
 
   // Function to handle moving to the next step
   const handleNextStep = useCallback(() => {
-    setCurrentStep((prevStep) => prevStep + 1);
+    setCurrentStep(currentStep + 1);
     scrollToNextStep();
-  }, [scrollToNextStep, setCurrentStep]);
+  }, [scrollToNextStep, setCurrentStep, currentStep]);
 
   // Function to handle moving to the previous step
   const handlePrevStep = useCallback(() => {
-    setCurrentStep((prevStep) => prevStep - 1);
+    setCurrentStep(currentStep - 1);
     scrollToNextStep();
-  }, [scrollToNextStep, setCurrentStep]);
+  }, [scrollToNextStep, setCurrentStep, currentStep]);
 
   return {
     scrollToNextStep,
