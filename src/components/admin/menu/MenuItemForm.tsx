@@ -27,6 +27,16 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_path || null);
 
+  // Ensure options always have IDs
+  const prepareOptions = (options: any[] = []): MenuItemOption[] => {
+    return options.map(option => ({
+      id: option.id || crypto.randomUUID(),
+      name: option.name || '',
+      price_adjustment: option.price_adjustment || 0,
+      is_required: option.is_required || false
+    }));
+  };
+
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
     defaultValues: {
@@ -44,12 +54,12 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       is_featured: item?.is_featured || false,
       is_in_stock: item?.is_in_stock !== false,
       display_order: item?.display_order || 0,
-      options: item?.options || [],
+      options: prepareOptions(item?.options),
       variants: item?.variants || []
     }
   });
 
-  const handleImageSelected = (url: string) => {
+  const handleImageSelected = (url: string | null) => {
     setImageUrl(url);
     form.setValue('image_path', url);
   };
@@ -60,7 +70,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       // Ensure all required fields are present and properly typed
       const formattedValues = {
         name: values.name,
-        category_id: values.category_id, // Now guaranteed to be a string from our schema
+        category_id: values.category_id,
         description: values.description || null,
         price: values.price,
         image_path: values.image_path || null,
@@ -88,7 +98,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         if (error) throw error;
 
         // After successful update of the main menu item, handle options
-        await handleOptionsUpdate(item.id, values.options || []);
+        await handleOptionsUpdate(item.id, prepareOptions(values.options));
         
         toast({
           title: "Başarılı",
@@ -105,7 +115,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         if (error) throw error;
         
         if (data && values.options && values.options.length > 0) {
-          await handleOptionsUpdate(data.id, values.options);
+          await handleOptionsUpdate(data.id, prepareOptions(values.options));
         }
 
         toast({
