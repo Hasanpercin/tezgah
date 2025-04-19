@@ -54,11 +54,29 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
   const onSubmit = async (values: MenuItemFormValues) => {
     setIsSubmitting(true);
     try {
+      // Ensure all required fields are present and properly typed
+      const formattedValues = {
+        name: values.name,
+        category_id: values.category_id, // Now guaranteed to be a string from our schema
+        description: values.description || null,
+        price: values.price,
+        image_path: values.image_path || null,
+        ingredients: values.ingredients || null,
+        allergens: values.allergens || null,
+        is_vegetarian: values.is_vegetarian,
+        is_vegan: values.is_vegan,
+        is_gluten_free: values.is_gluten_free,
+        is_spicy: values.is_spicy,
+        is_featured: values.is_featured,
+        is_in_stock: values.is_in_stock,
+        display_order: values.display_order
+      };
+
       if (isEditMode && item) {
         const { error } = await supabase
           .from("menu_items")
           .update({
-            ...values,
+            ...formattedValues,
             updated_at: new Date().toISOString()
           })
           .eq("id", item.id);
@@ -71,7 +89,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       } else {
         const { error } = await supabase
           .from("menu_items")
-          .insert(values);
+          .insert(formattedValues);
 
         if (error) throw error;
         toast({
