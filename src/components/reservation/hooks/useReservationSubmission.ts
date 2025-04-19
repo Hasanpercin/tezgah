@@ -11,6 +11,25 @@ export const useReservationSubmission = (
   toast: any,
   setCurrentStep: (step: number) => void
 ) => {
+  // Function to send webhook notification
+  const sendWebhookNotification = async (reservationData: any) => {
+    try {
+      const response = await fetch('https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reservationData)
+      });
+
+      if (!response.ok) {
+        console.error('Webhook notification failed', await response.text());
+      }
+    } catch (error) {
+      console.error('Error sending webhook notification:', error);
+    }
+  };
+
   // Function to handle submitting the reservation
   return useCallback(async () => {
     try {
@@ -57,6 +76,9 @@ export const useReservationSubmission = (
       if (error) {
         throw error;
       }
+
+      // Send webhook notification
+      await sendWebhookNotification(reservationData);
 
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
       if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {
