@@ -11,52 +11,78 @@ export const useReservationSubmission = (
   toast: ReturnType<typeof useToast>['toast'],
   setCurrentStep: (step: number) => void
 ) => {
-  // Function to send webhook notification with detailed logging
+  // Function to send webhook notification with enhanced error handling and logging
   const sendWebhookNotification = async (reservationData: any) => {
+    console.log('Starting webhook notification process...');
+    console.log('Reservation data to be sent:', JSON.stringify(reservationData, null, 2));
+
     try {
-      console.log('Sending webhook notification with data:', reservationData);
-      
-      const response = await fetch('https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e', {
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
+      console.log('Sending POST request to webhook URL:', webhookUrl);
+
+      const startTime = performance.now();
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(reservationData)
       });
+      const endTime = performance.now();
+
+      console.log(`Webhook request completed in ${Math.round(endTime - startTime)}ms`);
+      console.log('Response status:', response.status);
+      console.log('Response status text:', response.statusText);
 
       const responseText = await response.text();
-      console.log('Webhook response status:', response.status);
-      console.log('Webhook response body:', responseText);
+      console.log('Full response body:', responseText);
 
       if (!response.ok) {
-        throw new Error(`Webhook notification failed: ${responseText}`);
+        throw new Error(`Webhook failed with status ${response.status}: ${responseText}`);
       }
 
+      // Log success metrics
+      console.log('Webhook notification successful');
+      console.log('Request-Response cycle completed in:', Math.round(endTime - startTime), 'ms');
+
       toast({
-        title: "Webhook Notification",
-        description: "Successfully sent reservation details to webhook.",
+        title: "Webhook Başarılı",
+        description: "Rezervasyon bilgileri webhook'a başarıyla gönderildi.",
         variant: "default"
       });
 
       return true;
     } catch (error) {
-      console.error('Error sending webhook notification:', error);
-      
+      // Enhanced error logging
+      console.error('Webhook notification error details:');
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      } else {
+        console.error('Unknown error type:', error);
+      }
+
       toast({
-        title: "Webhook Error",
-        description: `Failed to send webhook notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Webhook Hatası",
+        description: error instanceof Error 
+          ? `Webhook bildirimi başarısız: ${error.message}`
+          : "Webhook gönderiminde beklenmeyen bir hata oluştu",
         variant: "destructive"
       });
 
+      // Return false to indicate failure
       return false;
     }
   };
 
-  // Function to handle submitting the reservation
+  // Main reservation submission function
   return useCallback(async () => {
+    console.log('Starting reservation submission process...');
+    
     try {
       if (!user) {
-        throw new Error("User not authenticated");
+        throw new Error("Kullanıcı girişi yapılmamış");
       }
 
       // Generate a unique ID for the reservation
@@ -90,20 +116,26 @@ export const useReservationSubmission = (
         total_amount: state.payment?.amount || 0,
       };
 
-      // Insert reservation data into Supabase
+      console.log('Attempting to insert reservation into database...');
       const { error } = await supabase
         .from("reservations")
         .insert([reservationData]);
 
       if (error) {
+        console.error('Supabase insertion error:', error);
         throw error;
       }
+      
+      console.log('Reservation successfully inserted into database');
 
-      // Send webhook notification and log the result
+      // Send webhook notification with enhanced error handling
       const webhookResult = await sendWebhookNotification(reservationData);
       
       if (!webhookResult) {
-        console.warn('Webhook notification failed but reservation was created');
+        console.warn('Webhook notification failed, but reservation was created in database');
+        // We continue the process since the reservation was saved
+      } else {
+        console.log('Webhook notification completed successfully');
       }
 
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
@@ -122,7 +154,6 @@ export const useReservationSubmission = (
       // Add loyalty points
       await addLoyaltyPoints(user.id, state);
 
-      // Show success message
       toast({
         title: "Rezervasyon Başarılı!",
         description: "Rezervasyonunuz başarıyla oluşturuldu. Onay için lütfen bekleyiniz.",
@@ -130,11 +161,14 @@ export const useReservationSubmission = (
 
       // Reset the state
       resetReservationState(setCurrentStep);
-    } catch (error: any) {
-      // Show error message
+    } catch (error) {
+      console.error('Reservation submission error:', error);
+      
       toast({
         title: "Rezervasyon Hatası",
-        description: error.message || "Rezervasyon oluşturulurken bir hata oluştu.",
+        description: error instanceof Error 
+          ? error.message 
+          : "Rezervasyon oluşturulurken beklenmeyen bir hata oluştu.",
         variant: "destructive",
       });
     }
