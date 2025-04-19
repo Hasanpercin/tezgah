@@ -37,7 +37,7 @@ const AdminLogin = () => {
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (adminError || !adminData) {
         setError('Bu hesap admin yetkisine sahip değil.');

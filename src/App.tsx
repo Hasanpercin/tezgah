@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Index from './pages/Index';
@@ -22,6 +22,40 @@ import { Toaster } from './components/ui/sonner';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('*')
+          .single();
+        
+        setIsAdmin(!!adminData);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
+
+  if (isAdmin === null) {
+    return null; // or a loading spinner
+  }
+
+  return isAdmin ? <>{children}</> : <Navigate to="/admin-login" replace />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -43,8 +77,14 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-reservations" element={<MyReservations />} />
               <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminCMS />} />
-              <Route path="/loyalty" element={<Loyalty />} />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminCMS />
+                  </AdminRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

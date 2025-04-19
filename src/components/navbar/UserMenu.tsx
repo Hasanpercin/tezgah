@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,33 @@ interface UserMenuProps {
 }
 
 const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) => {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('*')
+          .single();
+        
+        setIsAdmin(!!adminData);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      checkAdminStatus();
+    }
+  }, [isAuthenticated, user]);
+
   if (isAuthenticated) {
     return (
       <DropdownMenu>
@@ -37,7 +63,7 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
           <DropdownMenuItem asChild>
             <Link to="/profile">Profilim</Link>
           </DropdownMenuItem>
-          {user?.email === "admin@example.com" && (
+          {isAdmin && (
             <DropdownMenuItem asChild>
               <Link to="/admin">Yönetim Paneli</Link>
             </DropdownMenuItem>
