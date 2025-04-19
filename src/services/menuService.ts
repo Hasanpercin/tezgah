@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -8,7 +7,7 @@ export interface MenuItem {
   price: number;
   category_id: string;
   image_path?: string;
-  quantity?: number; // For tracking selected quantity
+  quantity?: number;
   is_in_stock: boolean;
   display_order: number;
   ingredients?: string;
@@ -22,6 +21,23 @@ export interface MenuItem {
     name: string;
     id?: string;
   };
+  options?: MenuItemOption[];
+  variants?: MenuItemVariant[];
+}
+
+export interface MenuItemOption {
+  id: string;
+  name: string;
+  price_adjustment: number;
+  is_required: boolean;
+  min_selections?: number;
+  max_selections?: number;
+}
+
+export interface MenuItemVariant {
+  id: string;
+  name: string;
+  price_adjustment: number;
 }
 
 export interface MenuCategory {
@@ -64,6 +80,19 @@ export const fetchMenuItemDetails = async (itemId: string) => {
       *,
       menu_categories (
         id, name
+      ),
+      menu_item_options (
+        id,
+        name,
+        price_adjustment,
+        is_required,
+        min_selections,
+        max_selections
+      ),
+      menu_item_variants (
+        id,
+        name,
+        price_adjustment
       )
     `)
     .eq("id", itemId)
@@ -71,7 +100,11 @@ export const fetchMenuItemDetails = async (itemId: string) => {
     
   if (error) throw error;
   
-  return data;
+  return {
+    ...data,
+    options: data.menu_item_options || [],
+    variants: data.menu_item_variants || []
+  };
 };
 
 export const saveReservationMenuItems = async (

@@ -1,4 +1,3 @@
-
 // Fix this file with proper TypeScript types for the reservation system
 import { MenuSelectionType } from '../types';
 
@@ -111,4 +110,45 @@ export interface StepIndicatorProps {
     icon: string;
   }>;
   skipStep?: number;
+}
+
+export interface MenuItemOption {
+  id: string;
+  name: string;
+  price_adjustment: number;
+  is_required: boolean;
+  min_selections?: number;
+  max_selections?: number;
+}
+
+export interface MenuItemVariant {
+  id: string;
+  name: string;
+  price_adjustment: number;
+}
+
+// Update MenuItem interface to include options and variants
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category_id: string;
+  image_path?: string;
+  quantity?: number;
+  is_in_stock: boolean;
+  display_order: number; // Changed from optional to required to match menuService.ts
+  ingredients?: string;
+  allergens?: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  is_spicy?: boolean;
+  is_featured?: boolean;
+  menu_categories?: {
+    name: string;
+    id?: string;
+  };
+  options?: MenuItemOption[];
+  variants?: MenuItemVariant[];
 }
