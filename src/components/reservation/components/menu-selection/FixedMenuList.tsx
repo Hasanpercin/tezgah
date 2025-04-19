@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FixedMenuItem } from '@/components/reservation/types/reservationTypes';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,7 +57,7 @@ const FixedMenuList = ({
   }
 
   return (
-    <>
+    <div className="space-y-6">
       {selectedFixedMenus.length > 0 && (
         <div className="mb-6 bg-amber-50/70 rounded-lg border border-amber-100/80 p-5 shadow-sm">
           <h5 className="font-medium text-lg mb-4 flex items-center">
@@ -120,8 +120,8 @@ const FixedMenuList = ({
         </div>
       )}
       
-      <ScrollArea className="max-h-[550px] pr-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ScrollArea className="h-[70vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
           {fixedMenus && fixedMenus.length > 0 ? (
             fixedMenus.map((menu) => (
               <Card 
@@ -199,7 +199,7 @@ const FixedMenuList = ({
           )}
         </div>
       </ScrollArea>
-    </>
+    </div>
   );
 };
 

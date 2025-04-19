@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { fetchMenuItems, MenuItem } from '@/services/menuService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Plus, Minus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Trash2, Plus, Minus } from 'lucide-react';
 
 interface ALaCarteMenuProps {
   onChange: (items: MenuItem[]) => void;
@@ -40,7 +39,6 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
         
         setMenuItems(items);
         
-        // Extract categories
         const cats: {[key: string]: string} = {};
         items.forEach(item => {
           if (item.menu_categories && item.category_id) {
@@ -68,7 +66,6 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
     const existingItemIndex = selectedItems.findIndex(i => i.id === item.id);
     
     if (existingItemIndex >= 0) {
-      // Item already exists, increment quantity
       const updatedItems = [...selectedItems];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
@@ -76,7 +73,6 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
       };
       setSelectedItems(updatedItems);
     } else {
-      // New item, add with quantity 1
       setSelectedItems([...selectedItems, { ...item, quantity: 1 }]);
     }
     
@@ -186,72 +182,76 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
       )}
 
       {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Button
-          variant={selectedCategory === 'all' ? "default" : "outline"}
-          size="sm"
-          onClick={() => setSelectedCategory('all')}
-        >
-          Tümü
-        </Button>
-        {Object.entries(categories).map(([id, name]) => (
+      <ScrollArea className="w-full overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-6">
           <Button
-            key={id}
-            variant={selectedCategory === id ? "default" : "outline"}
+            variant={selectedCategory === 'all' ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedCategory(id)}
+            onClick={() => setSelectedCategory('all')}
           >
-            {name}
+            Tümü
           </Button>
-        ))}
-      </div>
+          {Object.entries(categories).map(([id, name]) => (
+            <Button
+              key={id}
+              variant={selectedCategory === id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(id)}
+            >
+              {name}
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
 
       <Separator className="my-6" />
 
       {/* Menu Items */}
-      <ScrollArea className="max-h-[450px] pr-4">
-        {filteredItems.length === 0 ? (
-          <p className="text-center p-4 text-muted-foreground">Bu kategoride ürün bulunamadı.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredItems.map((item) => (
-              <Card
-                key={item.id}
-                className="overflow-hidden cursor-pointer hover:shadow-md"
-                onClick={() => handleItemSelect(item)}
-              >
-                <CardContent className="p-0">
-                  <div className="flex flex-col">
-                    {item.image_path && (
-                      <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${item.image_path})` }}></div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{item.name}</h3>
-                        <span className="text-primary font-medium">{item.price} ₺</span>
-                      </div>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+      <ScrollArea className="h-[60vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
+        <div className="pb-6">
+          {filteredItems.length === 0 ? (
+            <p className="text-center p-4 text-muted-foreground">Bu kategoride ürün bulunamadı.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredItems.map((item) => (
+                <Card
+                  key={item.id}
+                  className="overflow-hidden cursor-pointer hover:shadow-md"
+                  onClick={() => handleItemSelect(item)}
+                >
+                  <CardContent className="p-0">
+                    <div className="flex flex-col">
+                      {item.image_path && (
+                        <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${item.image_path})` }}></div>
                       )}
-                      <div className="mt-3 flex justify-end">
-                        <Button 
-                          variant={selectedItems.some(i => i.id === item.id) ? "default" : "outline"}
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleItemSelect(item);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-1" /> Ekle
-                        </Button>
+                      <div className="p-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-medium">{item.name}</h3>
+                          <span className="text-primary font-medium">{item.price} ₺</span>
+                        </div>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                        )}
+                        <div className="mt-3 flex justify-end">
+                          <Button 
+                            variant={selectedItems.some(i => i.id === item.id) ? "default" : "outline"}
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleItemSelect(item);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-1" /> Ekle
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </ScrollArea>
     </div>
   );
