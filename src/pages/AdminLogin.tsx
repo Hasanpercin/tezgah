@@ -24,6 +24,9 @@ const AdminLogin = () => {
     
     try {
       if (password === 'TezgahAdmin2024!') {
+        // Başarılı giriş durumunda, admin durumunu localStorage'a kaydet
+        localStorage.setItem('isAdmin', 'true');
+        
         // Successfully authenticated
         toast({
           title: 'Giriş başarılı',

@@ -25,41 +25,20 @@ import { supabase } from './integrations/supabase/client';
 import './App.css';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // If no user is logged in, they're definitely not an admin
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
+    // localStorage'dan admin durumunu kontrol et
+    const adminStatus = localStorage.getItem('isAdmin') === 'true';
+    setIsAdmin(adminStatus);
+    setIsLoading(false);
+  }, []);
 
-    // Check if we have valid admin settings configured in the database
-    const checkAdminStatus = async () => {
-      try {
-        // For now, simply check if the admin_settings table has a valid entry
-        // A more complex implementation would check for specific admin permissions if needed
-        const { data: adminData } = await supabase
-          .from('admin_settings')
-          .select('*')
-          .single();
-        
-        // If admin_settings table has a record, we consider the current user as an admin
-        // This is a simplified approach; in a real-world app, you might want
-        // to also check for admin role or specific permissions
-        setIsAdmin(!!adminData);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
-
-  if (isAdmin === null) {
-    return null; // or a loading spinner
+  if (isLoading) {
+    return <div className="flex h-screen w-full items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>;
   }
 
   return isAdmin ? <>{children}</> : <Navigate to="/admin-login" replace />;

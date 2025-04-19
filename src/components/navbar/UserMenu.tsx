@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserType } from './types';
-import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,35 +19,24 @@ interface UserMenuProps {
 }
 
 const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-
-      try {
-        const { data: adminData } = await supabase
-          .from('admin_settings')
-          .select('*')
-          .single();
-        
-        // If the admin_settings table has an entry, consider the user as an admin
-        // This is a simplified approach; in a real application you might want to
-        // implement more complex admin role checking
-        setIsAdmin(!!adminData);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      }
+    // localStorage'dan admin durumunu kontrol et
+    const checkAdminStatus = () => {
+      const adminStatus = localStorage.getItem('isAdmin') === 'true';
+      setIsAdmin(adminStatus);
     };
 
-    if (isAuthenticated) {
-      checkAdminStatus();
-    }
-  }, [isAuthenticated, user]);
+    checkAdminStatus();
+    
+    // localStorage değişikliklerini dinle
+    window.addEventListener('storage', checkAdminStatus);
+    
+    return () => {
+      window.removeEventListener('storage', checkAdminStatus);
+    };
+  }, [isAuthenticated]);
 
   if (isAuthenticated) {
     return (
