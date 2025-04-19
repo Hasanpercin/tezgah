@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
@@ -64,6 +63,25 @@ export const ImageUploader = ({ onImageSelected, className, folder = "general", 
       return;
     }
 
+    // Create image element to check dimensions
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise((resolve) => {
+      img.onload = resolve;
+    });
+
+    // Recommended dimensions for menu items
+    const MAX_WIDTH = 800;
+    const MAX_HEIGHT = 600;
+
+    if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
+      toast({
+        title: "Öneri",
+        description: `Menü görselleri için önerilen boyut: Maks. ${MAX_WIDTH}x${MAX_HEIGHT} piksel. Görseli sıkıştırmanızı veya yeniden boyutlandırmanızı öneririz.`,
+        variant: "default",
+      });
+    }
+
     try {
       setIsUploading(true);
       
@@ -126,6 +144,9 @@ export const ImageUploader = ({ onImageSelected, className, folder = "general", 
       <Upload className="h-10 w-10 text-muted-foreground mb-2" />
       <p className="text-sm text-center mb-2">
         Görsel yüklemek için sürükleyip bırakın veya tıklayın
+      </p>
+      <p className="text-xs text-muted-foreground mb-4">
+        Önerilen boyut: Maks. 800x600 piksel, 5MB'dan küçük
       </p>
       <Button 
         variant="outline" 
