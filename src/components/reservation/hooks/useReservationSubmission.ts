@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,42 @@ export const useReservationSubmission = (
   // Function to send webhook notification with enhanced error handling and logging
   const sendWebhookNotification = async (reservationData: any) => {
     console.log('Starting webhook notification process...');
-    console.log('Reservation data to be sent:', JSON.stringify(reservationData, null, 2));
+    
+    // Format the date if it exists for better readability
+    const formattedReservationData = {
+      ...reservationData,
+      // Make sure we format date information in a more readable way
+      formattedDate: reservationData.date ? new Date(reservationData.date).toLocaleDateString('tr-TR') : null,
+      // Include the full form data explicitly for webhook
+      userDetails: {
+        name: state.formData.name,
+        email: state.formData.email,
+        phone: state.formData.phone,
+      },
+      reservationDetails: {
+        date: state.formData.date ? state.formData.date.toLocaleDateString('tr-TR') : null,
+        time: state.formData.time,
+        guests: parseInt(state.formData.guests.toString()),
+        notes: state.formData.notes,
+        occasion: state.formData.occasion
+      },
+      // Include table selection information
+      tableDetails: state.selectedTable ? {
+        tableId: state.selectedTable.id,
+        tableName: state.selectedTable.name || state.selectedTable.label,
+        tableSize: state.selectedTable.size,
+        tableType: state.selectedTable.type
+      } : null,
+      // Include any payment information if available
+      paymentDetails: state.payment ? {
+        isPaid: state.payment.isPaid,
+        amount: state.payment.amount,
+        discountAmount: state.payment.discountAmount,
+        transactionId: state.payment.transactionId
+      } : null
+    };
+    
+    console.log('Enhanced reservation data to be sent:', JSON.stringify(formattedReservationData, null, 2));
 
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
@@ -26,7 +62,7 @@ export const useReservationSubmission = (
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(reservationData)
+        body: JSON.stringify(formattedReservationData)
       });
       const endTime = performance.now();
 
