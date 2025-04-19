@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,34 +65,35 @@ export const useReservationSubmission = (
     };
 
     try {
-      // Convert test data to query parameters
-      const queryParams = new URLSearchParams({
-        data: JSON.stringify(testData)
-      }).toString();
-
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
-      const fullUrl = `${webhookUrl}?${queryParams}`;
       
-      console.log('Sending GET request to webhook URL:', fullUrl);
+      // Doğrudan URL'ye data parametresi olarak ekle
+      // Bu tür JSON veriler için encodeURIComponent ile kodlama şart
+      const encodedData = encodeURIComponent(JSON.stringify(testData));
+      const fullUrl = `${webhookUrl}?data=${encodedData}`;
+      
+      console.log('Webhook verisi gönderiliyor:', JSON.stringify(testData, null, 2));
+      console.log('Tam URL:', fullUrl);
 
       const startTime = performance.now();
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         }
       });
       const endTime = performance.now();
 
-      console.log(`Webhook request completed in ${Math.round(endTime - startTime)}ms`);
-      console.log('Response status:', response.status);
-      console.log('Response status text:', response.statusText);
+      console.log(`Webhook isteği ${Math.round(endTime - startTime)}ms içinde tamamlandı`);
+      console.log('Yanıt durumu:', response.status);
+      console.log('Yanıt durum metni:', response.statusText);
 
       const responseText = await response.text();
-      console.log('Full response body:', responseText);
+      console.log('Tam yanıt içeriği:', responseText);
 
       if (!response.ok) {
-        throw new Error(`Webhook failed with status ${response.status}: ${responseText}`);
+        throw new Error(`Webhook ${response.status} kodu ile başarısız oldu: ${responseText}`);
       }
 
       toast({
@@ -102,7 +104,7 @@ export const useReservationSubmission = (
 
       return true;
     } catch (error) {
-      console.error('Webhook test error details:', error);
+      console.error('Webhook test hatası detayları:', error);
 
       toast({
         title: "Webhook Test Hatası",
@@ -118,7 +120,7 @@ export const useReservationSubmission = (
 
   // Main reservation submission function
   return useCallback(async () => {
-    console.log('Starting reservation submission process...');
+    console.log('Rezervasyon gönderme işlemi başlatılıyor...');
     
     try {
       if (!user) {
@@ -156,28 +158,21 @@ export const useReservationSubmission = (
         total_amount: state.payment?.amount || 0,
       };
 
-      console.log('Attempting to insert reservation into database...');
+      console.log('Rezervasyon veritabanına ekleniyor...');
       const { error } = await supabase
         .from("reservations")
         .insert([reservationData]);
 
       if (error) {
-        console.error('Supabase insertion error:', error);
+        console.error('Supabase ekleme hatası:', error);
         throw error;
       }
       
-      console.log('Reservation successfully inserted into database');
+      console.log('Rezervasyon başarıyla veritabanına eklendi');
 
-      // Send webhook notification with enhanced error handling
-      const webhookResult = await sendWebhookNotification(reservationData);
+      // Hem rezervasyon oluşturulurken hem de manuel test için webhook'u çağırabiliriz
+      await sendWebhookNotification(reservationData);
       
-      if (!webhookResult) {
-        console.warn('Webhook notification failed, but reservation was created in database');
-        // We continue the process since the reservation was saved
-      } else {
-        console.log('Webhook notification completed successfully');
-      }
-
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
       if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {
         await Promise.all(state.menuSelection.selectedFixedMenus.map(async (fixedMenu) => {
@@ -202,7 +197,7 @@ export const useReservationSubmission = (
       // Reset the state
       resetReservationState(setCurrentStep);
     } catch (error) {
-      console.error('Reservation submission error:', error);
+      console.error('Rezervasyon gönderme hatası:', error);
       
       toast({
         title: "Rezervasyon Hatası",
@@ -247,10 +242,10 @@ const addLoyaltyPoints = async (userId: string, state: ReservationState) => {
           description: `Rezervasyon tamamlama: ${state.menuSelection.type !== 'at_restaurant' ? 'Menü önceden seçildi' : 'Standart rezervasyon'}`
         });
       
-      console.log(`Added ${totalPoints} loyalty points to user ${userId}`);
+      console.log(`Kullanıcı ${userId}'ye ${totalPoints} sadakat puanı eklendi`);
     }
   } catch (error) {
-    console.error("Error updating loyalty points:", error);
+    console.error("Sadakat puanları güncellenirken hata:", error);
   }
 };
 
