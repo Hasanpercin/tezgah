@@ -28,6 +28,8 @@ interface ALaCarteSectionProps {
   onAddItem: (item: MenuItem) => void;
   onRemoveItem: (itemId: string) => void;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
+  onMenuItemsSelect?: (items: MenuItem[]) => void;
+  guestCount?: number | string;
 }
 
 const ALaCarteSection: React.FC<ALaCarteSectionProps> = ({

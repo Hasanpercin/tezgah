@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { getFixedMenus } from '@/services/menuService';
-import { MenuSelectionData } from './types/reservationTypes';
+import { getFixedMenus, fetchMenuItemsByCategory } from '@/services/menuService';
+import { MenuSelectionData, MenuItem } from './types/reservationTypes';
 import { useToast } from '@/hooks/use-toast';
 import MenuTypeSelection from './components/menu-selection/MenuTypeSelection';
 import FixedMenuSection from './components/menu-selection/FixedMenuSection';
@@ -29,22 +29,60 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
     handleALaCarteMenuSelect
   } = useMenuSelection(value, onChange);
   
-  const { isError } = useQuery({
+  const { isError: isFixedMenuError } = useQuery({
     queryKey: ['fixedMenus'],
     queryFn: getFixedMenus,
   });
 
-  // Check for error loading fixed menus
-  React.useEffect(() => {
-    if (isError) {
-      console.error('Error fetching fixed menus');
+  const { data: menuItems = [], isError: isMenuItemsError } = useQuery({
+    queryKey: ['menuItems'],
+    queryFn: fetchMenuItemsByCategory,
+    enabled: selectedMenuTypes.includes('a_la_carte')
+  });
+
+  const [selectedALaCarteItems, setSelectedALaCarteItems] = useState<MenuItem[]>(
+    value?.selectedMenuItems || []
+  );
+
+  useEffect(() => {
+    // Initialize selected items from value prop
+    if (value?.selectedMenuItems) {
+      setSelectedALaCarteItems(value.selectedMenuItems);
+    }
+  }, [value?.selectedMenuItems]);
+
+  // Check for errors loading menus
+  useEffect(() => {
+    if (isFixedMenuError || isMenuItemsError) {
+      console.error('Error fetching menus');
       toast({
         title: "Menü Seçenekleri Yüklenemedi",
         description: "Menü seçeneklerini yüklerken bir hata oluştu. Lütfen tekrar deneyin.",
         variant: "destructive"
       });
     }
-  }, [isError, toast]);
+  }, [isFixedMenuError, isMenuItemsError, toast]);
+
+  // A La Carte menu handlers
+  const handleAddItem = (item: MenuItem) => {
+    const newItems = [...selectedALaCarteItems, { ...item, quantity: 1 }];
+    setSelectedALaCarteItems(newItems);
+    handleALaCarteMenuSelect(newItems);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    const newItems = selectedALaCarteItems.filter(item => item.id !== itemId);
+    setSelectedALaCarteItems(newItems);
+    handleALaCarteMenuSelect(newItems);
+  };
+
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
+    const newItems = selectedALaCarteItems.map(item => 
+      item.id === itemId ? { ...item, quantity } : item
+    );
+    setSelectedALaCarteItems(newItems);
+    handleALaCarteMenuSelect(newItems);
+  };
 
   return (
     <div className="space-y-8">
@@ -76,8 +114,11 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({ value, onChange, guestCou
       {selectedMenuTypes.includes('a_la_carte') && (
         <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md animate-fade-in">
           <ALaCarteSection 
-            onMenuItemsSelect={handleALaCarteMenuSelect}
-            guestCount={guestCount}
+            menuItems={menuItems}
+            selectedItems={selectedALaCarteItems}
+            onAddItem={handleAddItem}
+            onRemoveItem={handleRemoveItem}
+            onUpdateQuantity={handleUpdateQuantity}
           />
         </div>
       )}

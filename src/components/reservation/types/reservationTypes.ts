@@ -1,3 +1,4 @@
+
 // Fix this file with proper TypeScript types for the reservation system
 import { MenuSelectionType } from '../types';
 
@@ -48,6 +49,7 @@ export interface MenuItem {
   menu_categories?: {
     name: string;
     id?: string;
+    description?: string; // Added description field
   };
 }
 
@@ -58,6 +60,19 @@ export interface FixedMenuItem {
   price: number;
   image_path?: string | null;
   quantity?: number;
+}
+
+// Added FixedMenu interface that was missing
+export interface FixedMenu {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_path: string | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  details?: string;
 }
 
 export interface FixedMenuSelection {
@@ -148,6 +163,7 @@ export interface MenuItem {
   menu_categories?: {
     name: string;
     id?: string;
+    description?: string;
   };
   options?: MenuItemOption[];
   variants?: MenuItemVariant[];
