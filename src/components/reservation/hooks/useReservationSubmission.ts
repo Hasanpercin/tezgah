@@ -16,30 +16,39 @@ export const useReservationSubmission = (
   const sendWebhookNotification = async (reservationData: any) => {
     console.log('Starting webhook notification process...');
     
-    // Sample test data
-    const testData = {
-      reservationId: "test-" + uuidv4(),
+    // Prepare reservation data for webhook
+    const webhookData = {
+      reservationId: reservationData.id || "test-" + uuidv4(),
       userDetails: {
-        name: "Test User",
-        email: "test@example.com",
-        phone: "+90 555 555 5555"
+        name: reservationData.formData?.name || "Test User",
+        email: reservationData.formData?.email || "test@example.com",
+        phone: reservationData.formData?.phone || "+90 555 555 5555"
       },
       reservationDetails: {
-        date: new Date().toLocaleDateString('tr-TR'),
-        time: "19:00",
-        guests: 4,
-        notes: "Test reservation notes",
-        occasion: "Test occasion"
+        date: reservationData.formData?.date 
+          ? new Date(reservationData.formData.date).toLocaleDateString('tr-TR') 
+          : new Date().toLocaleDateString('tr-TR'),
+        time: reservationData.formData?.time || "19:00",
+        guests: parseInt(reservationData.formData?.guests) || 4,
+        notes: reservationData.formData?.notes || "Test reservation notes",
+        occasion: reservationData.formData?.occasion || "Test occasion"
       },
-      tableDetails: {
-        tableId: "test-table-1",
-        tableName: "Pencere Kenarı 1",
-        tableSize: 4,
-        tableType: "window"
-      },
+      tableDetails: reservationData.selectedTable 
+        ? {
+            tableId: reservationData.selectedTable.id,
+            tableName: reservationData.selectedTable.label || "Bilinmeyen Masa",
+            tableSize: reservationData.selectedTable.size,
+            tableType: reservationData.selectedTable.type
+          }
+        : {
+            tableId: "test-table-1",
+            tableName: "Pencere Kenarı 1",
+            tableSize: 4,
+            tableType: "window"
+          },
       menuSelection: {
-        type: "fixed_menu",
-        selectedFixedMenus: [
+        type: reservationData.menuSelection?.type || "fixed_menu",
+        selectedFixedMenus: reservationData.menuSelection?.selectedFixedMenus || [
           {
             menuId: "test-menu-1",
             menuName: "Akşam Menüsü",
@@ -47,7 +56,7 @@ export const useReservationSubmission = (
             price: 450
           }
         ],
-        selectedMenuItems: [
+        selectedMenuItems: reservationData.menuSelection?.selectedMenuItems || [
           {
             itemId: "test-item-1",
             itemName: "Test Yemeği",
@@ -57,8 +66,8 @@ export const useReservationSubmission = (
         ]
       },
       paymentDetails: {
-        isPaid: true,
-        amount: 1020,
+        isPaid: reservationData.payment?.isPaid || true,
+        amount: reservationData.payment?.amount || 1020,
         discountAmount: 0,
         transactionId: "test-transaction-" + uuidv4()
       }
@@ -68,10 +77,10 @@ export const useReservationSubmission = (
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
       
       // Data parametresi olarak JSON verisini ekleyin
-      const encodedData = encodeURIComponent(JSON.stringify(testData));
+      const encodedData = encodeURIComponent(JSON.stringify(webhookData));
       const fullUrl = `${webhookUrl}?data=${encodedData}`;
       
-      console.log('Webhook verisi gönderiliyor:', JSON.stringify(testData, null, 2));
+      console.log('Webhook verisi gönderiliyor:', JSON.stringify(webhookData, null, 2));
       console.log('Tam URL:', fullUrl);
 
       const startTime = performance.now();
@@ -96,20 +105,20 @@ export const useReservationSubmission = (
       }
 
       toast({
-        title: "Webhook Test Başarılı",
-        description: "Test verisi webhook'a başarıyla gönderildi.",
+        title: "Webhook Bildirimi Başarılı",
+        description: "Rezervasyon verileri webhook'a başarıyla gönderildi.",
         variant: "default"
       });
 
       return true;
     } catch (error) {
-      console.error('Webhook test hatası detayları:', error);
+      console.error('Webhook gönderme hatası detayları:', error);
 
       toast({
-        title: "Webhook Test Hatası",
+        title: "Webhook Bildirimi Hatası",
         description: error instanceof Error 
-          ? `Webhook test bildirimi başarısız: ${error.message}`
-          : "Webhook test gönderiminde beklenmeyen bir hata oluştu",
+          ? `Webhook bildirimi başarısız: ${error.message}`
+          : "Webhook gönderiminde beklenmeyen bir hata oluştu",
         variant: "destructive"
       });
 
@@ -142,7 +151,6 @@ export const useReservationSubmission = (
         notes: state.formData.notes,
         occasion: state.formData.occasion,
         status: "Beklemede",
-        // Düzeltme: selected_table doğrudan yazılmak yerine normal alanlar olarak kaydedilecek
         table_id: state.selectedTable ? state.selectedTable.id : null,
         menu_selection_type: state.menuSelection.type,
         fixed_menu_id: state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0 ? 
@@ -163,8 +171,9 @@ export const useReservationSubmission = (
       
       console.log('Rezervasyon başarıyla veritabanına eklendi');
 
-      // Hem rezervasyon oluşturulurken hem de manuel test için webhook'u çağırabiliriz
-      await sendWebhookNotification(reservationData);
+      // Webhook bildirimi gönder - Burası önemli!
+      console.log('Rezervasyon için webhook bildirimi gönderiliyor...');
+      await sendWebhookNotification(state);
       
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
       if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {
