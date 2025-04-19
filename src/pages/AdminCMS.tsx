@@ -34,14 +34,14 @@ const AdminCMS = () => {
               id: "1",
               name: "Mevsim Salatası",
               description: "Taze mevsim sebzeleri, akdeniz yeşillikleri, kiraz domates, salatalık ve özel sos ile",
-              price: "₺75",
-              image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+              price: 75, // Changed from string to number
+              image_path: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
             },
             {
               id: "2",
               name: "Humus Tabağı",
               description: "Nohut püresi, susam ezmesi (tahini), zeytinyağı, limon ve baharatlar ile",
-              price: "₺65",
+              price: 65, // Changed from string to number
             }
           ]
         },
@@ -53,14 +53,14 @@ const AdminCMS = () => {
               id: "6",
               name: "Özel Lezzet Burger",
               description: "180 gr dana eti, cheddar peyniri, karamelize soğan, özel burger sosu ve ev yapımı patates kızartması ile",
-              price: "₺145",
-              image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+              price: 145, // Changed from string to number
+              image_path: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
             },
             {
               id: "7",
               name: "Izgara Somon",
               description: "Limon ve otlar ile marine edilmiş somon fileto, sebzeli pilav ve taze yeşillikler ile",
-              price: "₺180",
+              price: 180, // Changed from string to number
             }
           ]
         }
@@ -153,7 +153,7 @@ const AdminCMS = () => {
                       <span>Görsel İçeren Ürünler</span>
                       <span className="font-medium">
                         {menuData.reduce((sum, category) => 
-                          sum + category.items.filter(item => item.image).length, 0
+                          sum + category.items.filter(item => item.image_path).length, 0
                         )}
                       </span>
                     </div>

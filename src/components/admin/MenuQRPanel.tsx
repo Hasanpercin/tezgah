@@ -28,7 +28,7 @@ export const MenuQRPanel = ({ menuData, isLoading }: MenuQRPanelProps) => {
   const [editMode, setEditMode] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
-  const [editedPrice, setEditedPrice] = useState("");
+  const [editedPrice, setEditedPrice] = useState(""); // Keep as string for input field
 
   const handleSelectCategory = (category: MenuCategoryType) => {
     setSelectedCategory(category);
@@ -48,7 +48,8 @@ export const MenuQRPanel = ({ menuData, isLoading }: MenuQRPanelProps) => {
       if (item) {
         setEditedName(item.name);
         setEditedDescription(item.description || "");
-        setEditedPrice(item.price);
+        // Convert price to string when setting in state
+        setEditedPrice(item.price.toString());
         setEditMode(true);
       }
     }
@@ -109,10 +110,10 @@ export const MenuQRPanel = ({ menuData, isLoading }: MenuQRPanelProps) => {
                     <p className="text-sm text-muted-foreground">{item.description}</p>
                     <p className="font-medium mt-1">{item.price}</p>
                   </div>
-                  {item.image && (
+                  {item.image_path && (
                     <div className="w-16 h-16 rounded overflow-hidden mr-3">
                       <img 
-                        src={item.image} 
+                        src={item.image_path} 
                         alt={item.name} 
                         className="w-full h-full object-cover"
                       />
