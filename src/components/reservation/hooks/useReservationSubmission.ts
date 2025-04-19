@@ -62,20 +62,24 @@ export const useReservationSubmission = (
         transactionId: "test-transaction-" + uuidv4()
       }
     };
-    
-    console.log('Test data to be sent:', JSON.stringify(testData, null, 2));
 
     try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
-      console.log('Sending POST request to webhook URL:', webhookUrl);
+      // Convert test data to query parameters
+      const queryParams = new URLSearchParams({
+        data: JSON.stringify(testData)
+      }).toString();
+
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
+      const fullUrl = `${webhookUrl}?${queryParams}`;
+      
+      console.log('Sending GET request to webhook URL:', fullUrl);
 
       const startTime = performance.now();
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
+      const response = await fetch(fullUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testData) // Send test data instead of actual reservation data
+          'Accept': 'application/json',
+        }
       });
       const endTime = performance.now();
 
