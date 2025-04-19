@@ -61,7 +61,12 @@ export interface FixedMenuItem {
 export const fetchMenuItems = async () => {
   const { data, error } = await supabase
     .from("menu_items")
-    .select("*, menu_categories(*)")
+    .select(`
+      *,
+      menu_categories(*),
+      menu_item_options(*),
+      menu_item_variants(*)
+    `)
     .eq("is_in_stock", true)
     .order('display_order', { ascending: true });
     
@@ -70,7 +75,11 @@ export const fetchMenuItems = async () => {
     throw error;
   }
   
-  return data as MenuItem[];
+  return data.map(item => ({
+    ...item,
+    options: item.menu_item_options || [],
+    variants: item.menu_item_variants || []
+  })) as MenuItem[];
 };
 
 export const fetchMenuItemDetails = async (itemId: string) => {
@@ -131,23 +140,39 @@ export const fetchMenuItemsByCategory = async () => {
     .from('menu_items')
     .select(`
       *,
-      menu_categories(*)
+      menu_categories(*),
+      menu_item_options(*),
+      menu_item_variants(*)
     `)
     .order('display_order', { ascending: true });
 
   if (error) throw error;
-  return data;
+  
+  return data.map(item => ({
+    ...item,
+    options: item.menu_item_options || [],
+    variants: item.menu_item_variants || []
+  }));
 };
 
 export const fetchFeaturedMenuItems = async () => {
   const { data, error } = await supabase
     .from('menu_items')
-    .select('*')
+    .select(`
+      *,
+      menu_item_options(*),
+      menu_item_variants(*)
+    `)
     .eq('is_featured', true)
     .limit(6);
 
   if (error) throw error;
-  return data;
+  
+  return data.map(item => ({
+    ...item,
+    options: item.menu_item_options || [],
+    variants: item.menu_item_variants || []
+  }));
 };
 
 export const updateFeaturedMenuItem = async (id: string, isFeatured: boolean) => {

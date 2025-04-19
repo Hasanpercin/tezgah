@@ -77,58 +77,101 @@ const MenuItem = ({
             </div>
             {description && <p className="text-muted-foreground mb-4">{description}</p>}
 
-            {/* Variants Section */}
-            {variants.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Seçenekler</h4>
-                <RadioGroup
-                  onValueChange={handleVariantChange}
-                  value={selectedVariant}
-                  className="flex flex-col gap-2"
-                >
+            {/* Variants Section - Always display on menu page */}
+            {variants && variants.length > 0 && (
+              <div className="mt-3 mb-2">
+                <h4 className="text-sm font-medium mb-1 text-muted-foreground">Çeşitler:</h4>
+                <ul className="text-sm space-y-1">
                   {variants.map((variant) => (
-                    <div key={variant.id} className="flex items-center space-x-2">
-                      <RadioGroupItem value={variant.id} id={`variant-${variant.id}`} />
-                      <Label htmlFor={`variant-${variant.id}`} className="flex justify-between w-full">
-                        <span>{variant.name}</span>
-                        {variant.price_adjustment > 0 && (
-                          <span className="text-sm text-muted-foreground">
-                            +{variant.price_adjustment} ₺
-                          </span>
-                        )}
-                      </Label>
-                    </div>
+                    <li key={variant.id} className="flex justify-between">
+                      <span>{variant.name}</span>
+                      {variant.price_adjustment > 0 && (
+                        <span className="text-primary font-medium">
+                          +{variant.price_adjustment} ₺
+                        </span>
+                      )}
+                    </li>
                   ))}
-                </RadioGroup>
+                </ul>
               </div>
             )}
 
-            {/* Options Section */}
-            {options.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Ekstra Seçimler</h4>
-                <div className="space-y-2">
+            {/* Options Section - Always display on menu page */}
+            {options && options.length > 0 && (
+              <div className="mt-2">
+                <h4 className="text-sm font-medium mb-1 text-muted-foreground">Opsiyonlar:</h4>
+                <ul className="text-sm space-y-1">
                   {options.map((option) => (
-                    <div key={option.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`option-${option.id}`}
-                        checked={selectedOptions.includes(option.id)}
-                        onCheckedChange={(checked) => 
-                          handleOptionChange(option.id, checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`option-${option.id}`} className="flex justify-between w-full">
-                        <span>{option.name}</span>
-                        {option.price_adjustment > 0 && (
-                          <span className="text-sm text-muted-foreground">
-                            +{option.price_adjustment} ₺
-                          </span>
-                        )}
-                      </Label>
-                    </div>
+                    <li key={option.id} className="flex justify-between">
+                      <span>{option.name}</span>
+                      {option.price_adjustment > 0 && (
+                        <span className="text-primary font-medium">
+                          +{option.price_adjustment} ₺
+                        </span>
+                      )}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
+            )}
+
+            {/* Interactive Selection UI - Only show when onSelectionChange is provided */}
+            {onSelectionChange && (
+              <>
+                {/* Variants Section with radio selection */}
+                {variants && variants.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Seçenekler</h4>
+                    <RadioGroup
+                      onValueChange={handleVariantChange}
+                      value={selectedVariant}
+                      className="flex flex-col gap-2"
+                    >
+                      {variants.map((variant) => (
+                        <div key={variant.id} className="flex items-center space-x-2">
+                          <RadioGroupItem value={variant.id} id={`variant-${variant.id}`} />
+                          <Label htmlFor={`variant-${variant.id}`} className="flex justify-between w-full">
+                            <span>{variant.name}</span>
+                            {variant.price_adjustment > 0 && (
+                              <span className="text-sm text-muted-foreground">
+                                +{variant.price_adjustment} ₺
+                              </span>
+                            )}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {/* Options Section with checkbox selection */}
+                {options && options.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Ekstra Seçimler</h4>
+                    <div className="space-y-2">
+                      {options.map((option) => (
+                        <div key={option.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`option-${option.id}`}
+                            checked={selectedOptions.includes(option.id)}
+                            onCheckedChange={(checked) => 
+                              handleOptionChange(option.id, checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`option-${option.id}`} className="flex justify-between w-full">
+                            <span>{option.name}</span>
+                            {option.price_adjustment > 0 && (
+                              <span className="text-sm text-muted-foreground">
+                                +{option.price_adjustment} ₺
+                              </span>
+                            )}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

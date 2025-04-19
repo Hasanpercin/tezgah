@@ -9,6 +9,16 @@ export type MenuItemType = {
   price: string;
   image?: string;
   isInStock?: boolean;
+  options?: {
+    id: string;
+    name: string;
+    price_adjustment: number;
+  }[];
+  variants?: {
+    id: string;
+    name: string;
+    price_adjustment: number;
+  }[];
 }
 
 export type MenuCategoryType = {
@@ -63,6 +73,8 @@ const MenuCategory = ({ categories }: MenuCategoryProps) => {
                   price={item.price}
                   image={item.image}
                   isInStock={item.isInStock}
+                  options={item.options}
+                  variants={item.variants}
                 />
               ))}
             </div>
