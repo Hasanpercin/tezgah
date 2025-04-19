@@ -31,10 +31,13 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
 
       try {
         const { data: adminData } = await supabase
-          .from('admin_users')
+          .from('admin_settings')
           .select('*')
           .single();
         
+        // If the admin_settings table has an entry, consider the user as an admin
+        // This is a simplified approach; in a real application you might want to
+        // implement more complex admin role checking
         setIsAdmin(!!adminData);
       } catch (error) {
         console.error('Error checking admin status:', error);

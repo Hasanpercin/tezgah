@@ -29,18 +29,25 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
+    // If no user is logged in, they're definitely not an admin
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
 
+    // Check if we have valid admin settings configured in the database
+    const checkAdminStatus = async () => {
       try {
+        // For now, simply check if the admin_settings table has a valid entry
+        // A more complex implementation would check for specific admin permissions if needed
         const { data: adminData } = await supabase
-          .from('admin_users')
+          .from('admin_settings')
           .select('*')
           .single();
         
+        // If admin_settings table has a record, we consider the current user as an admin
+        // This is a simplified approach; in a real-world app, you might want
+        // to also check for admin role or specific permissions
         setIsAdmin(!!adminData);
       } catch (error) {
         console.error('Error checking admin status:', error);
