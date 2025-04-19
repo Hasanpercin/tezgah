@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,7 +46,23 @@ export const useReservationSubmission = (
         amount: state.payment.amount,
         discountAmount: state.payment.discountAmount,
         transactionId: state.payment.transactionId
-      } : null
+      } : null,
+      // Include menu selection details
+      menuSelection: {
+        type: state.menuSelection.type,
+        selectedFixedMenus: state.menuSelection.selectedFixedMenus?.map(item => ({
+          menuId: item.menu.id,
+          menuName: item.menu.name,
+          quantity: item.quantity,
+          price: item.menu.price
+        })),
+        selectedMenuItems: state.menuSelection.selectedMenuItems?.map(item => ({
+          itemId: item.id,
+          itemName: item.name,
+          quantity: item.quantity || 1,
+          price: item.price
+        }))
+      }
     };
     
     console.log('Enhanced reservation data to be sent:', JSON.stringify(formattedReservationData, null, 2));
