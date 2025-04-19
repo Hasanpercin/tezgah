@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,14 +33,20 @@ const AdminCMS = () => {
               id: "1",
               name: "Mevsim Salatası",
               description: "Taze mevsim sebzeleri, akdeniz yeşillikleri, kiraz domates, salatalık ve özel sos ile",
-              price: 75, // Changed from string to number
-              image_path: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+              price: 75,
+              image_path: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300",
+              category_id: "starters",
+              is_in_stock: true,
+              display_order: 0
             },
             {
               id: "2",
               name: "Humus Tabağı",
               description: "Nohut püresi, susam ezmesi (tahini), zeytinyağı, limon ve baharatlar ile",
-              price: 65, // Changed from string to number
+              price: 65,
+              category_id: "starters",
+              is_in_stock: true,
+              display_order: 1
             }
           ]
         },
@@ -53,14 +58,20 @@ const AdminCMS = () => {
               id: "6",
               name: "Özel Lezzet Burger",
               description: "180 gr dana eti, cheddar peyniri, karamelize soğan, özel burger sosu ve ev yapımı patates kızartması ile",
-              price: 145, // Changed from string to number
-              image_path: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300"
+              price: 145,
+              image_path: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=300",
+              category_id: "mains",
+              is_in_stock: true,
+              display_order: 0
             },
             {
               id: "7",
               name: "Izgara Somon",
               description: "Limon ve otlar ile marine edilmiş somon fileto, sebzeli pilav ve taze yeşillikler ile",
-              price: 180, // Changed from string to number
+              price: 180,
+              category_id: "mains",
+              is_in_stock: true, 
+              display_order: 1
             }
           ]
         }
@@ -303,7 +314,6 @@ const DashboardSummaryCard = () => {
   );
 };
 
-// Only modifying the DashboardRecentReservations component to handle JSON data correctly
 const DashboardRecentReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -321,13 +331,10 @@ const DashboardRecentReservations = () => {
         if (error) throw error;
         
         if (data) {
-          // Convert the data to match Reservation type
           const formattedReservations = data.map(res => {
-            // Handle selected_items safely
             let selectedItems: any | undefined = undefined;
             
             if (res.selected_items) {
-              // Safely parse the JSON data
               const si = res.selected_items as any;
               selectedItems = {
                 menuSelectionType: si.menuSelectionType || "at_restaurant",
