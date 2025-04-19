@@ -23,7 +23,16 @@ const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
     // Sayfa ilk yüklendiğinde webhook bildirimini tekrar gönderelim
     const sendWebhook = async () => {
       console.log("ReservationSummary bileşeni yüklendi, webhook gönderiliyor...");
-      await sendWebhookNotification(state);
+      
+      // Mobil tarayıcılarda gecikmeli olarak webhook'u gönderelim
+      // Bu sayede sayfa tamamen yüklendikten sonra webhook gönderilir
+      setTimeout(async () => {
+        try {
+          await sendWebhookNotification(state);
+        } catch (error) {
+          console.error("Webhook gönderme hatası:", error);
+        }
+      }, 1000);
     };
     
     sendWebhook();

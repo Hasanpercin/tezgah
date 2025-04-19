@@ -76,7 +76,7 @@ export const useReservationSubmission = (
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
       
-      // Data parametresi olarak JSON verisini ekleyin
+      // Data parametresi olarak JSON verisini ekliyoruz
       const encodedData = encodeURIComponent(JSON.stringify(webhookData));
       const fullUrl = `${webhookUrl}?data=${encodedData}`;
       
@@ -84,12 +84,17 @@ export const useReservationSubmission = (
       console.log('Tam URL:', fullUrl);
 
       const startTime = performance.now();
+      // Fetch işlemini hem mobil hem de masaüstü tarayıcılara uygun hale getiriyoruz
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-        }
+          // Mobil tarayıcılar için ek başlıklar
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+        cache: 'no-store', // Önbellekleme önlemek için
       });
       const endTime = performance.now();
 

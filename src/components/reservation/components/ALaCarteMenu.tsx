@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { fetchMenuItems, MenuItem } from '@/services/menuService';
 import { useToast } from '@/hooks/use-toast';
@@ -72,11 +73,12 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
         quantity: (updatedItems[existingItemIndex].quantity || 1) + 1
       };
       setSelectedItems(updatedItems);
+      onChange(updatedItems);
     } else {
-      setSelectedItems([...selectedItems, { ...item, quantity: 1 }]);
+      const newItems = [...selectedItems, { ...item, quantity: 1 }];
+      setSelectedItems(newItems);
+      onChange(newItems);
     }
-    
-    onChange([...selectedItems, { ...item, quantity: 1 }]);
   };
 
   const handleItemQuantityChange = (itemId: string, change: number) => {
@@ -207,7 +209,7 @@ const ALaCarteMenu = ({ onChange, guestCount }: ALaCarteMenuProps) => {
       <Separator className="my-6" />
 
       {/* Menu Items */}
-      <ScrollArea className="h-[60vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
+      <ScrollArea className="h-[50vh] md:h-[60vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
         <div className="pb-6">
           {filteredItems.length === 0 ? (
             <p className="text-center p-4 text-muted-foreground">Bu kategoride ürün bulunamadı.</p>

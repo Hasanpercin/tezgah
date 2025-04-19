@@ -120,7 +120,7 @@ const FixedMenuList = ({
         </div>
       )}
       
-      <ScrollArea className="h-[70vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
+      <ScrollArea className="h-[60vh] md:h-[70vh] w-full pr-4 overflow-y-auto -mx-2 px-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
           {fixedMenus && fixedMenus.length > 0 ? (
             fixedMenus.map((menu) => (
