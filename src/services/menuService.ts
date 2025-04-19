@@ -92,13 +92,17 @@ export const fetchMenuItemDetails = async (itemId: string) => {
       
     if (itemError) throw itemError;
     
-    const options: MenuItemOption[] = [];
-    const variants: MenuItemVariant[] = [];
+    const { data: options, error: optionsError } = await supabase
+      .from('menu_item_options')
+      .select('*')
+      .eq('menu_item_id', itemId);
+    
+    if (optionsError) throw optionsError;
     
     return {
       ...itemData,
-      options,
-      variants
+      options: options || [],
+      variants: []
     } as MenuItem;
   } catch (error) {
     console.error("Error fetching menu item details:", error);
@@ -127,7 +131,7 @@ export const saveReservationMenuItems = async (
 
 export const fetchMenuItemsByCategory = async () => {
   try {
-    const { data, error } = await supabase
+    const { data: menuItems, error: menuError } = await supabase
       .from('menu_items')
       .select(`
         *,
@@ -135,13 +139,21 @@ export const fetchMenuItemsByCategory = async () => {
       `)
       .order('display_order', { ascending: true });
 
-    if (error) throw error;
-    
-    return data.map(item => ({
+    if (menuError) throw menuError;
+
+    const { data: options, error: optionsError } = await supabase
+      .from('menu_item_options')
+      .select('*');
+
+    if (optionsError) throw optionsError;
+
+    const menuItemsWithOptions = menuItems.map(item => ({
       ...item,
-      options: [],
+      options: options.filter(option => option.menu_item_id === item.id) || [],
       variants: []
-    })) as MenuItem[];
+    }));
+
+    return menuItemsWithOptions;
   } catch (error) {
     console.error("Error in fetchMenuItemsByCategory:", error);
     throw error;

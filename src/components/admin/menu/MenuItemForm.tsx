@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +26,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_path || null);
 
-  // Ensure options always have IDs
   const prepareOptions = (options: any[] = []): MenuItemOption[] => {
     return options.map(option => ({
       id: option.id || crypto.randomUUID(),
@@ -67,7 +65,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
   const onSubmit = async (values: MenuItemFormValues) => {
     setIsSubmitting(true);
     try {
-      // Ensure all required fields are present and properly typed
       const formattedValues = {
         name: values.name,
         category_id: values.category_id,
@@ -85,7 +82,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         display_order: values.display_order
       };
 
-      // First, handle the basic menu item update/insert
       if (isEditMode && item) {
         const { error } = await supabase
           .from("menu_items")
@@ -97,7 +93,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
 
         if (error) throw error;
 
-        // After successful update of the main menu item, handle options
         await handleOptionsUpdate(item.id, prepareOptions(values.options));
         
         toast({
@@ -105,7 +100,6 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           description: "Menü öğesi başarıyla güncellendi",
         });
       } else {
-        // For new menu items, first create the item then add options
         const { data, error } = await supabase
           .from("menu_items")
           .insert(formattedValues)
@@ -136,13 +130,33 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
     }
   };
 
-  // Helper function to handle options update/insert
   const handleOptionsUpdate = async (menuItemId: string, options: MenuItemOption[]) => {
-    // We'll implement this in a future update with a proper database table for menu_item_options
-    // For now, we're just preparing the component structure
-    console.log('Saving options for menu item:', menuItemId, options);
-    // In a real implementation, we would insert/update options in a separate table
-    return true;
+    try {
+      const { error: deleteError } = await supabase
+        .from('menu_item_options')
+        .delete()
+        .eq('menu_item_id', menuItemId);
+
+      if (deleteError) throw deleteError;
+
+      if (options.length > 0) {
+        const { error: insertError } = await supabase
+          .from('menu_item_options')
+          .insert(
+            options.map(option => ({
+              menu_item_id: menuItemId,
+              name: option.name,
+              price_adjustment: option.price_adjustment,
+              is_required: option.is_required
+            }))
+          );
+
+        if (insertError) throw insertError;
+      }
+    } catch (error: any) {
+      console.error('Error updating options:', error);
+      throw error;
+    }
   };
 
   return (
