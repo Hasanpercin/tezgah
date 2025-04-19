@@ -28,17 +28,19 @@ const MenuItem = ({
 }: MenuItemProps) => {
   return (
     <Card className={cn(
-      "overflow-hidden transition-all duration-200 hover:shadow-lg",
+      "overflow-hidden transition-all duration-200 hover:shadow-lg w-full max-w-md",
       !isInStock && "opacity-60"
     )}>
       <CardContent className="p-0">
         <div className="flex flex-col h-full">
           {image && (
-            <div className="relative h-32 overflow-hidden">
+            <div className="relative w-full aspect-square overflow-hidden">
               <img 
-                src={image} 
+                src={`${image}?w=300&h=300&fit=crop`}
                 alt={name} 
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                width={300}
+                height={300}
               />
               {!isInStock && (
                 <div className="absolute top-2 right-2">
@@ -48,9 +50,9 @@ const MenuItem = ({
             </div>
           )}
           
-          <div className="p-5 space-y-4 flex-1 bg-card">
+          <div className="p-4 space-y-3">
             <div>
-              <div className="flex justify-between items-start gap-2">
+              <div className="flex justify-between items-start gap-2 mb-2">
                 <h3 className="font-playfair text-lg font-medium leading-tight">{name}</h3>
                 <span className="font-medium text-primary whitespace-nowrap">
                   {price}
@@ -58,7 +60,7 @@ const MenuItem = ({
               </div>
               
               {description && (
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {description}
                 </p>
               )}
@@ -66,7 +68,7 @@ const MenuItem = ({
 
             {(options?.length > 0 || variants?.length > 0) && (
               <>
-                <Separator className="my-3" />
+                <Separator />
                 <div className="space-y-3">
                   {variants?.length > 0 && (
                     <div className="space-y-2">
