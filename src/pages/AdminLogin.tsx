@@ -26,25 +26,31 @@ const AdminLogin = () => {
     setError(null);
     
     try {
+      // First, attempt to login with provided credentials
       const loginResult = await login(email, password);
       
-      if (loginResult.error) {
-        setError(loginResult.error);
+      if (loginResult.success === false) {
+        setError(loginResult.error || 'Giriş başarısız');
+        setIsLoading(false);
         return;
       }
 
-      // Check if the user is an admin
+      // After successful login, check if the user is an admin
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
+        .eq('user_id', supabase.auth.getUser().then(res => res.data.user?.id))
         .maybeSingle();
 
       if (adminError || !adminData) {
-        setError('Bu hesap admin yetkisine sahip değil.');
+        // If not an admin, log out and show error
         await supabase.auth.signOut();
+        setError('Bu hesap admin yetkisine sahip değil.');
+        setIsLoading(false);
         return;
       }
 
+      // If all checks pass, redirect to admin panel
       toast({
         title: 'Giriş başarılı',
         description: 'Admin paneline yönlendiriliyorsunuz.',
@@ -52,6 +58,7 @@ const AdminLogin = () => {
       
       navigate('/admin');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError('Giriş yapılırken bir hata oluştu');
     } finally {
       setIsLoading(false);
