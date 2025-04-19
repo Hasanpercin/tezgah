@@ -67,8 +67,7 @@ export const useReservationSubmission = (
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
       
-      // Doğrudan URL'ye data parametresi olarak ekle
-      // Bu tür JSON veriler için encodeURIComponent ile kodlama şart
+      // Data parametresi olarak JSON verisini ekleyin
       const encodedData = encodeURIComponent(JSON.stringify(testData));
       const fullUrl = `${webhookUrl}?data=${encodedData}`;
       
@@ -119,7 +118,7 @@ export const useReservationSubmission = (
   };
 
   // Main reservation submission function
-  return useCallback(async () => {
+  const submitReservation = useCallback(async () => {
     console.log('Rezervasyon gönderme işlemi başlatılıyor...');
     
     try {
@@ -143,17 +142,11 @@ export const useReservationSubmission = (
         notes: state.formData.notes,
         occasion: state.formData.occasion,
         status: "Beklemede",
-        selected_table: state.selectedTable ? { id: state.selectedTable.id } : null,
-        selected_items: {
-          menuSelectionType: state.menuSelection.type,
-          fixedMenuId: state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0 ? state.menuSelection.selectedFixedMenus[0].menu.id : null,
-          items: state.menuSelection.selectedMenuItems ? state.menuSelection.selectedMenuItems.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || 1
-          })) : null
-        },
+        // Düzeltme: selected_table doğrudan yazılmak yerine normal alanlar olarak kaydedilecek
+        table_id: state.selectedTable ? state.selectedTable.id : null,
+        menu_selection_type: state.menuSelection.type,
+        fixed_menu_id: state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0 ? 
+          state.menuSelection.selectedFixedMenus[0].menu.id : null,
         has_prepayment: state.payment?.isPaid || false,
         total_amount: state.payment?.amount || 0,
       };
@@ -208,6 +201,11 @@ export const useReservationSubmission = (
       });
     }
   }, [state, user, toast, setCurrentStep]);
+
+  return {
+    submitReservation,
+    sendWebhookNotification // Webhook test için bu fonksiyonu dışarı açıyoruz
+  };
 };
 
 // Helper function to add loyalty points

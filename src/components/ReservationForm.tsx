@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { useReservationSubmission } from './reservation/hooks/useReservationSubmission';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const ReservationForm = () => {
   const {
@@ -20,8 +21,9 @@ const ReservationForm = () => {
 
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
   
-  // Webhook test butonu için dummy state ve fonksiyon
+  // Webhook test butonu için dummy state
   const dummyState = {
     formData: {
       name: 'Test User',
@@ -63,7 +65,22 @@ const ReservationForm = () => {
   
   const dummySetCurrentStep = () => {};
   
-  const sendWebhookTest = useReservationSubmission(
+  // Webhook test fonksiyonunu ayrı olarak tanımlayalım
+  const sendWebhookTest = async () => {
+    setIsTestingWebhook(true);
+    try {
+      console.log('Webhook test başlatılıyor...');
+      // Sadece webhook gönderme fonksiyonunu çağırırız
+      await sendWebhookNotification(dummyState);
+      setIsTestingWebhook(false);
+    } catch (error) {
+      console.error('Webhook testi sırasında hata:', error);
+      setIsTestingWebhook(false);
+    }
+  };
+
+  // WebhookNotification fonksiyonunu doğrudan import edelim
+  const { sendWebhookNotification } = useReservationSubmission(
     user,
     dummyState,
     toast,
@@ -97,9 +114,10 @@ const ReservationForm = () => {
             type="button" 
             variant="outline"
             onClick={handleWebhookTest}
+            disabled={isTestingWebhook}
             className="bg-yellow-50 text-amber-800 border-amber-300 hover:bg-amber-100"
           >
-            Webhook Test Et
+            {isTestingWebhook ? 'Gönderiliyor...' : 'Webhook Test Et'}
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
             Bu buton sadece geliştirme aşamasında görünür ve webhook entegrasyonunu test etmek içindir.
