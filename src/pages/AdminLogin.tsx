@@ -23,26 +23,16 @@ const AdminLogin = () => {
     setError(null);
     
     try {
-      // Fetch the admin password hash from settings
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_settings')
-        .select('password_hash')
-        .single();
-
-      if (adminError || !adminData) {
-        setError('Admin ayarları bulunamadı.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Compare the entered password with stored hash
-      if (password === 'TezgahAdmin2024!') { // For simplicity, we're using direct comparison
+      if (password === 'TezgahAdmin2024!') {
+        // Successfully authenticated
         toast({
           title: 'Giriş başarılı',
           description: 'Admin paneline yönlendiriliyorsunuz.',
         });
         
-        navigate('/admin');
+        setTimeout(() => {
+          navigate('/admin');
+        }, 1000);
       } else {
         setError('Geçersiz şifre');
       }
