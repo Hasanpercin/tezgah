@@ -1,11 +1,10 @@
 
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { MenuItemOption, MenuItemVariant } from "@/services/menuService";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { MenuItemOption, MenuItemVariant } from '@/services/menuService';
 
 type MenuItemProps = {
   name: string;
@@ -16,161 +15,95 @@ type MenuItemProps = {
   isInStock?: boolean;
   options?: MenuItemOption[];
   variants?: MenuItemVariant[];
-  onSelectionChange?: (selection: {
-    optionIds: string[];
-    variantId?: string;
-  }) => void;
 }
 
 const MenuItem = ({ 
   name, 
   description, 
   price, 
-  image, 
-  id, 
+  image,
   isInStock = true,
   options = [],
-  variants = [],
-  onSelectionChange
+  variants = []
 }: MenuItemProps) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [selectedVariant, setSelectedVariant] = useState<string>();
-
-  const handleOptionChange = (optionId: string, checked: boolean) => {
-    const newSelection = checked 
-      ? [...selectedOptions, optionId]
-      : selectedOptions.filter(id => id !== optionId);
-    
-    setSelectedOptions(newSelection);
-    onSelectionChange?.({ optionIds: newSelection, variantId: selectedVariant });
-  };
-
-  const handleVariantChange = (variantId: string) => {
-    setSelectedVariant(variantId);
-    onSelectionChange?.({ optionIds: selectedOptions, variantId });
-  };
-
   return (
-    <Card className="overflow-hidden h-full">
+    <Card className={cn(
+      "overflow-hidden transition-all duration-200 hover:shadow-lg",
+      !isInStock && "opacity-60"
+    )}>
       <CardContent className="p-0">
-        <div className={`flex ${image ? 'flex-col md:flex-row' : ''} h-full relative`}>
-          {!isInStock && (
-            <div className="absolute top-0 right-0 m-2 z-10">
-              <Badge variant="destructive" className="font-medium">Stokta Yok</Badge>
-            </div>
-          )}
-          
+        <div className="flex flex-col h-full">
           {image && (
-            <div className={`${image ? 'md:w-1/3' : 'hidden'} overflow-hidden relative`}>
+            <div className="relative h-48 overflow-hidden">
               <img 
                 src={image} 
                 alt={name} 
-                className={`w-full h-full object-cover aspect-square md:aspect-auto ${!isInStock ? 'opacity-50' : ''}`}
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
               />
+              {!isInStock && (
+                <div className="absolute top-2 right-2">
+                  <Badge variant="destructive">Tükendi</Badge>
+                </div>
+              )}
             </div>
           )}
           
-          <div className={`flex-1 p-4 ${!image ? 'w-full' : ''}`}>
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-xl font-playfair font-semibold">{name}</h3>
-              <span className="text-lg font-semibold text-primary ml-4 whitespace-nowrap">{price}</span>
+          <div className="p-5 space-y-4 flex-1 bg-card">
+            <div>
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="font-playfair text-lg font-medium leading-tight">{name}</h3>
+                <span className="font-medium text-primary whitespace-nowrap">
+                  {price}
+                </span>
+              </div>
+              
+              {description && (
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {description}
+                </p>
+              )}
             </div>
-            {description && <p className="text-muted-foreground mb-4">{description}</p>}
 
-            {/* Always display variants section if available */}
-            {variants && variants.length > 0 && (
-              <div className="mt-3 mb-2">
-                <h4 className="text-sm font-medium mb-1 text-muted-foreground">Çeşitler:</h4>
-                <ul className="text-sm space-y-1">
-                  {variants.map((variant) => (
-                    <li key={variant.id} className="flex justify-between">
-                      <span>{variant.name}</span>
-                      {variant.price_adjustment > 0 && (
-                        <span className="text-primary font-medium">
-                          +{variant.price_adjustment} ₺
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Always display options section if available */}
-            {options && options.length > 0 && (
-              <div className="mt-2">
-                <h4 className="text-sm font-medium mb-1 text-muted-foreground">Opsiyonlar:</h4>
-                <ul className="text-sm space-y-1">
-                  {options.map((option) => (
-                    <li key={option.id} className="flex justify-between">
-                      <span>{option.name}</span>
-                      {option.price_adjustment > 0 && (
-                        <span className="text-primary font-medium">
-                          +{option.price_adjustment} ₺
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Interactive Selection UI - Only show when onSelectionChange is provided */}
-            {onSelectionChange && (
+            {(options?.length > 0 || variants?.length > 0) && (
               <>
-                {/* Variants Section with radio selection */}
-                {variants && variants.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Seçenekler</h4>
-                    <RadioGroup
-                      onValueChange={handleVariantChange}
-                      value={selectedVariant}
-                      className="flex flex-col gap-2"
-                    >
-                      {variants.map((variant) => (
-                        <div key={variant.id} className="flex items-center space-x-2">
-                          <RadioGroupItem value={variant.id} id={`variant-${variant.id}`} />
-                          <Label htmlFor={`variant-${variant.id}`} className="flex justify-between w-full">
+                <Separator className="my-3" />
+                <div className="space-y-3">
+                  {variants?.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-muted-foreground">Çeşitler</h4>
+                      <div className="grid gap-1.5">
+                        {variants.map((variant) => (
+                          <div key={variant.id} className="flex justify-between text-sm">
                             <span>{variant.name}</span>
                             {variant.price_adjustment > 0 && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-primary font-medium">
                                 +{variant.price_adjustment} ₺
                               </span>
                             )}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                {/* Options Section with checkbox selection */}
-                {options && options.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Ekstra Seçimler</h4>
+                  {options?.length > 0 && (
                     <div className="space-y-2">
-                      {options.map((option) => (
-                        <div key={option.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`option-${option.id}`}
-                            checked={selectedOptions.includes(option.id)}
-                            onCheckedChange={(checked) => 
-                              handleOptionChange(option.id, checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`option-${option.id}`} className="flex justify-between w-full">
+                      <h4 className="text-sm font-medium text-muted-foreground">Seçenekler</h4>
+                      <div className="grid gap-1.5">
+                        {options.map((option) => (
+                          <div key={option.id} className="flex justify-between text-sm">
                             <span>{option.name}</span>
                             {option.price_adjustment > 0 && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-primary font-medium">
                                 +{option.price_adjustment} ₺
                               </span>
                             )}
-                          </Label>
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </>
             )}
           </div>

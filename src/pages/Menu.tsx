@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Hero from '@/components/Hero';
 import MenuCategory from '@/components/MenuCategory';
@@ -19,7 +18,6 @@ const Menu = () => {
       try {
         const menuItemsData = await fetchMenuItemsByCategory();
         
-        // Process the data to match the expected MenuCategoryType structure
         const categories: { [key: string]: MenuCategoryType } = {};
         
         menuItemsData.forEach(item => {
@@ -30,13 +28,13 @@ const Menu = () => {
             categories[categoryId] = {
               id: categoryId,
               name: categoryName,
-              items: []
+              items: [],
+              displayOrder: item.menu_categories?.display_order || 0
             };
           }
           
           categories[categoryId].items.push({
             ...item,
-            // We're already handling empty arrays for these in the service
             options: item.options || [],
             variants: item.variants || []
           });
@@ -57,35 +55,31 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section with gradient background and smaller height */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555224177-391776d8221d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=2000"
         title="Menümüz"
-        subtitle="En lezzetli yemeklerimizi keşfedin"
+        subtitle="Özenle hazırlanmış lezzetlerimizi keşfedin"
         showButtons={false}
         className="h-[30vh]"
-        overlayColor="rgba(115, 191, 130, 0.7)" // Light green color with transparency
+        overlayColor="rgba(0, 0, 0, 0.5)"
         titleGradient={true}
       />
       
-      {/* Menu Content */}
-      <section className="section-padding pt-8">
-        <div className="container-custom max-w-5xl">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-2 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-amber-500 mr-2" />
+      <section className="section-padding pt-12">
+        <div className="container-custom max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-playfair font-semibold mb-4">
               Günün Menüsü
-              <Sparkles className="h-6 w-6 text-amber-500 ml-2" />
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Özenle seçilmiş malzemelerle hazırlanan, damak zevkinize hitap edecek
-              çeşitlerimizle karşınızdayız.
+              Mevsimsel malzemelerle hazırlanmış, şeflerimizin özel tarifleriyle sunduğumuz
+              seçkin menümüzü keşfedin.
             </p>
           </div>
           
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : error ? (
             <div className="text-center text-red-500">
