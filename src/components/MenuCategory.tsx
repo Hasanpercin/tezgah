@@ -46,19 +46,31 @@ const MenuCategory = ({ categories }: MenuCategoryProps) => {
             className={`${activeCategory === category.id ? 'block' : 'hidden'}`}
           >
             <div className="grid grid-cols-1 gap-8">
-              {category.items.map((item) => (
-                <MenuItem
-                  key={item.id}
-                  id={item.id}
-                  name={item.name}
-                  description={item.description || ''}
-                  price={`${item.price} ₺`}
-                  image={item.image_path}
-                  isInStock={item.is_in_stock}
-                  options={item.options || []}
-                  variants={item.variants || []}
-                />
-              ))}
+              {category.items.map((item) => {
+                // Ensure options and variants are properly formatted arrays
+                const options = Array.isArray(item.options) ? item.options.map(opt => ({
+                  id: opt.id,
+                  name: opt.name,
+                  price_adjustment: opt.price_adjustment,
+                  is_required: opt.is_required !== undefined ? opt.is_required : false
+                })) : [];
+                
+                const variants = Array.isArray(item.variants) ? item.variants : [];
+                
+                return (
+                  <MenuItem
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    description={item.description || ''}
+                    price={`${item.price} ₺`}
+                    image={item.image_path}
+                    isInStock={item.is_in_stock}
+                    options={options}
+                    variants={variants}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}

@@ -77,7 +77,7 @@ const MenuItem = ({
             </div>
             {description && <p className="text-muted-foreground mb-4">{description}</p>}
 
-            {/* Variants Section - Always display on menu page */}
+            {/* Always display variants section if available */}
             {variants && variants.length > 0 && (
               <div className="mt-3 mb-2">
                 <h4 className="text-sm font-medium mb-1 text-muted-foreground">Çeşitler:</h4>
@@ -96,7 +96,7 @@ const MenuItem = ({
               </div>
             )}
 
-            {/* Options Section - Always display on menu page */}
+            {/* Always display options section if available */}
             {options && options.length > 0 && (
               <div className="mt-2">
                 <h4 className="text-sm font-medium mb-1 text-muted-foreground">Opsiyonlar:</h4>
