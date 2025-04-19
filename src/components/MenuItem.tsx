@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { MenuItemOption, MenuItemVariant } from "@/components/reservation/types/reservationTypes";
+import { MenuItemOption, MenuItemVariant } from "@/services/menuService";
 
 type MenuItemProps = {
   name: string;

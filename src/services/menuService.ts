@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -63,9 +64,7 @@ export const fetchMenuItems = async () => {
     .from("menu_items")
     .select(`
       *,
-      menu_categories(*),
-      menu_item_options(*),
-      menu_item_variants(*)
+      menu_categories(*)
     `)
     .eq("is_in_stock", true)
     .order('display_order', { ascending: true });
@@ -75,11 +74,7 @@ export const fetchMenuItems = async () => {
     throw error;
   }
   
-  return data.map(item => ({
-    ...item,
-    options: item.menu_item_options || [],
-    variants: item.menu_item_variants || []
-  })) as MenuItem[];
+  return data as MenuItem[];
 };
 
 export const fetchMenuItemDetails = async (itemId: string) => {
@@ -89,19 +84,6 @@ export const fetchMenuItemDetails = async (itemId: string) => {
       *,
       menu_categories (
         id, name
-      ),
-      menu_item_options (
-        id,
-        name,
-        price_adjustment,
-        is_required,
-        min_selections,
-        max_selections
-      ),
-      menu_item_variants (
-        id,
-        name,
-        price_adjustment
       )
     `)
     .eq("id", itemId)
@@ -109,11 +91,12 @@ export const fetchMenuItemDetails = async (itemId: string) => {
     
   if (error) throw error;
   
+  // Create default empty arrays for options and variants
   return {
     ...data,
-    options: data.menu_item_options || [],
-    variants: data.menu_item_variants || []
-  };
+    options: [],
+    variants: []
+  } as MenuItem;
 };
 
 export const saveReservationMenuItems = async (
@@ -136,43 +119,54 @@ export const saveReservationMenuItems = async (
 };
 
 export const fetchMenuItemsByCategory = async () => {
-  const { data, error } = await supabase
-    .from('menu_items')
-    .select(`
-      *,
-      menu_categories(*),
-      menu_item_options(*),
-      menu_item_variants(*)
-    `)
-    .order('display_order', { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select(`
+        *,
+        menu_categories(*)
+      `)
+      .order('display_order', { ascending: true });
 
-  if (error) throw error;
-  
-  return data.map(item => ({
-    ...item,
-    options: item.menu_item_options || [],
-    variants: item.menu_item_variants || []
-  }));
+    if (error) throw error;
+    
+    // Since we don't have menu_item_options and menu_item_variants tables,
+    // we'll return the data with empty arrays for these properties
+    return data.map(item => ({
+      ...item,
+      options: [],
+      variants: []
+    })) as MenuItem[];
+  } catch (error) {
+    console.error("Error in fetchMenuItemsByCategory:", error);
+    throw error;
+  }
 };
 
 export const fetchFeaturedMenuItems = async () => {
-  const { data, error } = await supabase
-    .from('menu_items')
-    .select(`
-      *,
-      menu_item_options(*),
-      menu_item_variants(*)
-    `)
-    .eq('is_featured', true)
-    .limit(6);
+  try {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select(`
+        *,
+        menu_categories(*)
+      `)
+      .eq('is_featured', true)
+      .limit(6);
 
-  if (error) throw error;
-  
-  return data.map(item => ({
-    ...item,
-    options: item.menu_item_options || [],
-    variants: item.menu_item_variants || []
-  }));
+    if (error) throw error;
+    
+    // Since we don't have menu_item_options and menu_item_variants tables,
+    // we'll return the data with empty arrays for these properties
+    return data.map(item => ({
+      ...item,
+      options: [],
+      variants: []
+    })) as MenuItem[];
+  } catch (error) {
+    console.error("Error in fetchFeaturedMenuItems:", error);
+    throw error;
+  }
 };
 
 export const updateFeaturedMenuItem = async (id: string, isFeatured: boolean) => {

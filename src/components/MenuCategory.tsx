@@ -1,25 +1,7 @@
 
 import { useState } from 'react';
 import MenuItem from './MenuItem';
-
-export type MenuItemType = {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  image?: string;
-  isInStock?: boolean;
-  options?: {
-    id: string;
-    name: string;
-    price_adjustment: number;
-  }[];
-  variants?: {
-    id: string;
-    name: string;
-    price_adjustment: number;
-  }[];
-}
+import { MenuItem as MenuItemType } from '@/services/menuService'; 
 
 export type MenuCategoryType = {
   id: string;
@@ -69,12 +51,12 @@ const MenuCategory = ({ categories }: MenuCategoryProps) => {
                   key={item.id}
                   id={item.id}
                   name={item.name}
-                  description={item.description}
-                  price={item.price}
-                  image={item.image}
-                  isInStock={item.isInStock}
-                  options={item.options}
-                  variants={item.variants}
+                  description={item.description || ''}
+                  price={`${item.price} ₺`}
+                  image={item.image_path}
+                  isInStock={item.is_in_stock}
+                  options={item.options || []}
+                  variants={item.variants || []}
                 />
               ))}
             </div>

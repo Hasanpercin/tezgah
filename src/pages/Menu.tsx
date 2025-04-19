@@ -35,22 +35,10 @@ const Menu = () => {
           }
           
           categories[categoryId].items.push({
-            id: item.id,
-            name: item.name,
-            description: item.description || '',
-            price: `${item.price} ₺`,
-            image: item.image_path,
-            isInStock: item.is_in_stock,
-            options: item.options?.map(option => ({
-              id: option.id,
-              name: option.name,
-              price_adjustment: option.price_adjustment
-            })),
-            variants: item.variants?.map(variant => ({
-              id: variant.id,
-              name: variant.name,
-              price_adjustment: variant.price_adjustment
-            }))
+            ...item,
+            // We're already handling empty arrays for these in the service
+            options: item.options || [],
+            variants: item.variants || []
           });
         });
         
