@@ -15,57 +15,55 @@ export const useReservationSubmission = (
   const sendWebhookNotification = async (reservationData: any) => {
     console.log('Starting webhook notification process...');
     
-    // Format the date if it exists for better readability
-    const formattedReservationData = {
-      ...reservationData,
-      // Make sure we format date information in a more readable way
-      formattedDate: reservationData.date ? new Date(reservationData.date).toLocaleDateString('tr-TR') : null,
-      // Include the full form data explicitly for webhook
+    // Sample test data
+    const testData = {
+      reservationId: "test-" + uuidv4(),
       userDetails: {
-        name: state.formData.name,
-        email: state.formData.email,
-        phone: state.formData.phone,
+        name: "Test User",
+        email: "test@example.com",
+        phone: "+90 555 555 5555"
       },
       reservationDetails: {
-        date: state.formData.date ? state.formData.date.toLocaleDateString('tr-TR') : null,
-        time: state.formData.time,
-        guests: parseInt(state.formData.guests.toString()),
-        notes: state.formData.notes,
-        occasion: state.formData.occasion
+        date: new Date().toLocaleDateString('tr-TR'),
+        time: "19:00",
+        guests: 4,
+        notes: "Test reservation notes",
+        occasion: "Test occasion"
       },
-      // Include table selection information
-      tableDetails: state.selectedTable ? {
-        tableId: state.selectedTable.id,
-        tableName: state.selectedTable.name || state.selectedTable.label,
-        tableSize: state.selectedTable.size,
-        tableType: state.selectedTable.type
-      } : null,
-      // Include any payment information if available
-      paymentDetails: state.payment ? {
-        isPaid: state.payment.isPaid,
-        amount: state.payment.amount,
-        discountAmount: state.payment.discountAmount,
-        transactionId: state.payment.transactionId
-      } : null,
-      // Include menu selection details
+      tableDetails: {
+        tableId: "test-table-1",
+        tableName: "Pencere Kenarı 1",
+        tableSize: 4,
+        tableType: "window"
+      },
       menuSelection: {
-        type: state.menuSelection.type,
-        selectedFixedMenus: state.menuSelection.selectedFixedMenus?.map(item => ({
-          menuId: item.menu.id,
-          menuName: item.menu.name,
-          quantity: item.quantity,
-          price: item.menu.price
-        })),
-        selectedMenuItems: state.menuSelection.selectedMenuItems?.map(item => ({
-          itemId: item.id,
-          itemName: item.name,
-          quantity: item.quantity || 1,
-          price: item.price
-        }))
+        type: "fixed_menu",
+        selectedFixedMenus: [
+          {
+            menuId: "test-menu-1",
+            menuName: "Akşam Menüsü",
+            quantity: 2,
+            price: 450
+          }
+        ],
+        selectedMenuItems: [
+          {
+            itemId: "test-item-1",
+            itemName: "Test Yemeği",
+            quantity: 1,
+            price: 120
+          }
+        ]
+      },
+      paymentDetails: {
+        isPaid: true,
+        amount: 1020,
+        discountAmount: 0,
+        transactionId: "test-transaction-" + uuidv4()
       }
     };
     
-    console.log('Enhanced reservation data to be sent:', JSON.stringify(formattedReservationData, null, 2));
+    console.log('Test data to be sent:', JSON.stringify(testData, null, 2));
 
     try {
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e';
@@ -77,7 +75,7 @@ export const useReservationSubmission = (
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formattedReservationData)
+        body: JSON.stringify(testData) // Send test data instead of actual reservation data
       });
       const endTime = performance.now();
 
@@ -92,37 +90,24 @@ export const useReservationSubmission = (
         throw new Error(`Webhook failed with status ${response.status}: ${responseText}`);
       }
 
-      // Log success metrics
-      console.log('Webhook notification successful');
-      console.log('Request-Response cycle completed in:', Math.round(endTime - startTime), 'ms');
-
       toast({
-        title: "Webhook Başarılı",
-        description: "Rezervasyon bilgileri webhook'a başarıyla gönderildi.",
+        title: "Webhook Test Başarılı",
+        description: "Test verisi webhook'a başarıyla gönderildi.",
         variant: "default"
       });
 
       return true;
     } catch (error) {
-      // Enhanced error logging
-      console.error('Webhook notification error details:');
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      } else {
-        console.error('Unknown error type:', error);
-      }
+      console.error('Webhook test error details:', error);
 
       toast({
-        title: "Webhook Hatası",
+        title: "Webhook Test Hatası",
         description: error instanceof Error 
-          ? `Webhook bildirimi başarısız: ${error.message}`
-          : "Webhook gönderiminde beklenmeyen bir hata oluştu",
+          ? `Webhook test bildirimi başarısız: ${error.message}`
+          : "Webhook test gönderiminde beklenmeyen bir hata oluştu",
         variant: "destructive"
       });
 
-      // Return false to indicate failure
       return false;
     }
   };
