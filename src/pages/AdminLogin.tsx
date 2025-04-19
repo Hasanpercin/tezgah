@@ -35,11 +35,22 @@ const AdminLogin = () => {
         return;
       }
 
+      // Get current user ID after successful login
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      
+      if (!userId) {
+        await supabase.auth.signOut();
+        setError('Kullanıcı bilgisi alınamadı.');
+        setIsLoading(false);
+        return;
+      }
+
       // After successful login, check if the user is an admin
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
-        .eq('user_id', supabase.auth.getUser().then(res => res.data.user?.id))
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (adminError || !adminData) {
