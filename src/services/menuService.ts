@@ -21,6 +21,7 @@ export interface MenuItem {
   menu_categories?: {
     name: string;
     id?: string;
+    display_order?: number;  // Added this property to fix the error
   };
   options?: MenuItemOption[];
   variants?: MenuItemVariant[];
