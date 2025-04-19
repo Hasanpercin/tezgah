@@ -1,20 +1,22 @@
-
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { ReservationState } from '../types/reservationTypes';
 import { User } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
 export const useReservationSubmission = (
   user: User | null,
   state: ReservationState,
-  toast: any,
+  toast: ReturnType<typeof useToast>['toast'],
   setCurrentStep: (step: number) => void
 ) => {
-  // Function to send webhook notification
+  // Function to send webhook notification with detailed logging
   const sendWebhookNotification = async (reservationData: any) => {
     try {
-      const response = await fetch('https://k2vqd09z.rpcd.app/webhook/eecc6166-3b73-4d10-bccb-b4a14ed51a6e', {
+      console.log('Sending webhook notification with data:', reservationData);
+      
+      const response = await fetch('https://k2vqd09z.rpcd.app/webhook-test/eecc6166-3b73-4d10-bccb-b4a14ed51a6e', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -22,11 +24,31 @@ export const useReservationSubmission = (
         body: JSON.stringify(reservationData)
       });
 
+      const responseText = await response.text();
+      console.log('Webhook response status:', response.status);
+      console.log('Webhook response body:', responseText);
+
       if (!response.ok) {
-        console.error('Webhook notification failed', await response.text());
+        throw new Error(`Webhook notification failed: ${responseText}`);
       }
+
+      toast({
+        title: "Webhook Notification",
+        description: "Successfully sent reservation details to webhook.",
+        variant: "default"
+      });
+
+      return true;
     } catch (error) {
       console.error('Error sending webhook notification:', error);
+      
+      toast({
+        title: "Webhook Error",
+        description: `Failed to send webhook notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+
+      return false;
     }
   };
 
@@ -77,8 +99,12 @@ export const useReservationSubmission = (
         throw error;
       }
 
-      // Send webhook notification
-      await sendWebhookNotification(reservationData);
+      // Send webhook notification and log the result
+      const webhookResult = await sendWebhookNotification(reservationData);
+      
+      if (!webhookResult) {
+        console.warn('Webhook notification failed but reservation was created');
+      }
 
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
       if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {
