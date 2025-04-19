@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash, Edit } from "lucide-react";
+import { Plus, Trash, Edit, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { MenuItemFormValues, OptionValues } from "./types";
 import { v4 as uuidv4 } from "uuid";
@@ -22,9 +22,10 @@ import {
 
 interface OptionsSectionProps {
   form: UseFormReturn<MenuItemFormValues>;
+  isLoading?: boolean;
 }
 
-export function OptionsSection({ form }: OptionsSectionProps) {
+export function OptionsSection({ form, isLoading = false }: OptionsSectionProps) {
   const options = form.watch("options") || [];
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -135,7 +136,12 @@ export function OptionsSection({ form }: OptionsSectionProps) {
         </Dialog>
       </div>
       
-      {options.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-20">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="ml-2">Seçenekler yükleniyor...</span>
+        </div>
+      ) : options.length > 0 ? (
         <div className="space-y-2">
           {options.map((option, index) => (
             <Card key={option.id} className="bg-muted/30">

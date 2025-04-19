@@ -113,6 +113,6 @@ const MenuItem = ({
       </CardContent>
     </Card>
   );
-};
+}
 
 export default MenuItem;

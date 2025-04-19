@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -74,7 +75,40 @@ export const fetchMenuItems = async () => {
     throw error;
   }
   
-  return data as MenuItem[];
+  // Fetch all options for all menu items
+  const menuItems = data as MenuItem[];
+  
+  // Now fetch all menu item options in a single query
+  const { data: optionsData, error: optionsError } = await supabase
+    .from('menu_item_options')
+    .select('*');
+    
+  if (optionsError) {
+    console.error("Error fetching menu item options:", optionsError);
+    throw optionsError;
+  }
+  
+  // Map options to their respective menu items
+  return menuItems.map(item => ({
+    ...item,
+    options: optionsData.filter(option => option.menu_item_id === item.id) || [],
+    variants: []
+  }));
+};
+
+export const fetchMenuItemOptions = async (menuItemId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('menu_item_options')
+      .select('*')
+      .eq('menu_item_id', menuItemId);
+      
+    if (error) throw error;
+    return data as MenuItemOption[];
+  } catch (error) {
+    console.error("Error fetching menu item options:", error);
+    throw error;
+  }
 };
 
 export const fetchMenuItemDetails = async (itemId: string) => {

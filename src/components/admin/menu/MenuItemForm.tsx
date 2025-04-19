@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { MenuCategory, MenuItem, MenuItemOption, MenuItemVariant } from "@/services/menuService";
+import { MenuCategory, MenuItem, MenuItemOption, MenuItemVariant, fetchMenuItemOptions } from "@/services/menuService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BasicDetails } from "./menu-item-form/BasicDetails";
@@ -25,7 +26,9 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_path || null);
-
+  const [loadingOptions, setLoadingOptions] = useState(isEditMode && !!item);
+  
+  // Function to ensure all options have an ID
   const prepareOptions = (options: any[] = []): MenuItemOption[] => {
     return options.map(option => ({
       id: option.id || crypto.randomUUID(),
@@ -52,10 +55,41 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       is_featured: item?.is_featured || false,
       is_in_stock: item?.is_in_stock !== false,
       display_order: item?.display_order || 0,
-      options: prepareOptions(item?.options),
+      options: [],
       variants: item?.variants || []
     }
   });
+  
+  // Fetch options when in edit mode
+  useEffect(() => {
+    const fetchOptions = async () => {
+      if (isEditMode && item?.id) {
+        try {
+          setLoadingOptions(true);
+          const { data, error } = await supabase
+            .from('menu_item_options')
+            .select('*')
+            .eq('menu_item_id', item.id);
+            
+          if (error) throw error;
+          
+          const formattedOptions = prepareOptions(data || []);
+          form.setValue('options', formattedOptions);
+        } catch (error) {
+          console.error("Error fetching options:", error);
+          toast({
+            title: "Hata",
+            description: "Seçenekler yüklenirken bir hata oluştu.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingOptions(false);
+        }
+      }
+    };
+    
+    fetchOptions();
+  }, [isEditMode, item, form, toast]);
 
   const handleImageSelected = (url: string | null) => {
     setImageUrl(url);
@@ -82,7 +116,10 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         display_order: values.display_order
       };
 
+      let menuItemId: string;
+      
       if (isEditMode && item) {
+        menuItemId = item.id;
         const { error } = await supabase
           .from("menu_items")
           .update({
@@ -92,13 +129,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           .eq("id", item.id);
 
         if (error) throw error;
-
-        await handleOptionsUpdate(item.id, prepareOptions(values.options));
         
-        toast({
-          title: "Başarılı",
-          description: "Menü öğesi başarıyla güncellendi",
-        });
       } else {
         const { data, error } = await supabase
           .from("menu_items")
@@ -107,19 +138,24 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           .single();
 
         if (error) throw error;
+        if (!data) throw new Error("Menü öğesi oluşturulamadı.");
         
-        if (data && values.options && values.options.length > 0) {
-          await handleOptionsUpdate(data.id, prepareOptions(values.options));
-        }
-
-        toast({
-          title: "Başarılı",
-          description: "Yeni menü öğesi başarıyla oluşturuldu",
-        });
+        menuItemId = data.id;
       }
+
+      // Always update options by deleting old ones and inserting new ones
+      await handleOptionsUpdate(menuItemId, prepareOptions(values.options));
+        
+      toast({
+        title: "Başarılı",
+        description: isEditMode 
+          ? "Menü öğesi başarıyla güncellendi" 
+          : "Yeni menü öğesi başarıyla oluşturuldu",
+      });
 
       onSuccess();
     } catch (error: any) {
+      console.error("Form submission error:", error);
       toast({
         title: "Hata",
         description: "İşlem sırasında bir hata oluştu: " + error.message,
@@ -132,6 +168,10 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
 
   const handleOptionsUpdate = async (menuItemId: string, options: MenuItemOption[]) => {
     try {
+      console.log("Updating options for menu item:", menuItemId);
+      console.log("Options to save:", options);
+      
+      // First delete all existing options
       const { error: deleteError } = await supabase
         .from('menu_item_options')
         .delete()
@@ -139,19 +179,22 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
 
       if (deleteError) throw deleteError;
 
+      // Then insert new options if there are any
       if (options.length > 0) {
+        const optionsToInsert = options.map(option => ({
+          menu_item_id: menuItemId,
+          name: option.name,
+          price_adjustment: option.price_adjustment,
+          is_required: option.is_required
+        }));
+        
         const { error: insertError } = await supabase
           .from('menu_item_options')
-          .insert(
-            options.map(option => ({
-              menu_item_id: menuItemId,
-              name: option.name,
-              price_adjustment: option.price_adjustment,
-              is_required: option.is_required
-            }))
-          );
+          .insert(optionsToInsert);
 
         if (insertError) throw insertError;
+        
+        console.log("Options saved successfully:", optionsToInsert.length);
       }
     } catch (error: any) {
       console.error('Error updating options:', error);
@@ -176,7 +219,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
 
         <FoodProperties form={form} />
         
-        <OptionsSection form={form} />
+        <OptionsSection form={form} isLoading={loadingOptions} />
       
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>İptal</Button>
