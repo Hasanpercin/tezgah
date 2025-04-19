@@ -10,6 +10,7 @@ import { Plus, Trash, Edit } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { MenuItemFormValues, OptionValues } from "./types";
 import { v4 as uuidv4 } from "uuid";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export function OptionsSection({ form }: OptionsSectionProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [optionForm, setOptionForm] = useState<OptionValues>({
+    id: uuidv4(),
     name: "",
     price_adjustment: 0,
     is_required: false
@@ -45,6 +47,7 @@ export function OptionsSection({ form }: OptionsSectionProps) {
       setEditingIndex(index);
     } else {
       setOptionForm({
+        id: uuidv4(),
         name: "",
         price_adjustment: 0,
         is_required: false
@@ -56,15 +59,11 @@ export function OptionsSection({ form }: OptionsSectionProps) {
 
   const handleSaveOption = () => {
     const newOptions = [...options];
-    const formattedOption = {
-      ...optionForm,
-      id: optionForm.id || uuidv4()
-    };
     
     if (editingIndex !== null) {
-      newOptions[editingIndex] = formattedOption;
+      newOptions[editingIndex] = optionForm;
     } else {
-      newOptions.push(formattedOption);
+      newOptions.push(optionForm);
     }
     
     form.setValue("options", newOptions);
@@ -139,7 +138,7 @@ export function OptionsSection({ form }: OptionsSectionProps) {
       {options.length > 0 ? (
         <div className="space-y-2">
           {options.map((option, index) => (
-            <Card key={option.id || index} className="bg-muted/30">
+            <Card key={option.id} className="bg-muted/30">
               <CardContent className="p-3 flex justify-between items-center">
                 <div className="flex-1">
                   <div className="font-medium">{option.name}</div>

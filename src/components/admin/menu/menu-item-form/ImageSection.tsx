@@ -7,12 +7,12 @@ import { Trash } from "lucide-react";
 
 interface ImageSectionProps {
   imageUrl: string | null;
-  onImageSelected: (url: string) => void;
+  onImageSelected: (url: string | null) => void;
 }
 
 export function ImageSection({ imageUrl, onImageSelected }: ImageSectionProps) {
   const handleRemoveImage = () => {
-    onImageSelected("");  // Set to empty string to remove the image
+    onImageSelected(null);  // Set to null to remove the image
   };
 
   return (

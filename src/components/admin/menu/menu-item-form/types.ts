@@ -2,14 +2,14 @@
 import { z } from "zod";
 
 export const optionSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().default(() => crypto.randomUUID()),
   name: z.string().min(1, { message: "Seçenek adı gerekli" }),
   price_adjustment: z.coerce.number().default(0),
   is_required: z.boolean().default(false)
 });
 
 export const variantSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().default(() => crypto.randomUUID()),
   name: z.string().min(1, { message: "Çeşit adı gerekli" }),
   price_adjustment: z.coerce.number().default(0)
 });
