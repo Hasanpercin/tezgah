@@ -11,7 +11,7 @@ const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
   const { toast } = useToast();
   const dummySetCurrentStep = () => {};
   
-  // WebhookNotification fonksiyonunu doğrudan import edelim
+  // Get the sendWebhookNotification function from our hook
   const { sendWebhookNotification } = useReservationSubmission(
     user,
     state,
@@ -20,19 +20,32 @@ const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
   );
   
   useEffect(() => {
-    // Sayfa ilk yüklendiğinde webhook bildirimini tekrar gönderelim
+    // When summary page loads, attempt to send the webhook notification with improved reliability 
     const sendWebhook = async () => {
       console.log("ReservationSummary bileşeni yüklendi, webhook gönderiliyor...");
       
-      // Mobil tarayıcılarda gecikmeli olarak webhook'u gönderelim
-      // Bu sayede sayfa tamamen yüklendikten sonra webhook gönderilir
-      setTimeout(async () => {
+      // Use multiple attempts and delays for improved reliability
+      const attemptWebhook = async (retryCount = 0, maxRetries = 2) => {
         try {
-          await sendWebhookNotification(state);
+          const result = await sendWebhookNotification(state);
+          if (result) {
+            console.log("Webhook successfully sent from ReservationSummary");
+          } else if (retryCount < maxRetries) {
+            console.log(`Webhook send attempt ${retryCount + 1} failed, retrying...`);
+            // Exponential backoff for retries (1s, 2s)
+            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1000);
+          }
         } catch (error) {
-          console.error("Webhook gönderme hatası:", error);
+          console.error("Webhook sending error:", error);
+          if (retryCount < maxRetries) {
+            console.log(`Retrying webhook after error (attempt ${retryCount + 1})...`);
+            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1000);
+          }
         }
-      }, 1000);
+      };
+      
+      // Start first attempt with a short delay to ensure component is fully mounted
+      setTimeout(() => attemptWebhook(), 500);
     };
     
     sendWebhook();

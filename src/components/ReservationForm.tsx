@@ -65,27 +65,31 @@ const ReservationForm = () => {
   
   const dummySetCurrentStep = () => {};
   
-  // Webhook test fonksiyonunu ayrı olarak tanımlayalım
-  const sendWebhookTest = async () => {
-    setIsTestingWebhook(true);
-    try {
-      console.log('Webhook test başlatılıyor...');
-      // Sadece webhook gönderme fonksiyonunu çağırırız
-      await sendWebhookNotification(dummyState);
-      setIsTestingWebhook(false);
-    } catch (error) {
-      console.error('Webhook testi sırasında hata:', error);
-      setIsTestingWebhook(false);
-    }
-  };
-
-  // WebhookNotification fonksiyonunu doğrudan import edelim
+  // Get the webhook notification function
   const { sendWebhookNotification } = useReservationSubmission(
     user,
     dummyState,
     toast,
     dummySetCurrentStep
   );
+  
+  // Webhook test function with improved error handling
+  const sendWebhookTest = async () => {
+    setIsTestingWebhook(true);
+    try {
+      console.log('Webhook test başlatılıyor...');
+      await sendWebhookNotification(dummyState);
+    } catch (error) {
+      console.error('Webhook testi sırasında hata:', error);
+      toast({
+        title: "Webhook Test Hatası",
+        description: error instanceof Error ? error.message : "Webhook testi başarısız oldu",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingWebhook(false);
+    }
+  };
   
   const handleWebhookTest = () => {
     sendWebhookTest();
