@@ -74,9 +74,9 @@ export const useReservationSubmission = (
     };
 
     try {
-      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook-test/a68f9d2d-5f33-4541-8365-699a686ec901';
+      // Updated webhook URL
+      const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/a68f9d2d-5f33-4541-8365-699a686ec901';
       
-      // Data parametresi olarak JSON verisini ekliyoruz
       const encodedData = encodeURIComponent(JSON.stringify(webhookData));
       const fullUrl = `${webhookUrl}?data=${encodedData}`;
       
@@ -84,23 +84,26 @@ export const useReservationSubmission = (
       console.log('Tam URL:', fullUrl);
 
       const startTime = performance.now();
-      // Fetch işlemini hem mobil hem de masaüstü tarayıcılara uygun hale getiriyoruz
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);  // 10 saniye timeout
+
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          // Mobil tarayıcılar için ek başlıklar
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
         },
-        cache: 'no-store', // Önbellekleme önlemek için
+        cache: 'no-store',
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
       const endTime = performance.now();
 
       console.log(`Webhook isteği ${Math.round(endTime - startTime)}ms içinde tamamlandı`);
       console.log('Yanıt durumu:', response.status);
-      console.log('Yanıt durum metni:', response.statusText);
 
       const responseText = await response.text();
       console.log('Tam yanıt içeriği:', responseText);
