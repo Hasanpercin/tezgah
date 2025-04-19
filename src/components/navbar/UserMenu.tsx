@@ -22,7 +22,7 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
-    // localStorage'dan admin durumunu kontrol et
+    // localStorage'dan admin durumunu kontrol et ve değişiklikleri izle
     const checkAdminStatus = () => {
       const adminStatus = localStorage.getItem('isAdmin') === 'true';
       setIsAdmin(adminStatus);
@@ -36,7 +36,13 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
     return () => {
       window.removeEventListener('storage', checkAdminStatus);
     };
-  }, [isAuthenticated]);
+  }, []);
+
+  const handleLogout = () => {
+    // Admin çıkış yaparken localStorage'dan admin durumunu temizle
+    localStorage.removeItem('isAdmin');
+    logout();
+  };
 
   if (isAuthenticated) {
     return (
@@ -62,7 +68,7 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
               <Link to="/admin">Yönetim Paneli</Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={logout}>
+          <DropdownMenuItem onClick={handleLogout}>
             Çıkış Yap
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -82,3 +88,4 @@ const UserMenu = ({ isAuthenticated, user, logout, isScrolled }: UserMenuProps) 
 };
 
 export default UserMenu;
+
