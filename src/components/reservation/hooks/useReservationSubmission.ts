@@ -13,12 +13,12 @@ export const useReservationSubmission = (
   setCurrentStep: (step: number) => void
 ) => {
   // Function to send webhook notification with enhanced error handling and logging
-  const sendWebhookNotification = async (reservationData: any) => {
-    console.log('Starting webhook notification process...');
+  const sendWebhookNotification = async (reservationData: any, reservationId?: string) => {
+    console.log('Starting webhook notification process...', { reservationData, reservationId });
     
     // Prepare reservation data for webhook
     const webhookData = {
-      reservationId: reservationData.id || "test-" + uuidv4(),
+      reservationId: reservationId || reservationData.id || "test-" + uuidv4(),
       userDetails: {
         name: reservationData.formData?.name || "Test User",
         email: reservationData.formData?.email || "test@example.com",
@@ -66,10 +66,10 @@ export const useReservationSubmission = (
         ]
       },
       paymentDetails: {
-        isPaid: reservationData.payment?.isPaid || true,
-        amount: reservationData.payment?.amount || 1020,
+        isPaid: reservationData.payment?.isPaid || false,
+        amount: reservationData.payment?.amount || 0,
         discountAmount: 0,
-        transactionId: "test-transaction-" + uuidv4()
+        transactionId: reservationData.payment?.transactionId || "test-transaction-" + uuidv4()
       }
     };
 
@@ -159,7 +159,7 @@ export const useReservationSubmission = (
         total_amount: state.payment?.amount || 0,
       };
 
-      console.log('Rezervasyon veritabanına ekleniyor...');
+      console.log('Rezervasyon veritabanına ekleniyor...', reservationData);
       const { error } = await supabase
         .from("reservations")
         .insert([reservationData]);
@@ -171,9 +171,9 @@ export const useReservationSubmission = (
       
       console.log('Rezervasyon başarıyla veritabanına eklendi');
 
-      // Webhook bildirimi gönder - Burası önemli!
+      // Webhook bildirimi gönderme işlemi - Burası kritik!
       console.log('Rezervasyon için webhook bildirimi gönderiliyor...');
-      await sendWebhookNotification(state);
+      await sendWebhookNotification(state, reservationId);
       
       // If a fixed menu is selected, save it to the reservation_fixed_menus table
       if (state.menuSelection.type === 'fixed_menu' && state.menuSelection.selectedFixedMenus && state.menuSelection.selectedFixedMenus.length > 0) {

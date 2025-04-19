@@ -1,9 +1,34 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, Calendar, Users, MapPin, Clock, FileText } from 'lucide-react';
 import { ReservationSummaryProps } from './types/reservationTypes';
+import { useToast } from '@/hooks/use-toast';
+import { useReservationSubmission } from './hooks/useReservationSubmission';
+import { useAuth } from '@/context/AuthContext';
 
 const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const dummySetCurrentStep = () => {};
+  
+  // WebhookNotification fonksiyonunu doğrudan import edelim
+  const { sendWebhookNotification } = useReservationSubmission(
+    user,
+    state,
+    toast,
+    dummySetCurrentStep
+  );
+  
+  useEffect(() => {
+    // Sayfa ilk yüklendiğinde webhook bildirimini tekrar gönderelim
+    const sendWebhook = async () => {
+      console.log("ReservationSummary bileşeni yüklendi, webhook gönderiliyor...");
+      await sendWebhookNotification(state);
+    };
+    
+    sendWebhook();
+  }, []);
+  
   const getMenuTypeText = () => {
     switch(state.menuSelection.type) {
       case 'fixed_menu':
