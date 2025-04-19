@@ -24,28 +24,30 @@ const ReservationSummary: React.FC<ReservationSummaryProps> = ({ state }) => {
     const sendWebhook = async () => {
       console.log("ReservationSummary bileşeni yüklendi, webhook gönderiliyor...");
       
-      // Use multiple attempts and delays for improved reliability
-      const attemptWebhook = async (retryCount = 0, maxRetries = 2) => {
+      // Use multiple attempts with increasing delays for improved reliability
+      const attemptWebhook = async (retryCount = 0, maxRetries = 3) => {
         try {
+          console.log(`Webhook sending attempt ${retryCount + 1} of ${maxRetries + 1}`);
           const result = await sendWebhookNotification(state);
           if (result) {
             console.log("Webhook successfully sent from ReservationSummary");
           } else if (retryCount < maxRetries) {
-            console.log(`Webhook send attempt ${retryCount + 1} failed, retrying...`);
-            // Exponential backoff for retries (1s, 2s)
-            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1000);
+            console.log(`Webhook send attempt ${retryCount + 1} failed, retrying in ${(retryCount + 1) * 1500}ms...`);
+            // Exponential backoff for retries (1.5s, 3s, 4.5s)
+            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1500);
           }
         } catch (error) {
           console.error("Webhook sending error:", error);
           if (retryCount < maxRetries) {
             console.log(`Retrying webhook after error (attempt ${retryCount + 1})...`);
-            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1000);
+            setTimeout(() => attemptWebhook(retryCount + 1, maxRetries), (retryCount + 1) * 1500);
           }
         }
       };
       
       // Start first attempt with a short delay to ensure component is fully mounted
-      setTimeout(() => attemptWebhook(), 500);
+      // This is critical for iOS Safari where the component might not be fully ready
+      setTimeout(() => attemptWebhook(), 1000);
     };
     
     sendWebhook();

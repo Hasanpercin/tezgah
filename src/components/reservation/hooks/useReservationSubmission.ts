@@ -77,55 +77,75 @@ export const useReservationSubmission = (
       // Updated webhook URL
       const webhookUrl = 'https://k2vqd09z.rpcd.app/webhook/a68f9d2d-5f33-4541-8365-699a686ec901';
       
-      // For mobile browsers, we'll use a simpler approach that's more compatible
+      // Improved iOS Safari detection
+      const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+                         !navigator.userAgent.includes('Chrome') && 
+                         !navigator.userAgent.includes('CriOS');
+                         
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      if (isMobile) {
-        console.log('Using mobile-optimized webhook approach');
+      // For iOS Safari or other mobile browsers, use our most reliable approach
+      if (isIOSSafari || isMobile) {
+        console.log(`Using mobile-optimized webhook approach (iOS Safari: ${isIOSSafari}, Mobile: ${isMobile})`);
         
-        // Create a lightweight version of the request for mobile
+        // Create reliable method for iOS Safari
         const encodedData = encodeURIComponent(JSON.stringify(webhookData));
         const fullUrl = `${webhookUrl}?data=${encodedData}`;
         
         console.log('Mobile webhook URL:', fullUrl);
         
-        // Create an image request as a reliable fallback method for mobile browsers
-        // This technique works across almost all mobile browsers
-        const img = new Image();
+        // Multiple methods to ensure delivery on iOS Safari
+        try {
+          // Method 1: Image request technique (works on almost all browsers including iOS Safari)
+          const img = new Image();
+          
+          // Set up handling
+          img.onload = () => {
+            console.log('Mobile webhook successful via image method');
+            toast({
+              title: "Webhook Bildirimi Başarılı",
+              description: "Rezervasyon verileri webhook'a başarıyla gönderildi.",
+              variant: "default"
+            });
+          };
+          
+          img.onerror = () => {
+            console.log('Mobile webhook image failed to load, but request may have been processed');
+            // We don't show error as the request might still be processed
+          };
+          
+          // Add timestamp to prevent caching (critical for iOS Safari)
+          const cacheBuster = Date.now();
+          img.src = `${fullUrl}&cacheBuster=${cacheBuster}`;
+          
+          // Method 2: Use XMLHttpRequest as backup on mobile (works on some browsers when fetch fails)
+          setTimeout(() => {
+            console.log("Trying XMLHttpRequest as backup method");
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', `${fullUrl}&secondTry=true&cacheBuster=${Date.now()}`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+          }, 300);
+          
+        } catch (innerError) {
+          console.error("Error with mobile webhook methods:", innerError);
+          // We still return success as the first method might have worked
+        }
         
-        // Set up success/error handlers
-        img.onload = () => {
-          console.log('Mobile webhook request succeeded via image method');
-          toast({
-            title: "Webhook Bildirimi Başarılı",
-            description: "Rezervasyon verileri webhook'a başarıyla gönderildi.",
-            variant: "default"
-          });
-        };
-        
-        img.onerror = () => {
-          // Even if the image fails to load, the webhook request will usually still be processed
-          console.log('Mobile webhook image failed to load, but request likely processed');
-          // We don't show an error toast here as the request may have succeeded anyway
-        };
-        
-        // Send the request by setting the src
-        // Add a cache buster to prevent caching
-        img.src = `${fullUrl}&cacheBuster=${Date.now()}`;
-        
-        // Return successful regardless, as we can't reliably determine the result
         return true;
       } else {
         // Desktop approach with fetch and proper error handling
-        console.log('Webhook verisi gönderiliyor:', JSON.stringify(webhookData, null, 2));
+        console.log('Using standard desktop webhook approach');
+        console.log('Webhook data being sent:', JSON.stringify(webhookData, null, 2));
+        
         const encodedData = encodeURIComponent(JSON.stringify(webhookData));
         const fullUrl = `${webhookUrl}?data=${encodedData}`;
         
-        console.log('Tam URL:', fullUrl);
+        console.log('Full URL:', fullUrl);
 
         const startTime = performance.now();
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);  // 10 saniye timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);  // 10 second timeout
 
         const response = await fetch(fullUrl, {
           method: 'GET',
@@ -142,14 +162,14 @@ export const useReservationSubmission = (
         clearTimeout(timeoutId);
         const endTime = performance.now();
 
-        console.log(`Webhook isteği ${Math.round(endTime - startTime)}ms içinde tamamlandı`);
-        console.log('Yanıt durumu:', response.status);
+        console.log(`Webhook request completed in ${Math.round(endTime - startTime)}ms`);
+        console.log('Response status:', response.status);
 
         const responseText = await response.text();
-        console.log('Tam yanıt içeriği:', responseText);
+        console.log('Full response content:', responseText);
 
         if (!response.ok) {
-          throw new Error(`Webhook ${response.status} kodu ile başarısız oldu: ${responseText}`);
+          throw new Error(`Webhook failed with status code ${response.status}: ${responseText}`);
         }
 
         toast({
@@ -161,7 +181,7 @@ export const useReservationSubmission = (
         return true;
       }
     } catch (error) {
-      console.error('Webhook gönderme hatası detayları:', error);
+      console.error('Webhook sending error details:', error);
 
       toast({
         title: "Webhook Bildirimi Hatası",
@@ -262,7 +282,7 @@ export const useReservationSubmission = (
 
   return {
     submitReservation,
-    sendWebhookNotification // Webhook test için bu fonksiyonu dışarı açıyoruz
+    sendWebhookNotification // Export for webhook testing
   };
 };
 
