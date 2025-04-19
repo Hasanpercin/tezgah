@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { MenuCategory, MenuItem } from "@/services/menuService";
+import { MenuCategory, MenuItem, MenuItemOption, MenuItemVariant } from "@/services/menuService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BasicDetails } from "./menu-item-form/BasicDetails";
 import { ImageSection } from "./menu-item-form/ImageSection";
 import { AdditionalDetails } from "./menu-item-form/AdditionalDetails";
 import { FoodProperties } from "./menu-item-form/FoodProperties";
+import { OptionsSection } from "./menu-item-form/OptionsSection";
 import { menuItemSchema, MenuItemFormValues } from "./menu-item-form/types";
 
 type MenuItemFormProps = {
@@ -42,7 +43,9 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
       is_spicy: item?.is_spicy || false,
       is_featured: item?.is_featured || false,
       is_in_stock: item?.is_in_stock !== false,
-      display_order: item?.display_order || 0
+      display_order: item?.display_order || 0,
+      options: item?.options || [],
+      variants: item?.variants || []
     }
   });
 
@@ -72,6 +75,7 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         display_order: values.display_order
       };
 
+      // First, handle the basic menu item update/insert
       if (isEditMode && item) {
         const { error } = await supabase
           .from("menu_items")
@@ -82,16 +86,28 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
           .eq("id", item.id);
 
         if (error) throw error;
+
+        // After successful update of the main menu item, handle options
+        await handleOptionsUpdate(item.id, values.options || []);
+        
         toast({
           title: "Başarılı",
           description: "Menü öğesi başarıyla güncellendi",
         });
       } else {
-        const { error } = await supabase
+        // For new menu items, first create the item then add options
+        const { data, error } = await supabase
           .from("menu_items")
-          .insert(formattedValues);
+          .insert(formattedValues)
+          .select('id')
+          .single();
 
         if (error) throw error;
+        
+        if (data && values.options && values.options.length > 0) {
+          await handleOptionsUpdate(data.id, values.options);
+        }
+
         toast({
           title: "Başarılı",
           description: "Yeni menü öğesi başarıyla oluşturuldu",
@@ -110,6 +126,15 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
     }
   };
 
+  // Helper function to handle options update/insert
+  const handleOptionsUpdate = async (menuItemId: string, options: MenuItemOption[]) => {
+    // We'll implement this in a future update with a proper database table for menu_item_options
+    // For now, we're just preparing the component structure
+    console.log('Saving options for menu item:', menuItemId, options);
+    // In a real implementation, we would insert/update options in a separate table
+    return true;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -126,6 +151,8 @@ export function MenuItemForm({ categories, item, isEditMode, onSuccess, onCancel
         </div>
 
         <FoodProperties form={form} />
+        
+        <OptionsSection form={form} />
       
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>İptal</Button>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MenuItem {
@@ -21,7 +20,7 @@ export interface MenuItem {
   menu_categories?: {
     name: string;
     id?: string;
-    display_order?: number;  // Added this property to fix the error
+    display_order?: number;
   };
   options?: MenuItemOption[];
   variants?: MenuItemVariant[];
@@ -79,25 +78,32 @@ export const fetchMenuItems = async () => {
 };
 
 export const fetchMenuItemDetails = async (itemId: string) => {
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select(`
-      *,
-      menu_categories (
-        id, name
-      )
-    `)
-    .eq("id", itemId)
-    .single();
+  try {
+    const { data: itemData, error: itemError } = await supabase
+      .from("menu_items")
+      .select(`
+        *,
+        menu_categories (
+          id, name
+        )
+      `)
+      .eq("id", itemId)
+      .single();
+      
+    if (itemError) throw itemError;
     
-  if (error) throw error;
-  
-  // Create default empty arrays for options and variants
-  return {
-    ...data,
-    options: [],
-    variants: []
-  } as MenuItem;
+    const options: MenuItemOption[] = [];
+    const variants: MenuItemVariant[] = [];
+    
+    return {
+      ...itemData,
+      options,
+      variants
+    } as MenuItem;
+  } catch (error) {
+    console.error("Error fetching menu item details:", error);
+    throw error;
+  }
 };
 
 export const saveReservationMenuItems = async (
@@ -131,8 +137,6 @@ export const fetchMenuItemsByCategory = async () => {
 
     if (error) throw error;
     
-    // Since we don't have menu_item_options and menu_item_variants tables,
-    // we'll return the data with empty arrays for these properties
     return data.map(item => ({
       ...item,
       options: [],
@@ -157,8 +161,6 @@ export const fetchFeaturedMenuItems = async () => {
 
     if (error) throw error;
     
-    // Since we don't have menu_item_options and menu_item_variants tables,
-    // we'll return the data with empty arrays for these properties
     return data.map(item => ({
       ...item,
       options: [],
@@ -181,8 +183,6 @@ export const updateFeaturedMenuItem = async (id: string, isFeatured: boolean) =>
 };
 
 export const seedMenuData = async () => {
-  // This would be an admin function to seed menu data
-  // Implementation depends on specific requirements
   return { success: true };
 };
 
