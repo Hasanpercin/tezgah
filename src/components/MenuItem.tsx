@@ -34,7 +34,7 @@ const MenuItem = ({
       <CardContent className="p-0">
         <div className="flex flex-col h-full">
           {image && (
-            <div className="relative h-48 overflow-hidden">
+            <div className="relative h-32 overflow-hidden">
               <img 
                 src={image} 
                 alt={name} 

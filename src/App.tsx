@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -18,6 +17,7 @@ import NotFound from './pages/NotFound';
 import Loyalty from './pages/Loyalty';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import AdminLogin from './pages/AdminLogin';
 import { Toaster } from './components/ui/sonner';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
@@ -42,6 +42,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-reservations" element={<MyReservations />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminCMS />} />
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="*" element={<NotFound />} />
