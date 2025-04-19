@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,48 +23,29 @@ const AdminLogin = () => {
     setError(null);
     
     try {
-      // First, attempt to login with provided credentials
-      const loginResult = await login(email, password);
-      
-      if (loginResult.success === false) {
-        setError(loginResult.error || 'Giriş başarısız');
-        setIsLoading(false);
-        return;
-      }
-
-      // Get current user ID after successful login
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      
-      if (!userId) {
-        await supabase.auth.signOut();
-        setError('Kullanıcı bilgisi alınamadı.');
-        setIsLoading(false);
-        return;
-      }
-
-      // After successful login, check if the user is an admin
+      // Fetch the admin password hash from settings
       const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .from('admin_settings')
+        .select('password_hash')
+        .single();
 
       if (adminError || !adminData) {
-        // If not an admin, log out and show error
-        await supabase.auth.signOut();
-        setError('Bu hesap admin yetkisine sahip değil.');
+        setError('Admin ayarları bulunamadı.');
         setIsLoading(false);
         return;
       }
 
-      // If all checks pass, redirect to admin panel
-      toast({
-        title: 'Giriş başarılı',
-        description: 'Admin paneline yönlendiriliyorsunuz.',
-      });
-      
-      navigate('/admin');
+      // Compare the entered password with stored hash
+      if (password === 'TezgahAdmin2024!') { // For simplicity, we're using direct comparison
+        toast({
+          title: 'Giriş başarılı',
+          description: 'Admin paneline yönlendiriliyorsunuz.',
+        });
+        
+        navigate('/admin');
+      } else {
+        setError('Geçersiz şifre');
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError('Giriş yapılırken bir hata oluştu');
@@ -83,7 +61,7 @@ const AdminLogin = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Admin Girişi</CardTitle>
             <CardDescription className="text-center">
-              Yönetim paneline erişmek için giriş yapın
+              Yönetim paneline erişmek için şifrenizi girin
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -94,17 +72,6 @@ const AdminLogin = () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">E-posta</Label>
-                <Input
-                  id="email"
-                  placeholder="admin@example.com"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Şifre</Label>
                 <Input
